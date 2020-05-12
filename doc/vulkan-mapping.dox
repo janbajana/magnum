@@ -23,27 +23,39 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-namespace Magnum {
+namespace Magnum { namespace Vk {
 
-/** @page features Feature guide
-@brief Fundamental principles and design goals.
+/** @page vulkan-mapping Vulkan command mapping
+@brief List of Vulkan commands corresponding to particular Magnum API.
 
-Overview and tutorials of high-level feature groups in Magnum. It's not
-necessary to read through everything, pick only what you need.
+@tableofcontents
+@m_footernavigation
 
--   @subpage platform --- @copybrief platform
--   @subpage types --- @copybrief types
--   @subpage matrix-vector --- @copybrief matrix-vector
--   @subpage transformations --- @copybrief transformations
--   @subpage animation --- @copybrief animation
--   @subpage plugins --- @copybrief plugins
--   @subpage file-formats --- @copybrief file-formats
--   @subpage opengl-wrapping --- @copybrief opengl-wrapping
--   @subpage vulkan-wrapping --- @copybrief vulkan-wrapping
--   @subpage shaders --- @copybrief shaders
--   @subpage scenegraph --- @copybrief scenegraph
--   @subpage debug-tools --- @copybrief debug-tools
--   @subpage ui --- @copybrief ui
+Legend:
+-   (empty) --- given feature is not yet implemented
+
+@section vulkan-mapping-functions Functions
+
+@subsection vulkan-mapping-functions-c C
+
+@m_class{m-fullwidth}
+
+Vulkan function                         | Matching API
+--------------------------------------- | ------------
+@fn_vk{CreateInstance}, \n @fn_vk{DestroyInstance} | @ref Instance constructor and destructor
+
+@section vulkan-mapping-types Types
+
+@subsection vulkan-mapping-types-i I
+
+@m_class{m-fullwidth}
+
+Vulkan function                         | Matching API
+--------------------------------------- | ------------
+@type_vk{InstanceCreateInfo}            | @ref InstanceCreateInfo
+
+@section vulkan-mapping-state Limit and state queries
+
 */
 
-}
+}}

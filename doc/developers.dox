@@ -728,7 +728,40 @@ unless it doesn't affect public API at all.
 
 @section developers-vk-extensions Checklist for adding / removing Vulkan versions and extensions
 
-@todoc adapt from the GL section
+1.  Install [flextGL](https://github.com/mosra/flextgl)
+2.  Go to `src/MagnumExternal/Vulkan/`:
+    -   Update `extensions.txt` (bump a version or add/remove extensions)
+    -   Run @cb{.sh} .../flextGLgen.py -D . -t . extensions.txt @ce to generate
+        `flextVk.h`, `flextVk.cpp`, `flextVkGlobal.h`, and `flextVkGlobal.cpp`
+        files
+5.  Check @cb{.sh} git diff @ce for suspicious changes and whitespace-at-EOL
+6.  For every new added function, add an entry to `doc/vulkan-mapping.dox`
+7.  For every new added limit query (various `GL_MIN_*` and `GL_MAX_*` macros
+    etc.), add an entry to the bottom of `doc/vulkan-mapping.dox`
+8.  Add a table listing the new version and all new extensions in it to
+    `doc/vulkan-support.dox` (take a list of them from the changelog in the
+    official spec PDF). Some extensions might be already present in the general
+    extension list, move them out of there.
+9.  Add a new `requires-vkXY` page with @c \@m_footernavigation to
+    `doc/vulkan-support.dox`, mention it as a @c \@subpage at a correct
+    position in the list
+10. Add a new `requires-vkXY` alias to `Doxyfile`, `Doxyfile-mcss` and
+    `Doxyfile-public`, copypaste it from existing and change the numbers
+11. Add new version enum value:
+    -   to `src/Magnum/Vk/Version.h`
+    -   to debug output in `src/Magnum/Vk/Version.cpp`
+    -   to the list in `src/Magnum/Vk/vk-info.cpp`
+12. Add new extensions to `src/Magnum/Vk/Extensions.h`
+    -   order them by extension ID that is mentioned in every extension spec
+        file
+    -   update the numbering to stay monotonic and unique, round up start index
+        of next section to nearest ten to make the updates bearable
+    -   in case there's a lot of new extensions, @cpp Implementation::ExtensionCount @ce
+        might needed to be increased
+13. Update existing extensions with version in which they become core (last
+    parameter of the `_extension()` macro)
+
+@todoc adapt once the workflow is defined
 
 In order to remove Vulkan functionality, be sure to touch all places mentioned
 above, only in inverse --- but usually @ref developers-deprecation "deprecate first",

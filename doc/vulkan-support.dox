@@ -24,26 +24,26 @@
 */
 
 namespace Magnum {
+/** @page vulkan-support Vulkan support state
+@brief List of (un)supported Vulkan features and extensions.
 
-/** @page features Feature guide
-@brief Fundamental principles and design goals.
+@tableofcontents
+@m_footernavigation
 
-Overview and tutorials of high-level feature groups in Magnum. It's not
-necessary to read through everything, pick only what you need.
+@section vulkan-support-extensions-vendor Vendor Vulkan extensions
 
--   @subpage platform --- @copybrief platform
--   @subpage types --- @copybrief types
--   @subpage matrix-vector --- @copybrief matrix-vector
--   @subpage transformations --- @copybrief transformations
--   @subpage animation --- @copybrief animation
--   @subpage plugins --- @copybrief plugins
--   @subpage file-formats --- @copybrief file-formats
--   @subpage opengl-wrapping --- @copybrief opengl-wrapping
--   @subpage vulkan-wrapping --- @copybrief vulkan-wrapping
--   @subpage shaders --- @copybrief shaders
--   @subpage scenegraph --- @copybrief scenegraph
--   @subpage debug-tools --- @copybrief debug-tools
--   @subpage ui --- @copybrief ui
+@m_class{m-fullwidth}
+
+Extension                                           | Status
+--------------------------------------------------- | ------
+@vk_extension{EXT,debug_report}                     | |
+@vk_extension{EXT,debug_marker}                     | |
+@vk_extension{KHR,get_physical_device_properties2}  | |
+@vk_extension{KHR,maintenance1}                     | |
+@vk_extension{KHR,maintenance2}                     | |
+@vk_extension{KHR,get_memory_requirements2}         | |
+@vk_extension{NV,glsl_shader}                       | |
+
 */
 
 }
