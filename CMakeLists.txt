@@ -76,6 +76,9 @@ option(WITH_SCENECONVERTER "Build magnum-sceneconverter utility" OFF)
 # Magnum AL Info
 option(WITH_AL_INFO "Build magnum-al-info utility" OFF)
 
+# Magnum Vk Info
+option(WITH_VK_INFO "Build magnum-vk-info utility" OFF)
+
 # Plugins
 option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF)
 option(WITH_ANYAUDIOIMPORTER "Build AnyAudioImporter plugin" OFF)
@@ -100,7 +103,7 @@ cmake_dependent_option(WITH_TEXTURETOOLS "Build TextureTools library" ON "NOT WI
 cmake_dependent_option(WITH_TRADE "Build Trade library" ON "NOT WITH_MESHTOOLS;NOT WITH_PRIMITIVES;NOT WITH_IMAGECONVERTER;NOT WITH_ANYIMAGEIMPORTER;NOT WITH_ANYIMAGECONVERTER;NOT WITH_ANYSCENEIMPORTER;NOT WITH_OBJIMPORTER;NOT WITH_TGAIMAGECONVERTER;NOT WITH_TGAIMPORTER" ON)
 cmake_dependent_option(WITH_GL "Build GL library" ON "NOT WITH_SHADERS;NOT WITH_GL_INFO;NOT WITH_ANDROIDAPPLICATION;NOT WITH_WINDOWLESSIOSAPPLICATION;NOT WITH_CGLCONTEXT;NOT WITH_GLXAPPLICATION;NOT WITH_GLXCONTEXT;NOT WITH_XEGLAPPLICATION;NOT WITH_WINDOWLESSWGLAPPLICATION;NOT WITH_WGLCONTEXT;NOT WITH_WINDOWLESSWINDOWSEGLAPPLICATION;NOT WITH_DISTANCEFIELDCONVERTER" ON)
 option(WITH_PRIMITIVES "Builf Primitives library" ON)
-option(WITH_VK "Build Vk library" OFF)
+cmake_dependent_option(WITH_VK "Build Vk library" OFF "NOT WITH_VK_INFO" ON)
 
 cmake_dependent_option(TARGET_HEADLESS "Build command-line utilities for use on a headless machines" OFF "WITH_GL" OFF)
 cmake_dependent_option(TARGET_GL "Build libraries with OpenGL interoperability" ON "WITH_GL" OFF)

@@ -96,6 +96,7 @@
 #  imageconverter               - magnum-imageconverter executable
 #  sceneconverterter            - magnum-sceneconverter executable
 #  gl-info                      - magnum-gl-info executable
+#  vk-info                      - magnum-vk-info executable
 #  al-info                      - magnum-al-info executable
 #
 # Example usage with specifying additional components is::
@@ -369,7 +370,7 @@ set(_MAGNUM_PLUGIN_COMPONENT_LIST
     TgaImageConverter TgaImporter WavAudioImporter)
 set(_MAGNUM_EXECUTABLE_COMPONENT_LIST
     distancefieldconverter fontconverter imageconverter sceneconverter gl-info
-    al-info)
+    vk-info al-info)
 
 # Inter-component dependencies
 set(_MAGNUM_Audio_DEPENDENCIES )
