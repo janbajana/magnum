@@ -24,6 +24,7 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
+corrade_add_test(VkDeviceTest DeviceTest.cpp LIBRARIES MagnumVk)
 corrade_add_test(VkEnumsTest EnumsTest.cpp LIBRARIES MagnumVkTestLib)
 corrade_add_test(VkIntegrationTest IntegrationTest.cpp LIBRARIES MagnumVk)
 corrade_add_test(VkResultTest ResultTest.cpp LIBRARIES MagnumVk)

@@ -1,5 +1,3 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
 /*
     This file is part of Magnum.
 
@@ -25,19 +23,30 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
- */
+#include <sstream>
+#include <Corrade/TestSuite/Tester.h>
+#include <Corrade/Utility/DebugStl.h>
 
-#include <Magnum/Types.h>
+#include "Magnum/Vk/Device.h"
 
-namespace Magnum { namespace Vk {
+namespace Magnum { namespace Vk { namespace Test { namespace {
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-enum class Device: Int;
-enum class Result: Int;
-#endif
+struct DeviceTest: TestSuite::Tester {
+    explicit DeviceTest();
 
-}}
+    void debugPhysicalType();
+};
 
-#endif
+DeviceTest::DeviceTest() {
+    addTests({&DeviceTest::debugPhysicalType});
+}
+
+void DeviceTest::debugPhysicalType() {
+    std::ostringstream out;
+    Debug{&out} << PhysicalDeviceType::DiscreteGpu << PhysicalDeviceType(-10007655);
+    CORRADE_COMPARE(out.str(), "Vk::PhysicalDeviceType::DiscreteGpu Vk::PhysicalDeviceType(-10007655)\n");
+}
+
+}}}}
+
+CORRADE_TEST_MAIN(Magnum::Vk::Test::DeviceTest)

@@ -1,5 +1,5 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
+#ifndef Magnum_Vk_Device_h
+#define Magnum_Vk_Device_h
 /*
     This file is part of Magnum.
 
@@ -26,17 +26,47 @@
 */
 
 /** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
+ * @brief Enum @ref Magnum::Vk::PhysicalDeviceType
+ * @m_since_latest
  */
 
-#include <Magnum/Types.h>
+#include "Magnum/Magnum.h"
+#include "Magnum/Vk/Vulkan.h"
+#include "Magnum/Vk/visibility.h"
 
 namespace Magnum { namespace Vk {
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-enum class Device: Int;
-enum class Result: Int;
-#endif
+/**
+@brief Physical device type
+@m_since_latest
+
+Wraps a @type_vk_keyword{VkPhysicalDeviceType}.
+@m_enum_values_as_keywords
+*/
+enum class PhysicalDeviceType: Int {
+    /** Anything that does not match any other available types */
+    Other = VK_PHYSICAL_DEVICE_TYPE_OTHER,
+
+    /** Typically a device embedded in or tightly coupled with the host */
+    IntegratedGpu = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
+
+    /**
+     * Typically a separate processor connected to the host via an interlink
+     */
+    DiscreteGpu = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+
+    /** Typically a virtual node in a virtualization environment */
+    VirtualGpu = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,
+
+    /** Typically running on the same processors as the host */
+    Cpu = VK_PHYSICAL_DEVICE_TYPE_CPU
+};
+
+/**
+@debugoperatorenum{PhysicalDeviceType}
+@m_since_latest
+*/
+MAGNUM_VK_EXPORT Debug& operator<<(Debug& debug, PhysicalDeviceType value);
 
 }}
 

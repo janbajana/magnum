@@ -1,5 +1,3 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
 /*
     This file is part of Magnum.
 
@@ -25,19 +23,29 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
- */
+#include "Device.h"
 
-#include <Magnum/Types.h>
+#include <Corrade/Utility/Debug.h>
 
 namespace Magnum { namespace Vk {
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-enum class Device: Int;
-enum class Result: Int;
-#endif
+Debug& operator<<(Debug& debug, const PhysicalDeviceType value) {
+    debug << "Vk::PhysicalDeviceType" << Debug::nospace;
+
+    switch(value) {
+        /* LCOV_EXCL_START */
+        #define _c(value) case Vk::PhysicalDeviceType::value: return debug << "::" << Debug::nospace << #value;
+        _c(Other)
+        _c(IntegratedGpu)
+        _c(DiscreteGpu)
+        _c(VirtualGpu)
+        _c(Cpu)
+        #undef _c
+        /* LCOV_EXCL_STOP */
+    }
+
+    /* Vulkan docs have the values in decimal, so not converting to hex */
+    return debug << "(" << Debug::nospace << Int(value) << Debug::nospace << ")";
+}
 
 }}
-
-#endif
