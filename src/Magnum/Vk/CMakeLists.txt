@@ -43,6 +43,7 @@ set(MagnumVk_HEADERS
     Enums.h
     Integration.h
     Result.h
+    Version.h
     Vk.h
     Vulkan.h
 
