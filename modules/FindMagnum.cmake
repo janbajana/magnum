@@ -38,6 +38,8 @@
 #   importer plugins
 #  MAGNUM_PLUGINS_AUDIOIMPORTER[|_DEBUG|_RELEASE]_DIR - Directory with dynamic
 #   audio importer plugins
+#  MAGNUM_PLUGINS_VIDEOIMPORTER[|_DEBUG|_RELEASE]_DIR - Directory with dynamic
+#   video importer plugins
 #
 # If Magnum is built for Emscripten, the following variables contain paths to
 # various support files:
@@ -58,6 +60,7 @@
 #  AnySceneConverter            - Any scene converter
 #  AnySceneImporter             - Any scene importer
 #  Audio                        - Audio library
+#  Video                        - Video library
 #  DebugTools                   - DebugTools library
 #  GL                           - GL library
 #  MeshTools                    - MeshTools library
@@ -224,7 +227,7 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
 
     # Unrolling the transitive dependencies here so this doesn't need to be
     # after resolving inter-component dependencies. Listing also all plugins.
-    if(_component MATCHES "^(Audio|DebugTools|MeshTools|Primitives|Text|TextureTools|Trade|.+Importer|.+ImageConverter|.+Font)$")
+    if(_component MATCHES "^(Audio|Video|DebugTools|MeshTools|Primitives|Text|TextureTools|Trade|.+Importer|.+ImageConverter|.+Font)$")
         set(_MAGNUM_${_COMPONENT}_CORRADE_DEPENDENCIES PluginManager)
     endif()
 
@@ -355,7 +358,7 @@ endif()
 # Component distinction (listing them explicitly to avoid mistakes with finding
 # components from other repositories)
 set(_MAGNUM_LIBRARY_COMPONENT_LIST
-    Audio DebugTools GL MeshTools Primitives SceneGraph Shaders Text
+    Audio Video DebugTools GL MeshTools Primitives SceneGraph Shaders Text
     TextureTools Trade Vk
     AndroidApplication EmscriptenApplication GlfwApplication GlxApplication
     Sdl2Application XEglApplication WindowlessCglApplication
@@ -373,6 +376,7 @@ set(_MAGNUM_EXECUTABLE_COMPONENT_LIST
 
 # Inter-component dependencies
 set(_MAGNUM_Audio_DEPENDENCIES )
+set(_MAGNUM_Video_DEPENDENCIES )
 
 # Trade is used by CompareImage. If Trade is not enabled, CompareImage is not
 # compiled at all.
@@ -470,6 +474,8 @@ set(_MAGNUM_ObjImporter_DEPENDENCIES MeshTools) # and below
 foreach(_component ${_MAGNUM_PLUGIN_COMPONENT_LIST})
     if(_component MATCHES ".+AudioImporter")
         list(APPEND _MAGNUM_${_component}_DEPENDENCIES Audio)
+    elseif(_component MATCHES ".+VideoImporter")
+        list(APPEND _MAGNUM_${_component}_DEPENDENCIES Video)
     elseif(_component MATCHES ".+(Importer|ImageConverter|SceneConverter)")
         list(APPEND _MAGNUM_${_component}_DEPENDENCIES Trade)
     elseif(_component MATCHES ".+(Font|FontConverter)")
@@ -548,6 +554,10 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
                 # convert *AudioImporter.h to *Importer.h
                 string(REPLACE "AudioImporter" "Importer" _MAGNUM_${_COMPONENT}_HEADER_NAME "${_component}")
                 set(_MAGNUM_${_COMPONENT}_INCLUDE_PATH_NAMES ${_MAGNUM_${_COMPONENT}_HEADER_NAME}.h)
+
+            # VideoImporter plugin specific name suffixes
+            elseif(_component MATCHES ".+VideoImporter$")
+                set(_MAGNUM_${_COMPONENT}_PATH_SUFFIX videoimporters)
 
             # Importer plugin specific name suffixes
             elseif(_component MATCHES ".+Importer$")
@@ -820,6 +830,11 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
                 INTERFACE_INCLUDE_DIRECTORIES ${OPENAL_INCLUDE_DIR})
             set_property(TARGET Magnum::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES ${OPENAL_LIBRARY} Corrade::PluginManager)
+
+        # Video library
+        elseif(_component STREQUAL Video)
+            set_property(TARGET Magnum::${_component} APPEND PROPERTY
+                INTERFACE_LINK_LIBRARIES Corrade::PluginManager)
 
         # No special setup for DebugTools library
 
@@ -1141,6 +1156,10 @@ set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_LIBRARY_INSTALL_DIR}/audioimporters)
+set(MAGNUM_PLUGINS_VIDEOIMPORTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_BINARY_INSTALL_DIR}/videoimporters)
+set(MAGNUM_PLUGINS_VIDEOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/videoimporters)
+set(MAGNUM_PLUGINS_VIDEOIMPORTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/videoimporters)
+set(MAGNUM_PLUGINS_VIDEOIMPORTER_RELEASE_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_LIBRARY_INSTALL_DIR}/videoimporters)
 set(MAGNUM_INCLUDE_INSTALL_DIR ${MAGNUM_INCLUDE_INSTALL_PREFIX}/include/Magnum)
 set(MAGNUM_EXTERNAL_INCLUDE_INSTALL_DIR ${MAGNUM_INCLUDE_INSTALL_PREFIX}/include/MagnumExternal)
 set(MAGNUM_PLUGINS_INCLUDE_INSTALL_DIR ${MAGNUM_INCLUDE_INSTALL_PREFIX}/include/MagnumPlugins)
@@ -1165,6 +1184,7 @@ if(MAGNUM_PLUGINS_DIR)
     set(MAGNUM_PLUGINS_IMPORTER_DIR ${MAGNUM_PLUGINS_DIR}/importers)
     set(MAGNUM_PLUGINS_SCENECONVERTER_DIR ${MAGNUM_PLUGINS_DIR}/sceneconverters)
     set(MAGNUM_PLUGINS_AUDIOIMPORTER_DIR ${MAGNUM_PLUGINS_DIR}/audioimporters)
+    set(MAGNUM_PLUGINS_VIDEOIMPORTER_DIR ${MAGNUM_PLUGINS_DIR}/videoimporters)
 endif()
 if(MAGNUM_PLUGINS_DEBUG_DIR)
     set(MAGNUM_PLUGINS_FONT_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/fonts)
@@ -1174,6 +1194,7 @@ if(MAGNUM_PLUGINS_DEBUG_DIR)
     set(MAGNUM_PLUGINS_FONT_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/fonts)
     set(MAGNUM_PLUGINS_SCENECONVERTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/sceneconverters)
     set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/audioimporters)
+    set(MAGNUM_PLUGINS_VIDEOIMPORTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/videoimporters)
 endif()
 if(MAGNUM_PLUGINS_RELEASE_DIR)
     set(MAGNUM_PLUGINS_FONTCONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/fontconverters)
@@ -1181,4 +1202,5 @@ if(MAGNUM_PLUGINS_RELEASE_DIR)
     set(MAGNUM_PLUGINS_IMPORTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/importers)
     set(MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/sceneconverters)
     set(MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/audioimporters)
+    set(MAGNUM_PLUGINS_VIDEOIMPORTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/videoimporters)
 endif()

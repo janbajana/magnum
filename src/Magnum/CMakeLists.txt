@@ -185,6 +185,10 @@ if(WITH_AUDIO)
     add_subdirectory(Audio)
 endif()
 
+if(WITH_VIDEO)
+    add_subdirectory(Video)
+endif()
+
 if(WITH_DEBUGTOOLS)
     add_subdirectory(DebugTools)
 endif()
