@@ -73,7 +73,7 @@ bool AbstractImporter::openData(Containers::ArrayView<const char> data) {
     CORRADE_ASSERT(features() & ImporterFeature::OpenData,
         "Video::AbstractImporter::openData(): feature not supported", {});
 
-    close();
+    stop();
     doOpenData(data);
     return isOpened();
 }
@@ -83,7 +83,7 @@ void AbstractImporter::doOpenData(Containers::ArrayView<const char>) {
 }
 
 bool AbstractImporter::openFile(const std::string& filename) {
-    close();
+    stop();
     doOpenFile(filename);
     return isOpened();
 }
@@ -100,10 +100,24 @@ void AbstractImporter::doOpenFile(const std::string& filename) {
     doOpenData(Utility::Directory::read(filename));
 }
 
-void AbstractImporter::close() {
+void AbstractImporter::play() {
     if(isOpened()) {
-        doClose();
+        doPlay();
+        CORRADE_INTERNAL_ASSERT(isOpened());
+    }
+}
+
+void AbstractImporter::stop() {
+    if(isOpened()) {
+        doStop();
         CORRADE_INTERNAL_ASSERT(!isOpened());
+    }
+}
+
+void AbstractImporter::pause() {
+    if(isOpened()) {
+        doPause();
+        CORRADE_INTERNAL_ASSERT(isOpened());
     }
 }
 

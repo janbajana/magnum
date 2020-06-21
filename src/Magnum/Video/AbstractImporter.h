@@ -187,10 +187,14 @@ class MAGNUM_VIDEO_EXPORT AbstractImporter: public PluginManager::AbstractManagi
          */
         bool openFile(const std::string& filename);
 
-        /** @brief Close file */
-        void close();
+        /** @brief Play file */
+        void play();
 
-        /** @{ @name Data access */
+        /** @brief Stop playback and release resources */
+        void stop();
+
+        /** @brief Pause playback */
+        void pause();
 
         /** @brief Sample format */
         Int getFormat() const;
@@ -203,12 +207,6 @@ class MAGNUM_VIDEO_EXPORT AbstractImporter: public PluginManager::AbstractManagi
 
         /** @brief Sample data */
         Containers::Array<char> data();
-
-        /* Since 1.8.17, the original short-hand group closing doesn't work
-           anymore. FFS. */
-        /**
-         * @}
-         */
 
     private:
         /** @brief Implementation for @ref features() */
@@ -229,8 +227,14 @@ class MAGNUM_VIDEO_EXPORT AbstractImporter: public PluginManager::AbstractManagi
          */
         virtual void doOpenFile(const std::string& filename);
 
-        /** @brief Implementation for @ref close() */
-        virtual void doClose() = 0;
+        /** @brief Implementation for @ref play() */
+        virtual void doPlay() = 0;
+
+        /** @brief Implementation for @ref pause() */
+        virtual void doPause() = 0;
+
+        /** @brief Implementation for @ref stop() */
+        virtual void doStop() = 0;
 
         /** @brief Implementation for @ref format() */
         virtual Int doGetFormat() const = 0;
