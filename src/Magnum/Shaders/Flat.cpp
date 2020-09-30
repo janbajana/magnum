@@ -25,8 +25,12 @@
 
 #include "Flat.h"
 
+#ifdef MAGNUM_TARGET_GLES
+#include <Corrade/Containers/Array.h>
+#endif
 #include <Corrade/Containers/EnumSet.hpp>
 #include <Corrade/Containers/Reference.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/Resource.h>
 
 #include "Magnum/GL/Context.h"
@@ -45,7 +49,7 @@ namespace {
     enum: Int { TextureUnit = 0 };
 }
 
-template<UnsignedInt dimensions> Flat<dimensions>::Flat(const Flags flags): _flags(flags) {
+template<UnsignedInt dimensions> Flat<dimensions>::Flat(const Flags flags, const UnsignedInt viewCount): _viewCount(viewCount), _flags(flags) {
     CORRADE_ASSERT(!(flags & Flag::TextureTransformation) || (flags & Flag::Textured),
         "Shaders::Flat: texture transformation enabled but the shader is not textured", );
 
@@ -74,6 +78,8 @@ template<UnsignedInt dimensions> Flat<dimensions>::Flat(const Flags flags): _fla
         #endif
         .addSource(flags & Flag::InstancedTransformation ? "#define INSTANCED_TRANSFORMATION\n" : "")
         .addSource(flags >= Flag::InstancedTextureOffset ? "#define INSTANCED_TEXTURE_OFFSET\n" : "")
+        .addSource(Utility::formatString("#define VIEW_COUNT {}\n", viewCount))
+        .addSource(flags & Flag::OVRMultiview ? rs.get("ovrmultiview.glsl") : "")
         .addSource(rs.get("generic.glsl"))
         .addSource(rs.get("Flat.vert"));
     frag.addSource(flags & Flag::Textured ? "#define TEXTURED\n" : "")
@@ -142,7 +148,7 @@ template<UnsignedInt dimensions> Flat<dimensions>::Flat(const Flags flags): _fla
 
     /* Set defaults in OpenGL ES (for desktop they are set in shader code itself) */
     #ifdef MAGNUM_TARGET_GLES
-    setTransformationProjectionMatrix({});
+    setTransformationProjectionMatrices(Containers::Array<MatrixTypeFor<dimensions, Float>>{Containers::DirectInit, viewCount, MatrixTypeFor<dimensions, Float>{}});
     if(flags & Flag::TextureTransformation) setTextureMatrix({});
     setColor(Magnum::Color4{1.0f});
     if(flags & Flag::AlphaMask) setAlphaMask(0.5f);
@@ -153,6 +159,20 @@ template<UnsignedInt dimensions> Flat<dimensions>::Flat(const Flags flags): _fla
 template<UnsignedInt dimensions> Flat<dimensions>& Flat<dimensions>::setTransformationProjectionMatrix(const MatrixTypeFor<dimensions, Float>& matrix) {
     setUniform(_transformationProjectionMatrixUniform, matrix);
     return *this;
+}
+
+template<UnsignedInt dimensions> Flat<dimensions>& Flat<dimensions>::setTransformationProjectionMatrices(const Containers::ArrayView<const MatrixTypeFor<dimensions, Float>>& matrices)
+{
+    CORRADE_ASSERT(_viewCount == matrices.size(),
+                "Shaders::Flat::setTransformationProjectionMatrices(): expected" << _viewCount << "items but got" << matrices.size(), *this);
+    if (_viewCount)
+        setUniform(_transformationProjectionMatrixUniform, matrices);
+    return *this;
+}
+
+template<UnsignedInt dimensions> Flat<dimensions>& Flat<dimensions>::setTransformationProjectionMatrices(std::initializer_list<MatrixTypeFor<dimensions, Float>> matrices)
+{
+    return setTransformationProjectionMatrices({matrices.begin(), matrices.size()});
 }
 
 template<UnsignedInt dimensions> Flat<dimensions>& Flat<dimensions>::setTextureMatrix(const Matrix3& matrix) {
@@ -211,6 +231,7 @@ Debug& operator<<(Debug& debug, const FlatFlag value) {
         #endif
         _c(InstancedTransformation)
         _c(InstancedTextureOffset)
+        _c(OVRMultiview)
         #undef _c
         /* LCOV_EXCL_STOP */
     }
@@ -229,7 +250,8 @@ Debug& operator<<(Debug& debug, const FlatFlags value) {
         FlatFlag::InstancedObjectId, /* Superset of ObjectId */
         FlatFlag::ObjectId,
         #endif
-        FlatFlag::InstancedTransformation});
+        FlatFlag::InstancedTransformation,
+        FlatFlag::OVRMultiview});
 }
 
 }

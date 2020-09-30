@@ -54,7 +54,7 @@ namespace {
     };
 }
 
-Phong::Phong(const Flags flags, const UnsignedInt lightCount): _flags{flags}, _lightCount{lightCount}, _lightColorsUniform{_lightPositionsUniform + Int(lightCount)} {
+Phong::Phong(const Flags flags, const UnsignedInt lightCount, const UnsignedInt viewCount): _flags{flags}, _viewCount{viewCount}, _lightCount{lightCount}, _lightColorsUniform{_lightPositionsUniform + Int(lightCount)} {
     CORRADE_ASSERT(!(flags & Flag::TextureTransformation) || (flags & (Flag::AmbientTexture|Flag::DiffuseTexture|Flag::SpecularTexture|Flag::NormalTexture)),
         "Shaders::Phong: texture transformation enabled but the shader is not textured", );
 
@@ -106,6 +106,8 @@ Phong::Phong(const Flags flags, const UnsignedInt lightCount): _flags{flags}, _l
         #endif
         .addSource(flags & Flag::InstancedTransformation ? "#define INSTANCED_TRANSFORMATION\n" : "")
         .addSource(flags >= Flag::InstancedTextureOffset ? "#define INSTANCED_TEXTURE_OFFSET\n" : "")
+        .addSource(Utility::formatString("#define VIEW_COUNT {}\n", viewCount))
+        .addSource(flags & Flag::OVRMultiview ? rs.get("ovrmultiview.glsl") : "")
         .addSource(rs.get("generic.glsl"))
         .addSource(rs.get("Phong.vert"));
     frag.addSource(flags & Flag::AmbientTexture ? "#define AMBIENT_TEXTURE\n" : "")
@@ -204,8 +206,8 @@ Phong::Phong(const Flags flags, const UnsignedInt lightCount): _flags{flags}, _l
     /* Default to fully opaque white so we can see the textures */
     if(flags & Flag::AmbientTexture) setAmbientColor(Magnum::Color4{1.0f});
     else setAmbientColor(Magnum::Color4{0.0f});
-    setTransformationMatrix({});
-    setProjectionMatrix({});
+    setTransformationMatrices(Containers::Array<Matrix4>{Containers::DirectInit, viewCount, Matrix4{}});
+    setProjectionMatrices(Containers::Array<Matrix4>{Containers::DirectInit, viewCount, Matrix4{}});
     if(lightCount) {
         setDiffuseColor(Magnum::Color4{1.0f});
         setSpecularColor(Magnum::Color4{1.0f});
@@ -296,6 +298,18 @@ Phong& Phong::setTransformationMatrix(const Matrix4& matrix) {
     return *this;
 }
 
+Phong& Phong::setTransformationMatrices(const Containers::ArrayView<const Matrix4>& matrices){
+    CORRADE_ASSERT(_viewCount == matrices.size(),
+            "Shaders::Flat::setTransformationProjectionMatrices(): expected" << _viewCount << "items but got" << matrices.size(), *this);
+    if (_viewCount)
+        setUniform(_transformationMatrixUniform, matrices);
+    return *this;
+}
+
+Phong& Phong::setTransformationMatrices(std::initializer_list<Matrix4> matrices){
+    return setTransformationMatrices({matrices.begin(), matrices.size()});
+}
+
 Phong& Phong::setNormalMatrix(const Matrix3x3& matrix) {
     if(_lightCount) setUniform(_normalMatrixUniform, matrix);
     return *this;
@@ -304,6 +318,18 @@ Phong& Phong::setNormalMatrix(const Matrix3x3& matrix) {
 Phong& Phong::setProjectionMatrix(const Matrix4& matrix) {
     setUniform(_projectionMatrixUniform, matrix);
     return *this;
+}
+
+Phong& Phong::setProjectionMatrices(const Containers::ArrayView<const Matrix4>& matrices){
+    CORRADE_ASSERT(_viewCount == matrices.size(),
+            "Shaders::Flat::setProjectionMatrices(): expected" << _viewCount << "items but got" << matrices.size(), *this);
+    if (_viewCount)
+        setUniform(_projectionMatrixUniform, matrices);
+    return *this;
+}
+
+Phong& Phong::setProjectionMatrices(std::initializer_list<Matrix4> matrices){
+        return setProjectionMatrices({matrices.begin(), matrices.size()});
 }
 
 Phong& Phong::setTextureMatrix(const Matrix3& matrix) {
@@ -372,6 +398,7 @@ Debug& operator<<(Debug& debug, const Phong::Flag value) {
         #endif
         _c(InstancedTransformation)
         _c(InstancedTextureOffset)
+        _c(OVRMultiview)
         #undef _c
         /* LCOV_EXCL_STOP */
     }
@@ -393,7 +420,8 @@ Debug& operator<<(Debug& debug, const Phong::Flags value) {
         Phong::Flag::InstancedObjectId, /* Superset of ObjectId */
         Phong::Flag::ObjectId,
         #endif
-        Phong::Flag::InstancedTransformation});
+        Phong::Flag::InstancedTransformation,
+        Phong::Flag::OVRMultiview});
 }
 
 }}

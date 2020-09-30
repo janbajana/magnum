@@ -25,8 +25,12 @@
 
 #include "DistanceFieldVector.h"
 
+#ifdef MAGNUM_TARGET_GLES
+#include <Corrade/Containers/Array.h>
+#endif
 #include <Corrade/Containers/EnumSet.hpp>
 #include <Corrade/Containers/Reference.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/Resource.h>
 
 #include "Magnum/GL/Context.h"
@@ -40,7 +44,7 @@
 
 namespace Magnum { namespace Shaders {
 
-template<UnsignedInt dimensions> DistanceFieldVector<dimensions>::DistanceFieldVector(const Flags flags): _flags{flags} {
+template<UnsignedInt dimensions> DistanceFieldVector<dimensions>::DistanceFieldVector(const Flags flags, const UnsignedInt viewCount): _viewCount(viewCount), _flags{flags} {
     #ifdef MAGNUM_BUILD_STATIC
     /* Import resources on static build, if not already */
     if(!Utility::Resource::hasGroup("MagnumShaders"))
@@ -59,9 +63,12 @@ template<UnsignedInt dimensions> DistanceFieldVector<dimensions>::DistanceFieldV
 
     vert.addSource(flags & Flag::TextureTransformation ? "#define TEXTURE_TRANSFORMATION\n" : "")
         .addSource(dimensions == 2 ? "#define TWO_DIMENSIONS\n" : "#define THREE_DIMENSIONS\n")
+        .addSource(Utility::formatString("#define VIEW_COUNT {}\n", viewCount))
+        .addSource(flags & Flag::OVRMultiview ? rs.get("ovrmultiview.glsl") : "")
         .addSource(rs.get("generic.glsl"))
         .addSource(rs.get("AbstractVector.vert"));
-    frag.addSource(rs.get("generic.glsl"))
+    frag.addSource(Utility::formatString("#define VIEW_COUNT {}\n", viewCount))
+        .addSource(rs.get("generic.glsl"))
         .addSource(rs.get("DistanceFieldVector.frag"));
 
     CORRADE_INTERNAL_ASSERT_OUTPUT(GL::Shader::compile({vert, frag}));
@@ -104,7 +111,7 @@ template<UnsignedInt dimensions> DistanceFieldVector<dimensions>::DistanceFieldV
 
     /* Set defaults in OpenGL ES (for desktop they are set in shader code itself) */
     #ifdef MAGNUM_TARGET_GLES
-    setTransformationProjectionMatrix({});
+    setTransformationProjectionMatrices(Containers::Array<MatrixTypeFor<dimensions, Float>>{Containers::DirectInit, viewCount, MatrixTypeFor<dimensions, Float>{}});
     if(flags & Flag::TextureTransformation) setTextureMatrix({});
     setColor(Color4{1.0f}); /* Outline color is zero by default */
     setOutlineRange(0.5f, 1.0f);
@@ -115,6 +122,18 @@ template<UnsignedInt dimensions> DistanceFieldVector<dimensions>::DistanceFieldV
 template<UnsignedInt dimensions> DistanceFieldVector<dimensions>& DistanceFieldVector<dimensions>::setTransformationProjectionMatrix(const MatrixTypeFor<dimensions, Float>& matrix) {
     GL::AbstractShaderProgram::setUniform(_transformationProjectionMatrixUniform, matrix);
     return *this;
+}
+
+template<UnsignedInt dimensions> DistanceFieldVector<dimensions>& DistanceFieldVector<dimensions>::setTransformationProjectionMatrices(const Containers::ArrayView<const MatrixTypeFor<dimensions, Float>>& matrices) {
+    CORRADE_ASSERT(_viewCount == matrices.size(),
+                "Shaders::DistanceFieldVector::setTransformationProjectionMatrices(): expected" << _viewCount << "items but got" << matrices.size(), *this);
+    if (_viewCount)
+        GL::AbstractShaderProgram::setUniform(_transformationProjectionMatrixUniform, matrices);
+    return *this;
+}
+
+template<UnsignedInt dimensions> DistanceFieldVector<dimensions>& DistanceFieldVector<dimensions>::setTransformationProjectionMatrices(std::initializer_list<MatrixTypeFor<dimensions, Float>> matrices) {
+    return setTransformationProjectionMatrices({matrices.begin(), matrices.size()});
 }
 
 template<UnsignedInt dimensions> DistanceFieldVector<dimensions>& DistanceFieldVector<dimensions>::setTextureMatrix(const Matrix3& matrix) {

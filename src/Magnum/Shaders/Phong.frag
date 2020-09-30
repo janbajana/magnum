@@ -45,7 +45,7 @@ uniform lowp sampler2D ambientTexture;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 4)
+layout(location = 2)
 #endif
 uniform lowp vec4 ambientColor
     #ifndef GL_ES
@@ -66,7 +66,7 @@ uniform lowp sampler2D diffuseTexture;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 5)
+layout(location = 3)
 #endif
 uniform lowp vec4 diffuseColor
     #ifndef GL_ES
@@ -89,7 +89,7 @@ uniform lowp sampler2D normalTexture;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 6)
+layout(location = 4)
 #endif
 uniform lowp vec4 specularColor
     #ifndef GL_ES
@@ -98,7 +98,7 @@ uniform lowp vec4 specularColor
     ;
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 7)
+layout(location = 5)
 #endif
 uniform mediump float shininess
     #ifndef GL_ES
@@ -109,7 +109,7 @@ uniform mediump float shininess
 
 #ifdef ALPHA_MASK
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 8)
+layout(location = 6)
 #endif
 uniform lowp float alphaMask
     #ifndef GL_ES
@@ -120,7 +120,7 @@ uniform lowp float alphaMask
 
 #ifdef OBJECT_ID
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 9)
+layout(location = 7)
 #endif
 /* mediump is just 2^10, which might not be enough, this is 2^16 */
 uniform highp uint objectId; /* defaults to zero */

@@ -41,7 +41,7 @@ uniform lowp sampler2D textureData;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 2)
+layout(location = 1)
 #endif
 uniform lowp vec4 color
     #ifndef GL_ES
@@ -51,7 +51,7 @@ uniform lowp vec4 color
 
 #ifdef ALPHA_MASK
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 3)
+layout(location = 2)
 #endif
 uniform lowp float alphaMask
     #ifndef GL_ES
@@ -62,7 +62,7 @@ uniform lowp float alphaMask
 
 #ifdef OBJECT_ID
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 4)
+layout(location = 3)
 #endif
 /* mediump is just 2^10, which might not be enough, this is 2^16 */
 uniform highp uint objectId; /* defaults to zero */

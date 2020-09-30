@@ -37,7 +37,7 @@
 namespace Magnum { namespace Shaders {
 
 namespace Implementation {
-    enum class FlatFlag: UnsignedByte {
+    enum class FlatFlag: UnsignedShort {
         Textured = 1 << 0,
         AlphaMask = 1 << 1,
         VertexColor = 1 << 2,
@@ -47,7 +47,8 @@ namespace Implementation {
         InstancedObjectId = (1 << 5)|ObjectId,
         #endif
         InstancedTransformation = 1 << 6,
-        InstancedTextureOffset = (1 << 7)|TextureTransformation
+        InstancedTextureOffset = (1 << 7)|TextureTransformation,
+        OVRMultiview = (1 << 8)
     };
     typedef Containers::EnumSet<FlatFlag> FlatFlags;
 }
@@ -363,7 +364,14 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT Flat: public GL::Ab
              *      in WebGL 1.0.
              * @m_since{2020,06}
              */
-            InstancedTextureOffset = (1 << 7)|TextureTransformation
+            InstancedTextureOffset = (1 << 7)|TextureTransformation,
+
+            /**
+             * Multiview rendering mode
+             * 
+             */
+            OVRMultiview = (1 << 8)
+
         };
 
         /**
@@ -383,7 +391,7 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT Flat: public GL::Ab
          * @brief Constructor
          * @param flags     Flags
          */
-        explicit Flat(Flags flags = {});
+        explicit Flat(Flags flags = {}, UnsignedInt viewCount = 1);
 
         /**
          * @brief Construct without creating the underlying OpenGL object
@@ -414,6 +422,9 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT Flat: public GL::Ab
         /** @brief Flags */
         Flags flags() const { return _flags; }
 
+        /** @brief View count */
+        UnsignedInt viewCount() const { return _viewCount; }
+
         /**
          * @brief Set transformation and projection matrix
          * @return Reference to self (for method chaining)
@@ -421,6 +432,19 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT Flat: public GL::Ab
          * Initial value is an identity matrix.
          */
         Flat<dimensions>& setTransformationProjectionMatrix(const MatrixTypeFor<dimensions, Float>& matrix);
+
+        /**
+         * @brief Set transformation and projection matrix array.
+         * @return Reference to self (for method chaining)
+         * 
+         * Array of matrices can be passed if multiview rendering mode is used.
+         * This mode allow allows draw calls to render to several layers of on array texture.
+         * This mode can be usefull for VR/AR/XR devices but have to be supported by your GPU.
+         */
+        Flat<dimensions>& setTransformationProjectionMatrices(const Containers::ArrayView<const MatrixTypeFor<dimensions, Float>>& matrices);
+
+        /** @overload */
+        Flat<dimensions>& setTransformationProjectionMatrices(std::initializer_list<MatrixTypeFor<dimensions, Float>> matrices);
 
         /**
          * @brief Set texture coordinate transformation matrix
@@ -492,6 +516,7 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT Flat: public GL::Ab
         using GL::AbstractShaderProgram::dispatchCompute;
         #endif
 
+        UnsignedInt _viewCount;
         Flags _flags;
         Int _transformationProjectionMatrixUniform{0},
             _textureMatrixUniform{1},

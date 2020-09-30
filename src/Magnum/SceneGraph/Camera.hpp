@@ -55,14 +55,19 @@ template<UnsignedInt dimensions, class T> MatrixTypeFor<dimensions, T> aspectRat
 
 }
 
-template<UnsignedInt dimensions, class T> Camera<dimensions, T>::Camera(AbstractObject<dimensions, T>& object): AbstractFeature<dimensions, T>(object), _aspectRatioPolicy(AspectRatioPolicy::NotPreserved) {
+template<UnsignedInt dimensions, class T> Camera<dimensions, T>::Camera(AbstractObject<dimensions, T>& object, UnsignedInt viewCount): AbstractFeature<dimensions, T>(object), _aspectRatioPolicy(AspectRatioPolicy::NotPreserved), _rawProjectionMatrices{ viewCount }, _projectionMatrices{ viewCount } {
     AbstractFeature<dimensions, T>::setCachedTransformations(CachedTransformation::InvertedAbsolute);
 }
 
 template<UnsignedInt dimensions, class T> Camera<dimensions, T>::~Camera() = default;
 
 template<UnsignedInt dimensions, class T> void Camera<dimensions, T>::fixAspectRatio() {
-    _projectionMatrix = Implementation::aspectRatioFix<dimensions, T>(_aspectRatioPolicy, {Math::abs(_rawProjectionMatrix[0].x()), Math::abs(_rawProjectionMatrix[1].y())}, _viewport)*_rawProjectionMatrix;
+    _projectionMatrices[0] = Implementation::aspectRatioFix<dimensions, T>(_aspectRatioPolicy, {Math::abs(_rawProjectionMatrices[0][0].x()), Math::abs(_rawProjectionMatrices[0][1].y())}, _viewport)*_rawProjectionMatrices[0];
+}
+
+template<UnsignedInt dimensions, class T> void Camera<dimensions, T>::fixAspectRatios() {
+    for(size_t i = 0; i < _rawProjectionMatrices.size(); i++)
+        _projectionMatrices[i] = Implementation::aspectRatioFix<dimensions, T>(_aspectRatioPolicy, {Math::abs(_rawProjectionMatrices[i][0].x()), Math::abs(_rawProjectionMatrices[i][1].y())}, _viewport)*_rawProjectionMatrices[i];
 }
 
 template<UnsignedInt dimensions, class T> Camera<dimensions, T>& Camera<dimensions, T>::setAspectRatioPolicy(AspectRatioPolicy policy) {
@@ -72,8 +77,18 @@ template<UnsignedInt dimensions, class T> Camera<dimensions, T>& Camera<dimensio
 }
 
 template<UnsignedInt dimensions, class T> Camera<dimensions, T>& Camera<dimensions, T>::setProjectionMatrix(const MatrixTypeFor<dimensions, T>& matrix) {
-    _rawProjectionMatrix = matrix;
+    _rawProjectionMatrices[0] = matrix;
     fixAspectRatio();
+    return *this;
+}
+
+template<UnsignedInt dimensions, class T> Camera<dimensions, T>& Camera<dimensions, T>::setProjectionMatrices(const Containers::ArrayView<const MatrixTypeFor<dimensions, T>>& matrices)
+{
+     CORRADE_ASSERT(_rawProjectionMatrices.size() == matrices.size(),
+                "Camera::setProjectionMatrices(): expected" << _rawProjectionMatrices.size() << "items but got" << matrices.size(), *this);
+    for(size_t i = 0; i < _rawProjectionMatrices.size(); i++)
+        _rawProjectionMatrices[i] = matrices[i];
+    fixAspectRatios();
     return *this;
 }
 

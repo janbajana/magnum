@@ -32,27 +32,9 @@
 #define out varying
 #endif
 
-#ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 0)
-#endif
-uniform highp mat4 transformationMatrix
-    #ifndef GL_ES
-    = mat4(1.0)
-    #endif
-    ;
-
-#ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 1)
-#endif
-uniform highp mat4 projectionMatrix
-    #ifndef GL_ES
-    = mat4(1.0)
-    #endif
-    ;
-
 #if LIGHT_COUNT
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 2)
+layout(location = 0)
 #endif
 uniform mediump mat3 normalMatrix
     #ifndef GL_ES
@@ -63,7 +45,7 @@ uniform mediump mat3 normalMatrix
 
 #ifdef TEXTURE_TRANSFORMATION
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 3)
+layout(location = 1)
 #endif
 uniform mediump mat3 textureMatrix
     #ifndef GL_ES
@@ -72,10 +54,50 @@ uniform mediump mat3 textureMatrix
     ;
 #endif
 
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = 8)
+#endif
+#ifdef OVR_MULTIVIEW
+uniform highp mat4 transformationMatrix[VIEW_COUNT]
+    #ifndef GL_ES
+    = {mat4(1.0)}
+    #endif
+    ;
+#else
+uniform highp mat4 transformationMatrix
+    #ifndef GL_ES
+    = mat4(1.0)
+    #endif
+    ;
+#endif
+#ifdef OVR_MULTIVIEW
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = 10)
+#endif
+uniform highp mat4 projectionMatrix[VIEW_COUNT]
+    #ifndef GL_ES
+    = {mat4(1.0)}
+    #endif
+    ;
+#else
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = 9)
+#endif
+uniform highp mat4 projectionMatrix
+    #ifndef GL_ES
+    = mat4(1.0)
+    #endif
+    ;
+#endif
+
 #if LIGHT_COUNT
 /* Needs to be last because it uses locations 10 to 10 + LIGHT_COUNT - 1 */
 #ifdef EXPLICIT_UNIFORM_LOCATION
+#ifdef OVR_MULTIVIEW
+layout(location = 12)
+#else
 layout(location = 10)
+#endif
 #endif
 uniform highp vec3 lightPositions[LIGHT_COUNT]; /* defaults to zero */
 #endif
@@ -156,7 +178,11 @@ out highp vec3 cameraDirection;
 
 void main() {
     /* Transformed vertex position */
+    #ifdef OVR_MULTIVIEW
+    highp vec4 transformedPosition4 = transformationMatrix[VIEW_ID]*
+    #else
     highp vec4 transformedPosition4 = transformationMatrix*
+    #endif
         #ifdef INSTANCED_TRANSFORMATION
         instancedTransformationMatrix*
         #endif
@@ -187,7 +213,11 @@ void main() {
     #endif
 
     /* Transform the position */
+    #ifdef OVR_MULTIVIEW
+    gl_Position = projectionMatrix[VIEW_ID]*transformedPosition4;
+    #else
     gl_Position = projectionMatrix*transformedPosition4;
+    #endif
 
     #ifdef TEXTURED
     /* Texture coordinates, if needed */

@@ -37,7 +37,8 @@ namespace Magnum { namespace Shaders {
 
 namespace Implementation {
     enum class DistanceFieldVectorFlag: UnsignedByte {
-        TextureTransformation = 1 << 0
+        TextureTransformation = 1 << 0,
+        OVRMultiview = (1 << 1)
     };
     typedef Containers::EnumSet<DistanceFieldVectorFlag> DistanceFieldVectorFlags;
 }
@@ -92,7 +93,12 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT DistanceFieldVector
              * @see @ref setTextureMatrix()
              * @m_since{2020,06}
              */
-            TextureTransformation = 1 << 0
+            TextureTransformation = 1 << 0,
+
+            /**
+             * Enable multiview extensions for single pass rendering mode.
+             */
+            OVRMultiview = (1 << 1)
         };
 
         /**
@@ -113,7 +119,7 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT DistanceFieldVector
          * @brief Constructor
          * @param flags     Flags
          */
-        explicit DistanceFieldVector(Flags flags = {});
+        explicit DistanceFieldVector(Flags flags = {}, UnsignedInt viewCount = 1);
 
         /**
          * @brief Construct without creating the underlying OpenGL object
@@ -159,6 +165,19 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT DistanceFieldVector
          * Initial value is an identity matrix.
          */
         DistanceFieldVector<dimensions>& setTransformationProjectionMatrix(const MatrixTypeFor<dimensions, Float>& matrix);
+
+        /**
+         * @brief Set transformation and projection matrix array.
+         * @return Reference to self (for method chaining)
+         * 
+         * Array of matrices can be passed if multiview rendering mode is used.
+         * This mode allow allows draw calls to render to several layers of on array texture.
+         * This mode can be usefull for VR/AR/XR devices but have to be supported by your GPU.
+         */
+        DistanceFieldVector<dimensions>& setTransformationProjectionMatrices(const Containers::ArrayView<const MatrixTypeFor<dimensions, Float>>& matrices);
+
+        /** @overload */
+        DistanceFieldVector<dimensions>& setTransformationProjectionMatrices(std::initializer_list<MatrixTypeFor<dimensions, Float>> matrices);
 
         /**
          * @brief Set texture coordinate transformation matrix
@@ -234,6 +253,7 @@ template<UnsignedInt dimensions> class MAGNUM_SHADERS_EXPORT DistanceFieldVector
         #endif
 
         Flags _flags;
+        UnsignedInt _viewCount;
         Int _transformationProjectionMatrixUniform{0},
             _textureMatrixUniform{1},
             _colorUniform{2},

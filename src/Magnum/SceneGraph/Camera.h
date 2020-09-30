@@ -29,6 +29,8 @@
  * @brief Class @ref Magnum::SceneGraph::Camera, enum @ref Magnum::SceneGraph::AspectRatioPolicy, alias @ref Magnum::SceneGraph::BasicCamera2D, @ref Magnum::SceneGraph::BasicCamera3D, typedef @ref Magnum::SceneGraph::Camera2D, @ref Magnum::SceneGraph::Camera3D
  */
 
+#include "Corrade/Containers/Array.h"
+
 #include "Magnum/Math/Matrix3.h"
 #include "Magnum/Math/Matrix4.h"
 #include "Magnum/SceneGraph/AbstractFeature.h"
@@ -94,7 +96,7 @@ template<UnsignedInt dimensions, class T> class Camera: public AbstractFeature<d
          * @f$ [-1; 1] @f$ in all directions).
          * @see @ref setProjectionMatrix()
          */
-        explicit Camera(AbstractObject<dimensions, T>& object);
+        explicit Camera(AbstractObject<dimensions, T>& object, UnsignedInt viewCount = 1);
 
         #ifndef DOXYGEN_GENERATING_OUTPUT
         /* This is here to avoid ambiguity with deleted copy constructor when
@@ -138,7 +140,9 @@ template<UnsignedInt dimensions, class T> class Camera: public AbstractFeature<d
          * as last, after @ref cameraMatrix() and object transformation matrix.
          * @see @ref projectionSize()
          */
-        MatrixTypeFor<dimensions, T> projectionMatrix() const { return _projectionMatrix; }
+        MatrixTypeFor<dimensions, T> projectionMatrix() const { return _projectionMatrices[0]; }
+
+        Containers::ArrayView<const MatrixTypeFor<dimensions, T> > projectionMatrices() const { return _projectionMatrices; }
 
         /**
          * @brief Set projection matrix
@@ -148,6 +152,8 @@ template<UnsignedInt dimensions, class T> class Camera: public AbstractFeature<d
          *      @ref Matrix4::perspectiveProjection()
          */
         Camera<dimensions, T>& setProjectionMatrix(const MatrixTypeFor<dimensions, T>& matrix);
+
+        Camera<dimensions, T>& setProjectionMatrices(const Containers::ArrayView<const MatrixTypeFor<dimensions, T>>& matrices);
 
         /**
          * @brief Size of (near) XY plane in current projection
@@ -171,7 +177,7 @@ template<UnsignedInt dimensions, class T> class Camera: public AbstractFeature<d
          * @see @ref projectionMatrix()
          */
         Math::Vector2<T> projectionSize() const {
-            return {T(2.0)/_projectionMatrix[0].x(), T(2.0)/_projectionMatrix[1].y()};
+            return {T(2.0)/_projectionMatrices[0][0].x(), T(2.0)/_projectionMatrices[0][1].y()};
         }
 
         /** @brief Viewport size */
@@ -220,12 +226,14 @@ template<UnsignedInt dimensions, class T> class Camera: public AbstractFeature<d
         }
 
         void fixAspectRatio();
+        void fixAspectRatios();
 
-        MatrixTypeFor<dimensions, T> _rawProjectionMatrix;
         AspectRatioPolicy _aspectRatioPolicy;
 
-        MatrixTypeFor<dimensions, T> _projectionMatrix;
         MatrixTypeFor<dimensions, T> _cameraMatrix;
+
+        Corrade::Containers::Array<MatrixTypeFor<dimensions, T> > _rawProjectionMatrices;
+        Corrade::Containers::Array<MatrixTypeFor<dimensions, T> > _projectionMatrices;
 
         Vector2i _viewport;
 };

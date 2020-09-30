@@ -416,7 +416,10 @@ class MAGNUM_SHADERS_EXPORT Phong: public GL::AbstractShaderProgram {
              *      in WebGL 1.0.
              * @m_since{2020,06}
              */
-            InstancedTextureOffset = (1 << 10)|TextureTransformation
+            InstancedTextureOffset = (1 << 10)|TextureTransformation,
+
+            /* TODO documentation. */
+            OVRMultiview = (1 << 11)            
         };
 
         /**
@@ -431,7 +434,7 @@ class MAGNUM_SHADERS_EXPORT Phong: public GL::AbstractShaderProgram {
          * @param flags         Flags
          * @param lightCount    Count of light sources
          */
-        explicit Phong(Flags flags = {}, UnsignedInt lightCount = 1);
+        explicit Phong(Flags flags = {}, UnsignedInt lightCount = 1, UnsignedInt viewCount = 1);
 
         /**
          * @brief Construct without creating the underlying OpenGL object
@@ -464,6 +467,9 @@ class MAGNUM_SHADERS_EXPORT Phong: public GL::AbstractShaderProgram {
 
         /** @brief Light count */
         UnsignedInt lightCount() const { return _lightCount; }
+
+        /** @brief View count */
+        UnsignedInt viewCount() const { return _viewCount; }
 
         /**
          * @brief Set ambient color
@@ -613,6 +619,19 @@ class MAGNUM_SHADERS_EXPORT Phong: public GL::AbstractShaderProgram {
         Phong& setTransformationMatrix(const Matrix4& matrix);
 
         /**
+         * @brief Set transformation  matrix array.
+         * @return Reference to self (for method chaining)
+         * 
+         * Array of matrices can be passed if multiview rendering mode is used.
+         * This mode allow allows draw calls to render to several layers of on array texture.
+         * This mode can be usefull for VR/AR/XR devices if the extensions are supported by your GPU.
+         */
+        Phong& setTransformationMatrices(const Containers::ArrayView<const Matrix4>& matrices);
+
+        /** @overload */
+        Phong& setTransformationMatrices(std::initializer_list<Matrix4> matrices);
+
+        /**
          * @brief Set normal matrix
          * @return Reference to self (for method chaining)
          *
@@ -635,6 +654,19 @@ class MAGNUM_SHADERS_EXPORT Phong: public GL::AbstractShaderProgram {
          * cube).
          */
         Phong& setProjectionMatrix(const Matrix4& matrix);
+
+        /**
+         * @brief Set projection  matrix array.
+         * @return Reference to self (for method chaining)
+         * 
+         * Array of matrices can be passed if multiview rendering mode is used.
+         * This mode allow allows draw calls to render to several layers of on array texture.
+         * This mode can be usefull for VR/AR/XR devices if the extensions are supported by your GPU.
+         */
+        Phong& setProjectionMatrices(const Containers::ArrayView<const Matrix4>& matrices);
+
+        /** @overload */
+        Phong& setProjectionMatrices(std::initializer_list<Matrix4> matrices);
 
         /**
          * @brief Set texture coordinate transformation matrix
@@ -729,6 +761,7 @@ class MAGNUM_SHADERS_EXPORT Phong: public GL::AbstractShaderProgram {
         #endif
 
         Flags _flags;
+        UnsignedInt _viewCount;
         UnsignedInt _lightCount;
         Int _transformationMatrixUniform{0},
             _projectionMatrixUniform{1},

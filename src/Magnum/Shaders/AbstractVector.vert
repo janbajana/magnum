@@ -32,24 +32,40 @@
 layout(location = 0)
 #endif
 #ifdef TWO_DIMENSIONS
+#ifdef OVR_MULTIVIEW
+uniform highp mat3 transformationProjectionMatrix[VIEW_COUNT]
+    #ifndef GL_ES
+    = { mat3(1.0) }
+    #endif
+    ;
+#else
 uniform highp mat3 transformationProjectionMatrix
     #ifndef GL_ES
     = mat3(1.0)
     #endif
     ;
+#endif
 #elif defined(THREE_DIMENSIONS)
+#ifdef OVR_MULTIVIEW
+uniform highp mat4 transformationProjectionMatrix[VIEW_COUNT]
+    #ifndef GL_ES
+    = { mat4(1.0) }
+    #endif
+    ;
+#else
 uniform highp mat4 transformationProjectionMatrix
     #ifndef GL_ES
     = mat4(1.0)
     #endif
     ;
+#endif
 #else
 #error
 #endif
 
 #ifdef TEXTURE_TRANSFORMATION
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 1)
+layout(location = 0 + VIEW_COUNT)
 #endif
 uniform mediump mat3 textureMatrix
     #ifndef GL_ES
@@ -78,9 +94,17 @@ out mediump vec2 interpolatedTextureCoordinates;
 
 void main() {
     #ifdef TWO_DIMENSIONS
+    #ifdef OVR_MULTIVIEW
+    gl_Position.xywz = vec4(transformationProjectionMatrix[VIEW_ID]*vec3(position, 1.0), 0.0);
+    #else
     gl_Position.xywz = vec4(transformationProjectionMatrix*vec3(position, 1.0), 0.0);
+    #endif
     #elif defined(THREE_DIMENSIONS)
+    #ifdef OVR_MULTIVIEW
+    gl_Position = transformationProjectionMatrix[VIEW_ID]*position;
+    #else
     gl_Position = transformationProjectionMatrix*position;
+    #endif
     #else
     #error
     #endif
