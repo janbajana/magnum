@@ -29,8 +29,10 @@
 #define texture texture2D
 #endif
 
+#define VIEW_LOCATION_OFFSET (VIEW_COUNT - 1)
+
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 1 + VIEW_COUNT)
+layout(location = 2 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp vec4 color
     #ifndef GL_ES
@@ -39,12 +41,12 @@ uniform lowp vec4 color
     ;
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 2 + VIEW_COUNT)
+layout(location = 3 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp vec4 outlineColor; /* defaults to zero */
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 3 + VIEW_COUNT)
+layout(location = 4 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp vec2 outlineRange
     #ifndef GL_ES
@@ -53,7 +55,7 @@ uniform lowp vec2 outlineRange
     ;
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 4 + VIEW_COUNT)
+layout(location = 5 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp float smoothness
     #ifndef GL_ES

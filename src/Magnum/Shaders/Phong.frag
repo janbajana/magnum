@@ -37,6 +37,8 @@
 #define const
 #endif
 
+#define VIEW_LOCATION_OFFSET ((VIEW_COUNT - 1) * 2)
+
 #ifdef AMBIENT_TEXTURE
 #ifdef EXPLICIT_TEXTURE_LAYER
 layout(binding = 0)
@@ -45,7 +47,7 @@ uniform lowp sampler2D ambientTexture;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 2)
+layout(location = 4 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp vec4 ambientColor
     #ifndef GL_ES
@@ -66,7 +68,7 @@ uniform lowp sampler2D diffuseTexture;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 3)
+layout(location = 5 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp vec4 diffuseColor
     #ifndef GL_ES
@@ -89,7 +91,7 @@ uniform lowp sampler2D normalTexture;
 #endif
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 4)
+layout(location = 6 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp vec4 specularColor
     #ifndef GL_ES
@@ -98,7 +100,7 @@ uniform lowp vec4 specularColor
     ;
 
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 5)
+layout(location = 7 + VIEW_LOCATION_OFFSET)
 #endif
 uniform mediump float shininess
     #ifndef GL_ES
@@ -109,7 +111,7 @@ uniform mediump float shininess
 
 #ifdef ALPHA_MASK
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 6)
+layout(location = 8 + VIEW_LOCATION_OFFSET)
 #endif
 uniform lowp float alphaMask
     #ifndef GL_ES
@@ -120,7 +122,7 @@ uniform lowp float alphaMask
 
 #ifdef OBJECT_ID
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 7)
+layout(location = 9 + VIEW_LOCATION_OFFSET)
 #endif
 /* mediump is just 2^10, which might not be enough, this is 2^16 */
 uniform highp uint objectId; /* defaults to zero */
@@ -131,7 +133,7 @@ uniform highp uint objectId; /* defaults to zero */
    10 + 2*LIGHT_COUNT - 1. Location 10 is lightPositions. Also it can't be
    specified as 10 + LIGHT_COUNT because that requires ARB_enhanced_layouts. */
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = LIGHT_COLORS_LOCATION) /* I fear this will blow up some drivers */
+layout(location = LIGHT_COLORS_LOCATION + VIEW_LOCATION_OFFSET) /* I fear this will blow up some drivers */
 #endif
 uniform lowp vec4 lightColors[LIGHT_COUNT]
     #ifndef GL_ES

@@ -32,30 +32,10 @@
 #define out varying
 #endif
 
-#if LIGHT_COUNT
+#define VIEW_LOCATION_OFFSET ((VIEW_COUNT - 1) * 2)
+
 #ifdef EXPLICIT_UNIFORM_LOCATION
 layout(location = 0)
-#endif
-uniform mediump mat3 normalMatrix
-    #ifndef GL_ES
-    = mat3(1.0)
-    #endif
-    ;
-#endif
-
-#ifdef TEXTURE_TRANSFORMATION
-#ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 1)
-#endif
-uniform mediump mat3 textureMatrix
-    #ifndef GL_ES
-    = mat3(1.0)
-    #endif
-    ;
-#endif
-
-#ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 8)
 #endif
 #ifdef OVR_MULTIVIEW
 uniform highp mat4 transformationMatrix[VIEW_COUNT]
@@ -70,19 +50,17 @@ uniform highp mat4 transformationMatrix
     #endif
     ;
 #endif
-#ifdef OVR_MULTIVIEW
+
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 10)
+layout(location = 1 + VIEW_LOCATION_OFFSET)
 #endif
+#ifdef OVR_MULTIVIEW
 uniform highp mat4 projectionMatrix[VIEW_COUNT]
     #ifndef GL_ES
     = {mat4(1.0)}
     #endif
     ;
 #else
-#ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 9)
-#endif
 uniform highp mat4 projectionMatrix
     #ifndef GL_ES
     = mat4(1.0)
@@ -91,13 +69,31 @@ uniform highp mat4 projectionMatrix
 #endif
 
 #if LIGHT_COUNT
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = 2 + VIEW_LOCATION_OFFSET)
+#endif
+uniform mediump mat3 normalMatrix
+    #ifndef GL_ES
+    = mat3(1.0)
+    #endif
+    ;
+#endif
+
+#ifdef TEXTURE_TRANSFORMATION
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = 3 + VIEW_LOCATION_OFFSET)
+#endif
+uniform mediump mat3 textureMatrix
+    #ifndef GL_ES
+    = mat3(1.0)
+    #endif
+    ;
+#endif
+
+#if LIGHT_COUNT
 /* Needs to be last because it uses locations 10 to 10 + LIGHT_COUNT - 1 */
 #ifdef EXPLICIT_UNIFORM_LOCATION
-#ifdef OVR_MULTIVIEW
-layout(location = 12)
-#else
-layout(location = 10)
-#endif
+layout(location = 10 + VIEW_LOCATION_OFFSET)
 #endif
 uniform highp vec3 lightPositions[LIGHT_COUNT]; /* defaults to zero */
 #endif

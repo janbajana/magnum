@@ -28,6 +28,8 @@
 #define out varying
 #endif
 
+#define VIEW_LOCATION_OFFSET (VIEW_COUNT - 1)
+
 #ifdef EXPLICIT_UNIFORM_LOCATION
 layout(location = 0)
 #endif
@@ -65,7 +67,7 @@ uniform highp mat4 transformationProjectionMatrix
 
 #ifdef TEXTURE_TRANSFORMATION
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 0 + VIEW_COUNT)
+layout(location = 1 + VIEW_LOCATION_OFFSET)
 #endif
 uniform mediump mat3 textureMatrix
     #ifndef GL_ES
