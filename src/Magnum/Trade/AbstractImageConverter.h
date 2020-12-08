@@ -39,7 +39,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief Features supported by an image converter
-@m_since_latest
+@m_since{2020,06}
 
 @see @ref ImageConverterFeatures, @ref AbstractImageConverter::features()
 */
@@ -85,7 +85,7 @@ enum class ImageConverterFeature: UnsignedByte {
 
 /**
 @brief Features supported by an image converter
-@m_since_latest
+@m_since{2020,06}
 
 @see @ref AbstractImageConverter::features()
 */
@@ -101,15 +101,15 @@ MAGNUM_TRADE_EXPORT Debug& operator<<(Debug& debug, ImageConverterFeatures value
 
 /**
 @brief Image converter flag
-@m_since_latest
+@m_since{2020,06}
 
 @see @ref ImageConverterFlags, @ref AbstractImageConverter::setFlags()
 */
 enum class ImageConverterFlag: UnsignedByte {
     /**
-     * Print verbose diagnostic during import. By default the importer only
-     * prints messages on error or when some operation might cause unexpected
-     * data modification or loss.
+     * Print verbose diagnostic during conversion. By default the converter
+     * only prints messages on error or when some operation might cause
+     * unexpected data modification or loss.
      */
     Verbose = 1 << 0
 
@@ -118,9 +118,9 @@ enum class ImageConverterFlag: UnsignedByte {
 
 /**
 @brief Image converter flags
-@m_since_latest
+@m_since{2020,06}
 
-@see @ref AbstractImporter::setFlags()
+@see @ref AbstractImageConverter::setFlags()
 */
 typedef Containers::EnumSet<ImageConverterFlag> ImageConverterFlags;
 
@@ -128,13 +128,13 @@ CORRADE_ENUMSET_OPERATORS(ImageConverterFlags)
 
 /**
 @debugoperatorenum{ImageConverterFlag}
-@m_since_latest
+@m_since{2020,06}
 */
 MAGNUM_TRADE_EXPORT Debug& operator<<(Debug& debug, ImageConverterFlag value);
 
 /**
 @debugoperatorenum{ImageConverterFlags}
-@m_since_latest
+@m_since{2020,06}
 */
 MAGNUM_TRADE_EXPORT Debug& operator<<(Debug& debug, ImageConverterFlags value);
 
@@ -145,16 +145,24 @@ Provides functionality for converting images between various internal formats
 or compressing them. See @ref plugins for more information and `*ImageConverter`
 classes in @ref Trade namespace for available image converter plugins.
 
+@m_class{m-note m-success}
+
+@par
+    There's also a @ref magnum-imageconverter "magnum-imageconverter" tool,
+    exposing functionality of all image converter plugins on a command line as
+    well as performing introspection of image files.
+
 @section Trade-AbstractImageConverter-data-dependency Data dependency
 
 The instances returned from various functions *by design* have no dependency on
-the importer instance and neither on the dynamic plugin module. In other words,
-you don't need to keep the importer instance (or the plugin manager instance)
-around in order to have the `*Data` instances valid. Moreover, all
+the converter instance and neither on the dynamic plugin module. In other
+words, you don't need to keep the converter instance (or the plugin manager
+instance) around in order to have the `*Data` instances valid. Moreover, all
 @ref Corrade::Containers::Array instances returned through @ref Image,
-@ref CompressedImage and others are only allowed to have default deleters ---
-this is to avoid potential dangling function pointer calls when destructing
-such instances after the plugin module has been unloaded.
+@ref CompressedImage, @ref MeshData, @ref MaterialData, @ref AnimationData and
+others are only allowed to have default deleters --- this is to avoid potential
+dangling function pointer calls when destructing such instances after the
+plugin module has been unloaded.
 
 @section Trade-AbstractImageConverter-subclassing Subclassing
 
@@ -193,12 +201,12 @@ class MAGNUM_TRADE_EXPORT AbstractImageConverter: public PluginManager::Abstract
     public:
         #ifdef MAGNUM_BUILD_DEPRECATED
         /** @brief @copybrief ImageConverterFeature
-         * @m_deprecated_since_latest Use @ref ImageConverterFeature instead.
+         * @m_deprecated_since{2020,06} Use @ref ImageConverterFeature instead.
          */
         typedef CORRADE_DEPRECATED("use ImageConverterFeature instead") ImageConverterFeature Feature;
 
         /** @brief @copybrief ImageConverterFeatures
-         * @m_deprecated_since_latest Use @ref ImageConverterFeatures instead.
+         * @m_deprecated_since{2020,06} Use @ref ImageConverterFeatures instead.
          */
         typedef CORRADE_DEPRECATED("use ImageConverterFeatures instead") ImageConverterFeatures Features;
         #endif
@@ -206,9 +214,7 @@ class MAGNUM_TRADE_EXPORT AbstractImageConverter: public PluginManager::Abstract
         /**
          * @brief Plugin interface
          *
-         * @code{.cpp}
-         * "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1"
-         * @endcode
+         * @snippet Magnum/Trade/AbstractImageConverter.cpp interface
          */
         static std::string pluginInterface();
 
@@ -243,13 +249,13 @@ class MAGNUM_TRADE_EXPORT AbstractImageConverter: public PluginManager::Abstract
 
         /**
          * @brief Converter flags
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         ImageConverterFlags flags() const { return _flags; }
 
         /**
          * @brief Set converter flags
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Some flags can be set only if the converter supports particular
          * features, see documentation of each @ref ImageConverterFlag for more
@@ -340,7 +346,7 @@ class MAGNUM_TRADE_EXPORT AbstractImageConverter: public PluginManager::Abstract
         bool exportToFile(const ImageData2D& image, const std::string& filename);
 
     private:
-        /** @brief Implementation of @ref features() */
+        /** @brief Implementation for @ref features() */
         virtual ImageConverterFeatures doFeatures() const = 0;
 
         /**
@@ -358,20 +364,20 @@ class MAGNUM_TRADE_EXPORT AbstractImageConverter: public PluginManager::Abstract
          */
         virtual void doSetFlags(ImageConverterFlags flags);
 
-        /** @brief Implementation of @ref exportToImage() */
+        /** @brief Implementation for @ref exportToImage() */
         virtual Containers::Optional<Image2D> doExportToImage(const ImageView2D& image);
 
-        /** @brief Implementation of @ref exportToCompressedImage() */
+        /** @brief Implementation for @ref exportToCompressedImage() */
         virtual Containers::Optional<CompressedImage2D> doExportToCompressedImage(const ImageView2D& image);
 
-        /** @brief Implementation of @ref exportToData(const ImageView2D&) */
+        /** @brief Implementation for @ref exportToData(const ImageView2D&) */
         virtual Containers::Array<char> doExportToData(const ImageView2D& image);
 
-        /** @brief Implementation of @ref exportToData(const CompressedImageView2D&) */
+        /** @brief Implementation for @ref exportToData(const CompressedImageView2D&) */
         virtual Containers::Array<char> doExportToData(const CompressedImageView2D& image);
 
         /**
-         * @brief Implementation of @ref exportToFile(const ImageView2D&, const std::string&)
+         * @brief Implementation for @ref exportToFile(const ImageView2D&, const std::string&)
          *
          * If @ref ImageConverterFeature::ConvertData is supported, default
          * implementation calls @ref doExportToData(const ImageView2D&) and
@@ -380,7 +386,7 @@ class MAGNUM_TRADE_EXPORT AbstractImageConverter: public PluginManager::Abstract
         virtual bool doExportToFile(const ImageView2D& image, const std::string& filename);
 
         /**
-         * @brief Implementation of @ref exportToFile(const CompressedImageView2D&, const std::string&)
+         * @brief Implementation for @ref exportToFile(const CompressedImageView2D&, const std::string&)
          *
          * If @ref ImageConverterFeature::ConvertCompressedData is supported,
          * default implementation calls @ref doExportToData(const CompressedImageView2D&)

@@ -248,7 +248,7 @@ void GlfwApplication::setWindowTitle(const std::string& title) {
 
 #if GLFW_VERSION_MAJOR*100 + GLFW_VERSION_MINOR >= 302
 void GlfwApplication::setWindowIcon(const ImageView2D& image) {
-    setWindowIcon({image});
+    setWindowIcon({&image, 1});
 }
 
 namespace {
@@ -261,7 +261,7 @@ template<class T> inline void packPixels(const Containers::StridedArrayView2D<co
 
 }
 
-void GlfwApplication::setWindowIcon(std::initializer_list<ImageView2D> images) {
+void GlfwApplication::setWindowIcon(const Containers::ArrayView<const ImageView2D> images) {
     /* Calculate the total size needed to allocate first so we don't allocate
        a ton of tiny arrays */
     std::size_t size = 0;
@@ -301,6 +301,10 @@ void GlfwApplication::setWindowIcon(std::initializer_list<ImageView2D> images) {
     }
 
     glfwSetWindowIcon(_window, glfwImages.size(), glfwImages);
+}
+
+void GlfwApplication::setWindowIcon(std::initializer_list<ImageView2D> images) {
+    setWindowIcon(Containers::arrayView(images));
 }
 #endif
 
@@ -447,6 +451,12 @@ bool GlfwApplication::tryCreate(const Configuration& configuration, const GLConf
         }
         #else
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        /* Force EGL on Windows and non-desktop GLES -- needed by ANGLE:
+           https://stackoverflow.com/a/58904181/4084782 . Might be useful on
+           other platforms as well (Mac?), not tested yet. */
+        #if defined(CORRADE_TARGET_WINDOWS) && !defined(MAGNUM_TARGET_DESKTOP_GLES)
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+        #endif
         #endif
 
     /* Request usable version otherwise */
@@ -471,6 +481,12 @@ bool GlfwApplication::tryCreate(const Configuration& configuration, const GLConf
         #endif
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        /* Force EGL on Windows and non-desktop GLES -- needed by ANGLE:
+           https://stackoverflow.com/a/58904181/4084782 . Might be useful on
+           other platforms as well (Mac?), not tested yet. */
+        #if defined(CORRADE_TARGET_WINDOWS) && !defined(MAGNUM_TARGET_DESKTOP_GLES)
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+        #endif
         #endif
     }
 
@@ -844,18 +860,8 @@ void GlfwApplication::exitEvent(ExitEvent& event) {
 }
 
 void GlfwApplication::viewportEvent(ViewportEvent& event) {
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    CORRADE_IGNORE_DEPRECATED_PUSH
-    viewportEvent(event.windowSize());
-    CORRADE_IGNORE_DEPRECATED_POP
-    #else
     static_cast<void>(event);
-    #endif
 }
-
-#ifdef MAGNUM_BUILD_DEPRECATED
-void GlfwApplication::viewportEvent(const Vector2i&) {}
-#endif
 
 void GlfwApplication::keyPressEvent(KeyEvent&) {}
 void GlfwApplication::keyReleaseEvent(KeyEvent&) {}

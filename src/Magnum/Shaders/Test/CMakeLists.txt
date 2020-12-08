@@ -174,6 +174,8 @@ if(BUILD_GL_TESTS)
             MeshVisualizerTestFiles/vertexid3D.tga
             MeshVisualizerTestFiles/wireframe-nogeo2D.tga
             MeshVisualizerTestFiles/wireframe-nogeo3D.tga
+            MeshVisualizerTestFiles/wireframe-objectid2D.tga
+            MeshVisualizerTestFiles/wireframe-objectid3D.tga
             MeshVisualizerTestFiles/wireframe-nogeo-objectid2D.tga
             MeshVisualizerTestFiles/wireframe-nogeo-objectid3D.tga
             MeshVisualizerTestFiles/wireframe-perspective.tga
@@ -219,6 +221,7 @@ if(BUILD_GL_TESTS)
             PhongTestFiles/defaults.tga
             PhongTestFiles/instanced.tga
             PhongTestFiles/instanced-normal.tga
+            PhongTestFiles/low-light-angle.tga
             PhongTestFiles/shininess-black-specular.tga
             PhongTestFiles/shininess0-overflow.tga
             PhongTestFiles/shininess0.tga
@@ -231,9 +234,20 @@ if(BUILD_GL_TESTS)
             PhongTestFiles/textured-diffuse.tga
             PhongTestFiles/textured-diffuse-transformed.tga
             PhongTestFiles/textured-normal.tga
+            PhongTestFiles/textured-normal-left.tga
+            PhongTestFiles/textured-normal0.0.tga
+            PhongTestFiles/textured-normal0.5.tga
             PhongTestFiles/textured-specular.tga
             PhongTestFiles/textured.tga
             PhongTestFiles/vertexColor.tga
+            PhongTestFiles/light-directional-intensity2.tga
+            PhongTestFiles/light-directional.tga
+            PhongTestFiles/light-none.tga
+            PhongTestFiles/light-point-attenuated-specular.tga
+            PhongTestFiles/light-point-intensity10-range1.0.tga
+            PhongTestFiles/light-point-range1.5.tga
+            PhongTestFiles/light-point-specular-color.tga
+            PhongTestFiles/light-point.tga
 
             # For zero lights test (equivalency to Flat3D)
             FlatTestFiles/textured3D-alpha-mask0.5.tga)

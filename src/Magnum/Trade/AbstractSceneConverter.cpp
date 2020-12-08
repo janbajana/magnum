@@ -41,7 +41,11 @@
 namespace Magnum { namespace Trade {
 
 std::string AbstractSceneConverter::pluginInterface() {
-    return "cz.mosra.magnum.Trade.AbstractSceneConverter/0.1";
+    return
+/* [interface] */
+"cz.mosra.magnum.Trade.AbstractSceneConverter/0.1"
+/* [interface] */
+    ;
 }
 
 #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
@@ -141,7 +145,6 @@ bool AbstractSceneConverter::doConvertToFile(const std::string& filename, const 
     /* No deleter checks as it doesn't matter here */
     if(!data) return false;
 
-    /* Open file */
     if(!Utility::Directory::write(filename, data)) {
         Error() << "Trade::AbstractSceneConverter::convertToFile(): cannot write to file" << filename;
         return false;

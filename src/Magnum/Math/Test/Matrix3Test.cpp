@@ -207,7 +207,7 @@ void Matrix3Test::constructNoInit() {
     Matrix3 a{{3.0f,  5.0f, 8.0f},
               {4.5f,  4.0f, 7.0f},
               {7.9f, -1.0f, 8.0f}};
-    new(&a) Matrix3{NoInit};
+    new(&a) Matrix3{Magnum::NoInit};
     {
         #if defined(__GNUC__) && __GNUC__*100 + __GNUC_MINOR__ >= 601 && __OPTIMIZE__
         CORRADE_EXPECT_FAIL("GCC 6.1+ misoptimizes and overwrites the value.");
@@ -217,10 +217,10 @@ void Matrix3Test::constructNoInit() {
                                    {7.9f, -1.0f, 8.0f}));
     }
 
-    CORRADE_VERIFY((std::is_nothrow_constructible<Matrix3, NoInitT>::value));
+    CORRADE_VERIFY((std::is_nothrow_constructible<Matrix3, Magnum::NoInitT>::value));
 
     /* Implicit construction is not allowed */
-    CORRADE_VERIFY(!(std::is_convertible<NoInitT, Matrix3>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Magnum::NoInitT, Matrix3>::value));
 }
 
 void Matrix3Test::constructOneValue() {
@@ -339,7 +339,7 @@ void Matrix3Test::rotation() {
                    {-0.258819f, 0.965926f, 0.0f},
                    {      0.0f,      0.0f, 1.0f});
 
-    CORRADE_COMPARE(Matrix3::rotation(Deg(15.0f)), matrix);
+    CORRADE_COMPARE(Matrix3::rotation(15.0_degf), matrix);
 }
 
 void Matrix3Test::reflection() {
@@ -618,12 +618,12 @@ void Matrix3Test::vectorParts() {
 }
 
 void Matrix3Test::invertedRigid() {
-    Matrix3 actual = Matrix3::rotation(Deg(-74.0f))*
+    Matrix3 actual = Matrix3::rotation(-74.0_degf)*
                      Matrix3::reflection(Vector2(0.5f, -2.0f).normalized())*
                      Matrix3::translation({2.0f, -3.0f});
     Matrix3 expected = Matrix3::translation({-2.0f, 3.0f})*
                        Matrix3::reflection(Vector2(0.5f, -2.0f).normalized())*
-                       Matrix3::rotation(Deg(74.0f));
+                       Matrix3::rotation(74.0_degf);
 
     CORRADE_COMPARE(actual.invertedRigid(), expected);
     CORRADE_COMPARE(actual.invertedRigid(), actual.inverted());
@@ -646,7 +646,7 @@ void Matrix3Test::invertedRigidNotRigid() {
 }
 
 void Matrix3Test::transform() {
-    Matrix3 a = Matrix3::translation({1.0f, -5.0f})*Matrix3::rotation(Deg(90.0f));
+    Matrix3 a = Matrix3::translation({1.0f, -5.0f})*Matrix3::rotation(90.0_degf);
     Vector2 v(1.0f, -2.0f);
 
     CORRADE_COMPARE(a.transformVector(v), Vector2(2.0f, 1.0f));

@@ -5,6 +5,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -107,6 +108,23 @@ template<class T> class DualComplex: public Dual<Complex<T>> {
         }
 
         /**
+         * @brief Create dual complext from rotation complex and translation vector
+         * @m_since_latest
+         *
+         * @f[
+         *      \hat c = r + \epsilon (v_x + iv_y)
+         * @f]
+         *
+         * @see @ref translation(), @ref rotation()
+         *      @ref Matrix3::from(const Matrix2x2<T>&, const Vector2<T>&),
+         *      @ref Matrix4::from(const Matrix3x3<T>&, const Vector3<T>&),
+         *      @ref DualQuaternion::from(const Quaternion<T>&, const Vector3<T>&)
+         */
+        static DualComplex<T> from(const Complex<T>& rotation, const Vector2<T>& translation) {
+            return {rotation, Complex<T>{translation}};
+        }
+
+        /**
          * @brief Default constructor
          *
          * Equivalent to @ref DualComplex(IdentityInitT).
@@ -126,7 +144,7 @@ template<class T> class DualComplex: public Dual<Complex<T>> {
         constexpr explicit DualComplex(ZeroInitT) noexcept: Dual<Complex<T>>{Complex<T>{ZeroInit}, Complex<T>{ZeroInit}} {}
 
         /** @brief Construct without initializing the contents */
-        explicit DualComplex(NoInitT) noexcept: Dual<Complex<T>>{NoInit} {}
+        explicit DualComplex(Magnum::NoInitT) noexcept: Dual<Complex<T>>{Magnum::NoInit} {}
 
         /**
          * @brief Construct dual complex number from real and dual part
@@ -341,7 +359,7 @@ template<class T> class DualComplex: public Dual<Complex<T>> {
 
         /**
          * @brief Rotate a vector with a dual complex number
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Calls @ref Complex::transformVector() on the @ref real() part,
          * see its documentation for more information.

@@ -4,6 +4,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2018, 2019, 2020 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2020 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -29,9 +30,9 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/Debug.h>
-#include <Corrade/Utility/String.h>
 
 #include "Magnum/Math/ConfigurationValue.h"
 #include "Magnum/Platform/ScreenedApplication.hpp"
@@ -40,6 +41,13 @@
 #ifdef MAGNUM_TARGET_GL
 #include "Magnum/GL/Version.h"
 #include "Magnum/Platform/GLContext.h"
+#endif
+
+/** @todo drop once we don't support < 1.38.27 anymore */
+#ifndef EMSCRIPTEN_EVENT_TARGET_DOCUMENT
+#define EMSCRIPTEN_EVENT_TARGET_DOCUMENT reinterpret_cast<const char*>(1)
+#define EMSCRIPTEN_EVENT_TARGET_WINDOW reinterpret_cast<const char*>(2)
+#define EMSCRIPTEN_EVENT_TARGET_SCREEN reinterpret_cast<const char*>(3)
 #endif
 
 namespace Magnum { namespace Platform {
@@ -116,13 +124,13 @@ namespace {
        or '-'; `code` is a keyboard layout independent key string, e.g. 'KeyA'
        or 'Minus'. Note that the Y key on some layouts may result in 'KeyZ'. */
     Key toKey(const EM_UTF8* const key, const EM_UTF8* const code) {
-        const std::size_t keyLength = std::strlen(key);
-        if(keyLength == 0) return Key::Unknown;
+        const Containers::StringView keyView = key;
+        if(keyView.isEmpty()) return Key::Unknown;
 
         /* We use key for a-z as it gives us a keyboard layout respecting
            representation of the key, i.e. we get `z` for z depending on layout
            where code may give us `y` independent of the layout. */
-        if(keyLength == 1) {
+        if(keyView.size() == 1) {
             if(key[0] >= 'a' && key[0] <= 'z') return Key(key[0]);
             else if(key[0] >= 'A' && key[0] <= 'Z') return Key(key[0] - 'A' + 'a');
         }
@@ -130,20 +138,22 @@ namespace {
         /* We use code for 0-9 as it allows us to differentiate towards Numpad
            digits. For digits independent of numpad or not, key is e.g. '0' for
            Zero */
-        const std::size_t codeLength = std::strlen(code);
-        if(Utility::String::viewBeginsWith({code, codeLength}, "Digit")) {
+        const Containers::StringView codeView = code;
+        using namespace Containers::Literals;
+        constexpr Containers::StringView numpad = "Numpad"_s;
+        if(codeView.hasPrefix("Digit"_s)) {
             return Key(code[5]);
 
         /* Numpad keys */
-        } else if(Utility::String::viewBeginsWith({code, codeLength}, "Numpad")) {
-            std::string numKey(code + 6);
-            if(numKey == "Add") return Key::NumAdd;
-            if(numKey == "Decimal") return Key::NumDecimal;
-            if(numKey == "Divide") return Key::NumDivide;
-            if(numKey == "Enter") return Key::NumEnter;
-            if(numKey == "Equal") return Key::NumEqual;
-            if(numKey == "Multiply") return Key::NumMultiply;
-            if(numKey == "Subtract") return Key::NumSubtract;
+        } else if(codeView.hasPrefix(numpad)) {
+            const Containers::StringView numKey = codeView.suffix(numpad.size());
+            if(numKey == "Add"_s) return Key::NumAdd;
+            if(numKey == "Decimal"_s) return Key::NumDecimal;
+            if(numKey == "Divide"_s) return Key::NumDivide;
+            if(numKey == "Enter"_s) return Key::NumEnter;
+            if(numKey == "Equal"_s) return Key::NumEqual;
+            if(numKey == "Multiply"_s) return Key::NumMultiply;
+            if(numKey == "Subtract"_s) return Key::NumSubtract;
 
             /* Numpad0 - Numpad9 */
             const Int num = numKey[0] - '0';
@@ -170,6 +180,43 @@ namespace {
         }
 
         return Key::Unknown;
+    }
+
+    std::string canvasId() {
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+        /* Note: can't use let or const, as that breaks closure compiler:
+            ERROR - [JSC_LANGUAGE_FEATURE] This language feature is only
+            supported for ECMASCRIPT6 mode or better: const declaration. */
+        char* id = reinterpret_cast<char*>(EM_ASM_INT({
+            var id = Module['canvas'].id;
+            var bytes = lengthBytesUTF8(id) + 1;
+            var memory = _malloc(bytes);
+            stringToUTF8(id, memory, bytes);
+            return memory;
+        }));
+        #pragma GCC diagnostic pop
+        std::string str = id;
+        std::free(id);
+        return str;
+    }
+
+    bool checkForDeprecatedEmscriptenTargetBehavior() {
+        /* Emscripten 1.38.27 changed to generic CSS selectors from element IDs
+        depending on -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1 being
+        set.
+        https://github.com/emscripten-core/emscripten/pull/7977
+        There is no simple way to check for compiler options so check
+        whether the new CSS selectors are being used. If so, it should find
+        canvas#[id] which is any canvas with the ID of Module.canvas.
+        The old target behavior will look for an element with id="canvas#[id]"
+        which could theoretically exist but that's highly unlikely. */
+        bool deprecated = true;
+        Vector2d tempSize;
+        if(emscripten_get_element_css_size(("canvas#" + canvasId()).data(), &tempSize.x(), &tempSize.y()) >= 0) {
+            deprecated = false;
+        }
+        return deprecated;
     }
 }
 
@@ -263,10 +310,19 @@ bool EmscriptenApplication::tryCreate(const Configuration& configuration) {
     }
     #endif
 
+    std::ostream* verbose = _verboseLog ? Debug::output() : nullptr;
+
+    _deprecatedTargetBehavior = checkForDeprecatedEmscriptenTargetBehavior();
+    if(_deprecatedTargetBehavior) {
+        Debug{verbose} << "Platform::EmscriptenApplication::tryCreate(): using old Emscripten target behavior";
+    }
+
+    _canvasTarget = (_deprecatedTargetBehavior ? "" : "#") + canvasId();
+
     _dpiScaling = dpiScaling(configuration);
     if(!configuration.size().isZero()) {
         const Vector2i scaledCanvasSize = configuration.size()*_dpiScaling;
-        emscripten_set_canvas_element_size("#canvas", scaledCanvasSize.x(), scaledCanvasSize.y());
+        emscripten_set_canvas_element_size(_canvasTarget.data(), scaledCanvasSize.x(), scaledCanvasSize.y());
     }
 
     setupCallbacks(!!(configuration.windowFlags() & Configuration::WindowFlag::Resizable));
@@ -324,6 +380,17 @@ bool EmscriptenApplication::tryCreate(const Configuration& configuration, const 
     _devicePixelRatio = Vector2{Float(emscripten_get_device_pixel_ratio())};
     Debug{verbose} << "Platform::EmscriptenApplication: device pixel ratio" << _devicePixelRatio.x();
 
+    /* Find out which element target strings Emscripten expects. This depends on
+       the DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR compiler option.  */
+    _deprecatedTargetBehavior = checkForDeprecatedEmscriptenTargetBehavior();
+    if(_deprecatedTargetBehavior) {
+        Debug{verbose} << "Platform::EmscriptenApplication::tryCreate(): using old Emscripten target behavior";
+    }
+
+    /* Get the canvas ID from Module.canvas, either set by EmscriptenApplication.js
+       or overridden/manually set by the user. */
+    _canvasTarget = (_deprecatedTargetBehavior ? "" : "#") + canvasId();
+
     /* Get CSS canvas size and cache it. This is used later to detect canvas
        resizes in emscripten_set_resize_callback() and fire viewport events,
        because browsers are only required to fire resize events on the window
@@ -343,10 +410,10 @@ bool EmscriptenApplication::tryCreate(const Configuration& configuration, const 
     }
     _dpiScaling = dpiScaling(configuration);
     const Vector2i scaledCanvasSize = canvasSize*_dpiScaling*_devicePixelRatio;
-    emscripten_set_canvas_element_size("#canvas", scaledCanvasSize.x(), scaledCanvasSize.y());
+    emscripten_set_canvas_element_size(_canvasTarget.data(), scaledCanvasSize.x(), scaledCanvasSize.y());
 
     /* Create WebGL context */
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context("#canvas", &attrs);
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = emscripten_webgl_create_context(_canvasTarget.data(), &attrs);
     if(!context) {
         /* When context creation fails, `context` is a negative integer
            matching EMSCRIPTEN_RESULT_* defines */
@@ -368,23 +435,14 @@ bool EmscriptenApplication::tryCreate(const Configuration& configuration, const 
 
 Vector2i EmscriptenApplication::windowSize() const {
     Vector2d size;
-    /* Emscripten 1.38.27 changed to generic CSS selectors from element IDs
-       depending on -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1 being
-       set (which we can't detect at compile time). Fortunately, using #canvas
-       works the same way both in the previous versions and the current one.
-       Unfortunately, this is also the only value that works the same way for
-       both. Further details at
-       https://github.com/emscripten-core/emscripten/pull/7977 */
-    /** @todo don't hardcode "#canvas" everywhere, make it configurable from outside */
-    emscripten_get_element_css_size("#canvas", &size.x(), &size.y());
+    emscripten_get_element_css_size(_canvasTarget.data(), &size.x(), &size.y());
     return Vector2i{Math::round(size)};
 }
 
 #ifdef MAGNUM_TARGET_GL
 Vector2i EmscriptenApplication::framebufferSize() const {
     Vector2i size;
-    /* See above why hardcoded */
-    emscripten_get_canvas_element_size("#canvas", &size.x(), &size.y());
+    emscripten_get_canvas_element_size(_canvasTarget.data(), &size.x(), &size.y());
     return size;
 }
 #endif
@@ -399,7 +457,13 @@ void EmscriptenApplication::setWindowTitle(const std::string& title) {
 void EmscriptenApplication::setContainerCssClass(const std::string& cssClass) {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdollar-in-identifier-extension"
-    EM_ASM_({document.getElementById('container').className = AsciiToString($0);}, cssClass.data());
+    EM_ASM_({
+        /* Handle also the classic #container for backwards compatibility. We
+           also need to preserve the mn-container otherwise next time we'd have
+           no way to look for it anymore. */
+        (Module['canvas'].closest('.mn-container') ||
+         document.getElementById('container')).className = (['mn-container', AsciiToString($0)]).join(' ');
+    }, cssClass.data());
     #pragma GCC diagnostic pop
 
     /* Trigger a potential viewport event -- we don't poll the canvas size like
@@ -414,12 +478,11 @@ void EmscriptenApplication::swapBuffers() {
 /* Called from window resize event but also explicitly from
    setContainerCssClass() */
 void EmscriptenApplication::handleCanvasResize(const EmscriptenUiEvent* event) {
-    /* See windowSize() for why we hardcode "#canvas" here */
     const Vector2i canvasSize{windowSize()};
     if(canvasSize != _lastKnownCanvasSize) {
         _lastKnownCanvasSize = canvasSize;
         const Vector2i size = canvasSize*_dpiScaling*_devicePixelRatio;
-        emscripten_set_canvas_element_size("#canvas", size.x(), size.y());
+        emscripten_set_canvas_element_size(_canvasTarget.data(), size.x(), size.y());
         ViewportEvent e{event, canvasSize,
             #ifdef MAGNUM_TARGET_GL
             framebufferSize(),
@@ -445,11 +508,7 @@ void EmscriptenApplication::setupCallbacks(bool resizable) {
        changes. Better than polling for this change in every frame like
        Sdl2Application does, but still not ideal. */
     if(resizable) {
-        #ifdef EMSCRIPTEN_EVENT_TARGET_WINDOW
-        const char* target = EMSCRIPTEN_EVENT_TARGET_WINDOW;
-        #else
-        const char* target = "#window";
-        #endif
+        const char* target = _deprecatedTargetBehavior ? "#window" : EMSCRIPTEN_EVENT_TARGET_WINDOW;
         auto cb = [](int, const EmscriptenUiEvent* event, void* userData) -> Int {
             static_cast<EmscriptenApplication*>(userData)->handleCanvasResize(event);
             return false; /** @todo what does ignoring a resize event mean? */
@@ -457,23 +516,21 @@ void EmscriptenApplication::setupCallbacks(bool resizable) {
         emscripten_set_resize_callback(target, this, false, cb);
     }
 
-    /* See windowSize() for why we hardcode "#canvas" here */
-
-    emscripten_set_mousedown_callback("#canvas", this, false,
+    emscripten_set_mousedown_callback(_canvasTarget.data(), this, false,
         ([](int, const EmscriptenMouseEvent* event, void* userData) -> Int {
             MouseEvent e{*event};
             static_cast<EmscriptenApplication*>(userData)->mousePressEvent(e);
             return e.isAccepted();
         }));
 
-    emscripten_set_mouseup_callback("#canvas", this, false,
+    emscripten_set_mouseup_callback(_canvasTarget.data(), this, false,
         ([](int, const EmscriptenMouseEvent* event, void* userData) -> Int {
             MouseEvent e{*event};
             static_cast<EmscriptenApplication*>(userData)->mouseReleaseEvent(e);
             return e.isAccepted();
         }));
 
-    emscripten_set_mousemove_callback("#canvas", this, false,
+    emscripten_set_mousemove_callback(_canvasTarget.data(), this, false,
         ([](int, const EmscriptenMouseEvent* event, void* userData) -> Int {
             auto& app = *static_cast<EmscriptenApplication*>(userData);
             /* With DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR, canvasX/Y is
@@ -490,7 +547,7 @@ void EmscriptenApplication::setupCallbacks(bool resizable) {
             return e.isAccepted();
         }));
 
-    emscripten_set_wheel_callback("#canvas", this, false,
+    emscripten_set_wheel_callback(_canvasTarget.data(), this, false,
         ([](int, const EmscriptenWheelEvent* event, void* userData) -> Int {
             MouseScrollEvent e{*event};
             static_cast<EmscriptenApplication*>(userData)->mouseScrollEvent(e);
@@ -507,30 +564,37 @@ void EmscriptenApplication::setupCallbacks(bool resizable) {
        1.38.27 depending on -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1
        but we don't want to force this flag on the users so the behavior
        handles both. */
-    #ifdef EMSCRIPTEN_EVENT_TARGET_DOCUMENT
-    char* const keyboardListeningElement = reinterpret_cast<char*>(EM_ASM_INT({
+    /* Note: can't use let or const, as that breaks closure compiler:
+        ERROR - [JSC_LANGUAGE_FEATURE] This language feature is only
+        supported for ECMASCRIPT6 mode or better: const declaration. */
+    const char* keyboardListeningElement = reinterpret_cast<const char*>(EM_ASM_INT({
         var element = Module['keyboardListeningElement'] || document;
 
-        if(element === document) return 1;
-        if(element === window) return 2;
-        if('id' in element)
-            return allocate(intArrayFromString(element.id), 'i8', ALLOC_NORMAL);
+        if(element === document) return 1; /* EMSCRIPTEN_EVENT_TARGET_DOCUMENT */
+        if(element === window) return 2; /* EMSCRIPTEN_EVENT_TARGET_WINDOW */
+        if('id' in element) {
+            var bytes = lengthBytesUTF8(element.id) + 1;
+            var memory = _malloc(bytes);
+            stringToUTF8(element.id, memory, bytes);
+            return memory;
+        }
 
         return 0;
     }));
-    #else
-    char* const keyboardListeningElement = reinterpret_cast<char*>(EM_ASM_INT({
-        var element = Module['keyboardListeningElement'] || document;
-
-        if(element === document) element = {id: '#document'};
-        if(element === window) element = {id: '#window'};
-        if('id' in element)
-            return allocate(intArrayFromString(element.id), 'i8', ALLOC_NORMAL);
-
-        return 0;
-    }));
-    #endif
     #pragma GCC diagnostic pop
+
+    std::string keyboardListeningElementString;
+    if(keyboardListeningElement == EMSCRIPTEN_EVENT_TARGET_DOCUMENT) {
+        keyboardListeningElement = _deprecatedTargetBehavior ? "#document" : keyboardListeningElement;
+    } else if(keyboardListeningElement == EMSCRIPTEN_EVENT_TARGET_WINDOW) {
+        keyboardListeningElement = _deprecatedTargetBehavior ? "#window" : keyboardListeningElement;
+    } else if(keyboardListeningElement) {
+        if(!_deprecatedTargetBehavior)
+            keyboardListeningElementString = "#";
+        keyboardListeningElementString += keyboardListeningElement;
+        std::free(const_cast<char*>(keyboardListeningElement));
+        keyboardListeningElement = keyboardListeningElementString.data();
+    }
 
     /* Happens only if keyboardListeningElement was set, but did not have an
        `id` attribute. Instead it should be either null or undefined, a DOM
@@ -562,14 +626,6 @@ void EmscriptenApplication::setupCallbacks(bool resizable) {
             static_cast<EmscriptenApplication*>(userData)->keyReleaseEvent(e);
             return e.isAccepted();
         }));
-
-    #ifdef EMSCRIPTEN_EVENT_TARGET_DOCUMENT
-    if(keyboardListeningElement != EMSCRIPTEN_EVENT_TARGET_DOCUMENT &&
-       keyboardListeningElement != EMSCRIPTEN_EVENT_TARGET_WINDOW)
-    #endif
-    {
-        std::free(keyboardListeningElement);
-    }
 }
 
 void EmscriptenApplication::setupAnimationFrame(bool forceAnimationFrame) {
@@ -661,7 +717,7 @@ void EmscriptenApplication::setCursor(Cursor cursor) {
     CORRADE_INTERNAL_ASSERT(UnsignedInt(cursor) < Containers::arraySize(CursorMap));
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdollar-in-identifier-extension"
-    EM_ASM_({document.getElementById('canvas').style.cursor = AsciiToString($0);}, CursorMap[UnsignedInt(cursor)]);
+    EM_ASM_({Module['canvas'].style.cursor = AsciiToString($0);}, CursorMap[UnsignedInt(cursor)]);
     #pragma GCC diagnostic pop
 }
 
@@ -692,7 +748,8 @@ void EmscriptenApplication::textInputEvent(TextInputEvent&) {}
 
 #ifdef MAGNUM_TARGET_GL
 EmscriptenApplication::GLConfiguration::GLConfiguration():
-    _colorBufferSize{8, 8, 8, 8}, _depthBufferSize{24}, _stencilBufferSize{0} {}
+    _colorBufferSize{8, 8, 8, 8}, _depthBufferSize{24}, _stencilBufferSize{0},
+    _sampleCount{0} {}
 #endif
 
 int EmscriptenApplication::exec() {

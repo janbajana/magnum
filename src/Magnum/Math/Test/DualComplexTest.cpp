@@ -3,6 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -88,6 +89,8 @@ struct DualComplexTest: Corrade::TestSuite::Tester {
     void rotation();
     void translation();
     void combinedTransformParts();
+
+    void fromParts();
     void matrix();
     void matrixNotOrthogonal();
     void transformVector();
@@ -146,6 +149,8 @@ DualComplexTest::DualComplexTest() {
               &DualComplexTest::rotation,
               &DualComplexTest::translation,
               &DualComplexTest::combinedTransformParts,
+
+              &DualComplexTest::fromParts,
               &DualComplexTest::matrix,
               &DualComplexTest::matrixNotOrthogonal,
               &DualComplexTest::transformVector,
@@ -195,7 +200,7 @@ void DualComplexTest::constructZero() {
 
 void DualComplexTest::constructNoInit() {
     DualComplex a{{-1.0f, 2.5f}, {3.0f, -7.5f}};
-    new(&a) DualComplex{NoInit};
+    new(&a) DualComplex{Magnum::NoInit};
     {
         #if defined(__GNUC__) && __GNUC__*100 + __GNUC_MINOR__ >= 601 && __OPTIMIZE__
         CORRADE_EXPECT_FAIL("GCC 6.1+ misoptimizes and overwrites the value.");
@@ -203,10 +208,10 @@ void DualComplexTest::constructNoInit() {
         CORRADE_COMPARE(a, DualComplex({-1.0f, 2.5f}, {3.0f, -7.5f}));
     }
 
-    CORRADE_VERIFY((std::is_nothrow_constructible<DualComplex, NoInitT>::value));
+    CORRADE_VERIFY((std::is_nothrow_constructible<DualComplex, Magnum::NoInitT>::value));
 
     /* Implicit construction is not allowed */
-    CORRADE_VERIFY(!(std::is_convertible<NoInitT, DualComplex>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Magnum::NoInitT, DualComplex>::value));
 }
 
 void DualComplexTest::constructFromVector() {
@@ -283,7 +288,7 @@ void DualComplexTest::data() {
 
 void DualComplexTest::isNormalized() {
     CORRADE_VERIFY(!DualComplex({2.0f, 1.0f}, {}).isNormalized());
-    CORRADE_VERIFY((DualComplex::rotation(Deg(23.0f))*DualComplex::translation({6.0f, 3.0f})).isNormalized());
+    CORRADE_VERIFY((DualComplex::rotation(23.0_degf)*DualComplex::translation({6.0f, 3.0f})).isNormalized());
 }
 
 template<class T> void DualComplexTest::isNormalizedEpsilonRotation() {
@@ -392,10 +397,10 @@ void DualComplexTest::invertedNormalizedNotNormalized() {
 }
 
 void DualComplexTest::rotation() {
-    DualComplex a = DualComplex::rotation(Deg(120.0f));
+    DualComplex a = DualComplex::rotation(120.0_degf);
     CORRADE_COMPARE(a.length(), 1.0f);
     CORRADE_COMPARE(a, DualComplex({-0.5f, 0.8660254f}, {0.0f, 0.0f}));
-    CORRADE_COMPARE_AS(a.rotation().angle(), Deg(120.0f), Rad);
+    CORRADE_COMPARE_AS(a.rotation().angle(), 120.0_degf, Rad);
 
     /* Constexpr access to rotation */
     constexpr DualComplex b({-1.0f, 2.0f}, {});
@@ -414,20 +419,30 @@ void DualComplexTest::translation() {
     CORRADE_COMPARE(a.translation(), vec);
 }
 
+void DualComplexTest::fromParts() {
+    Complex r = Complex::rotation(120.0_degf);
+
+    Vector2 vec{1.0f, -3.5f};
+    DualComplex t = DualComplex::translation(vec);
+
+    DualComplex rt = t*DualComplex{r};
+    CORRADE_COMPARE(DualComplex::from(r, vec), rt);
+}
+
 void DualComplexTest::combinedTransformParts() {
     Vector2 translation = Vector2(-1.5f, 2.75f);
-    DualComplex a = DualComplex::translation(translation)*DualComplex::rotation(Deg(23.0f));
-    DualComplex b = DualComplex::rotation(Deg(23.0f))*DualComplex::translation(translation);
+    DualComplex a = DualComplex::translation(translation)*DualComplex::rotation(23.0_degf);
+    DualComplex b = DualComplex::rotation(23.0_degf)*DualComplex::translation(translation);
 
-    CORRADE_COMPARE_AS(a.rotation().angle(), Deg(23.0f), Rad);
-    CORRADE_COMPARE_AS(b.rotation().angle(), Deg(23.0f), Rad);
+    CORRADE_COMPARE_AS(a.rotation().angle(), 23.0_degf, Rad);
+    CORRADE_COMPARE_AS(b.rotation().angle(), 23.0_degf, Rad);
     CORRADE_COMPARE(a.translation(), translation);
-    CORRADE_COMPARE(b.translation(), Complex::rotation(Deg(23.0f)).transformVector(translation));
+    CORRADE_COMPARE(b.translation(), Complex::rotation(23.0_degf).transformVector(translation));
 }
 
 void DualComplexTest::matrix() {
-    DualComplex a = DualComplex::rotation(Deg(23.0f))*DualComplex::translation({2.0f, 3.0f});
-    Matrix3 m = Matrix3::rotation(Deg(23.0f))*Matrix3::translation({2.0f, 3.0f});
+    DualComplex a = DualComplex::rotation(23.0_degf)*DualComplex::translation({2.0f, 3.0f});
+    Matrix3 m = Matrix3::rotation(23.0_degf)*Matrix3::translation({2.0f, 3.0f});
 
     CORRADE_COMPARE(a.toMatrix(), m);
     CORRADE_COMPARE(DualComplex::fromMatrix(m), a);
@@ -461,10 +476,10 @@ void DualComplexTest::transformVector() {
 }
 
 void DualComplexTest::transformPoint() {
-    DualComplex a = DualComplex::translation({2.0f, 3.0f})*DualComplex::rotation(Deg(23.0f));
-    DualComplex b = DualComplex::rotation(Deg(23.0f))*DualComplex::translation({2.0f, 3.0f});
-    Matrix3 m = Matrix3::translation({2.0f, 3.0f})*Matrix3::rotation(Deg(23.0f));
-    Matrix3 n = Matrix3::rotation(Deg(23.0f))*Matrix3::translation({2.0f, 3.0f});
+    DualComplex a = DualComplex::translation({2.0f, 3.0f})*DualComplex::rotation(23.0_degf);
+    DualComplex b = DualComplex::rotation(23.0_degf)*DualComplex::translation({2.0f, 3.0f});
+    Matrix3 m = Matrix3::translation({2.0f, 3.0f})*Matrix3::rotation(23.0_degf);
+    Matrix3 n = Matrix3::rotation(23.0_degf)*Matrix3::translation({2.0f, 3.0f});
     Vector2 v(-3.6f, 0.7f);
 
     Vector2 transformedA = a.transformPoint(v);

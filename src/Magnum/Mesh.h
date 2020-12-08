@@ -57,6 +57,8 @@ presence.
 For D3D, corresponds to @m_class{m-doc-external} [D3D_PRIMITIVE_TOPOLOGY](https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology);
 for Metal, corresponds to @m_class{m-doc-external} [MTLPrimitiveType](https://developer.apple.com/documentation/metal/mtlprimitivetype?language=objc).
 See documentation of each value for more information about the mapping.
+
+@see @ref MeshTools::primitiveCount(MeshPrimitive, UnsignedInt)
 */
 enum class MeshPrimitive: UnsignedInt {
     /* Zero reserved for an invalid type (but not being a named value) */
@@ -65,7 +67,7 @@ enum class MeshPrimitive: UnsignedInt {
      * Single points.
      *
      * Corresponds to @ref GL::MeshPrimitive::Points;
-     * @def_vk_keyword{PRIMITIVE_TOPOLOGY_POINT_LIST,PrimitiveTopology};
+     * @val_vk_keyword{PRIMITIVE_TOPOLOGY_POINT_LIST,PrimitiveTopology};
      * @m_class{m-doc-external} [D3D_PRIMITIVE_TOPOLOGY_POINTLIST](https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
      * or @m_class{m-doc-external} [MTLPrimitiveTypePoint](https://developer.apple.com/documentation/metal/mtlprimitivetype/mtlprimitivetypepoint?language=objc).
      * @m_keywords{D3D_PRIMITIVE_TOPOLOGY_POINTLIST MTLPrimitiveTypePoint}
@@ -77,7 +79,7 @@ enum class MeshPrimitive: UnsignedInt {
      * connected together.
      *
      * Corresponds to @ref GL::MeshPrimitive::Lines /
-     * @def_vk_keyword{PRIMITIVE_TOPOLOGY_LINE_LIST,PrimitiveTopology};
+     * @val_vk_keyword{PRIMITIVE_TOPOLOGY_LINE_LIST,PrimitiveTopology};
      * @m_class{m-doc-external} [D3D_PRIMITIVE_TOPOLOGY_LINELIST](https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
      * or @m_class{m-doc-external} [MTLPrimitiveTypeLine](https://developer.apple.com/documentation/metal/mtlprimitivetype/mtlprimitivetypeline?language=objc).
      * @m_keywords{D3D_PRIMITIVE_TOPOLOGY_LINELIST MTLPrimitiveTypeLine}
@@ -98,7 +100,7 @@ enum class MeshPrimitive: UnsignedInt {
      * vertex defines another segment.
      *
      * Corresponds to @ref GL::MeshPrimitive::LineStrip /
-     * @def_vk_keyword{PRIMITIVE_TOPOLOGY_LINE_STRIP,PrimitiveTopology};
+     * @val_vk_keyword{PRIMITIVE_TOPOLOGY_LINE_STRIP,PrimitiveTopology};
      * @m_class{m-doc-external} [D3D_PRIMITIVE_TOPOLOGY_LINESTRIP](https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
      * or @m_class{m-doc-external} [MTLPrimitiveTypeLineStrip](https://developer.apple.com/documentation/metal/mtlprimitivetype/mtlprimitivetypelinestrip?language=objc).
      * @m_keywords{D3D_PRIMITIVE_TOPOLOGY_LINESTRIP MTLPrimitiveTypeLineStrip}
@@ -110,7 +112,7 @@ enum class MeshPrimitive: UnsignedInt {
      * Each three vertices define one triangle.
      *
      * Corresponds to @ref GL::MeshPrimitive::Triangles /
-     * @def_vk_keyword{PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,PrimitiveTopology};
+     * @val_vk_keyword{PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,PrimitiveTopology};
      * @m_class{m-doc-external} [D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST](https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
      * or @m_class{m-doc-external} [MTLPrimitiveTypeTriangle](https://developer.apple.com/documentation/metal/mtlprimitivetype/mtlprimitivetypetriangle?language=objc).
      * @m_keywords{D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST MTLPrimitiveTypeTriangle}
@@ -122,7 +124,7 @@ enum class MeshPrimitive: UnsignedInt {
      * vertex defines another triangle.
      *
      * Corresponds to @ref GL::MeshPrimitive::TriangleStrip /
-     * @def_vk_keyword{PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,PrimitiveTopology} or
+     * @val_vk_keyword{PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,PrimitiveTopology} or
      * @m_class{m-doc-external} [D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP](https://docs.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
      * or @m_class{m-doc-external} [MTLPrimitiveTypeTriangleStrip](https://developer.apple.com/documentation/metal/mtlprimitivetype/mtlprimitivetypetrianglestrip?language=objc).
      * @m_keywords{D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP MTLPrimitiveTypeTriangleStrip}
@@ -135,7 +137,7 @@ enum class MeshPrimitive: UnsignedInt {
      * previous and center vertex.
      *
      * Corresponds to @ref GL::MeshPrimitive::TriangleFan /
-     * @def_vk_keyword{PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,PrimitiveTopology}. Not
+     * @val_vk_keyword{PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,PrimitiveTopology}. Not
      * supported on D3D or Metal.
      * @see @ref MeshTools::generateTriangleFanIndices()
      */
@@ -143,7 +145,7 @@ enum class MeshPrimitive: UnsignedInt {
 
     /**
      * Per-instance data.
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * Has no direct mapping to GPU APIs, but can be used to annotate
      * @ref Trade::MeshData containing per-instance data (such as colors,
@@ -154,7 +156,7 @@ enum class MeshPrimitive: UnsignedInt {
 
     /**
      * Per-face data.
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * Can be used to annotate @ref Trade::MeshData containing data that are
      * per-face, as opposed to per-vertex. Has no direct mapping to common GPU
@@ -168,7 +170,7 @@ enum class MeshPrimitive: UnsignedInt {
 
     /**
      * Per-edge data.
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * Can be used to annotate @ref Trade::MeshData containing data that are
      * per-edge, as opposed to per-vertex. This is different from
@@ -188,7 +190,7 @@ MAGNUM_EXPORT Debug& operator<<(Debug& debug, MeshPrimitive value);
 
 /**
 @brief Whether a @ref MeshPrimitive value wraps an implementation-specific identifier
-@m_since_latest
+@m_since{2020,06}
 
 Returns @cpp true @ce if value of @p primitive has its highest bit set,
 @cpp false @ce otherwise. Use @ref meshPrimitiveWrap() and @ref meshPrimitiveUnwrap()
@@ -201,7 +203,7 @@ constexpr bool isMeshPrimitiveImplementationSpecific(MeshPrimitive primitive) {
 
 /**
 @brief Wrap an implementation-specific mesh primitive identifier in @ref MeshPrimitive
-@m_since_latest
+@m_since{2020,06}
 
 Sets the highest bit on @p primitive to mark it as implementation-specific.
 Expects that @p primitive fits into the remaining bits. Use
@@ -217,7 +219,7 @@ template<class T> constexpr MeshPrimitive meshPrimitiveWrap(T implementationSpec
 
 /**
 @brief Unwrap an implementation-specific mesh primitive identifier from @ref MeshPrimitive
-@m_since_latest
+@m_since{2020,06}
 
 Unsets the highest bit from @p primitive to extract the implementation-specific
 value. Expects that @p primitive has it set. Use @ref meshPrimitiveWrap() for
@@ -250,7 +252,7 @@ enum class MeshIndexType: UnsignedByte {
      * Unsigned byte
      *
      * Corresponds to @ref GL::MeshIndexType::UnsignedByte /
-     * @def_vk_keyword{INDEX_TYPE_UINT8_EXT,IndexType}. Note that using this
+     * @val_vk_keyword{INDEX_TYPE_UINT8_EXT,IndexType}. Note that using this
      * type is discouraged, at least AMD GPUs are known to suggest (via debug
      * output) using 16-byte types instead for better efficiency.
      */
@@ -260,7 +262,7 @@ enum class MeshIndexType: UnsignedByte {
      * Unsigned short
      *
      * Corresponds to @ref GL::MeshIndexType::UnsignedShort /
-     * @def_vk_keyword{INDEX_TYPE_UINT16,IndexType}.
+     * @val_vk_keyword{INDEX_TYPE_UINT16,IndexType}.
      */
     UnsignedShort,
 
@@ -268,7 +270,7 @@ enum class MeshIndexType: UnsignedByte {
      * Unsigned int
      *
      * Corresponds to @ref GL::MeshIndexType::UnsignedInt /
-     * @def_vk_keyword{INDEX_TYPE_UINT32,IndexType}.
+     * @val_vk_keyword{INDEX_TYPE_UINT32,IndexType}.
      */
     UnsignedInt
 };

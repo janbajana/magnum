@@ -54,7 +54,8 @@ Example usage:
 @snippet MagnumMeshTools.cpp generateFlatNormals
 
 @see @ref generateFlatNormalsInto(), @ref generateSmoothNormals(),
-    @ref MeshTools::CompileFlag::GenerateFlatNormals
+    @ref MeshTools::CompileFlag::GenerateFlatNormals,
+    @ref Math::cross(const Vector3<T>&, const Vector3<T>&)
 */
 MAGNUM_MESHTOOLS_EXPORT Containers::Array<Vector3> generateFlatNormals(const Containers::StridedArrayView1D<const Vector3>& positions);
 
@@ -134,7 +135,7 @@ MAGNUM_MESHTOOLS_EXPORT Containers::Array<Vector3> generateSmoothNormals(const C
 
 /**
 @brief Generate smooth normals using a type-erased index array
-@m_since_latest
+@m_since{2020,06}
 
 Expects that the second dimension of @p indices is contiguous and represents
 the actual 1/2/4-byte index type. Based on its size then calls one of the
@@ -180,7 +181,7 @@ MAGNUM_MESHTOOLS_EXPORT void generateSmoothNormalsInto(const Containers::Strided
 
 /**
 @brief Generate smooth normals into an existing array using a type-erased index array
-@m_since_latest
+@m_since{2020,06}
 
 Expects that @p normals has the same size as @p positions and that the second
 dimension of @p indices is contiguous and represents the actual 1/2/4-byte

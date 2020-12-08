@@ -34,6 +34,7 @@
 #include <Corrade/Utility/String.h>
 
 #include "Magnum/PixelFormat.h"
+#include "Magnum/Implementation/converterUtilities.h"
 #include "Magnum/Trade/AbstractImporter.h"
 #include "Magnum/Trade/AbstractImageConverter.h"
 #include "Magnum/Trade/ImageData.h"
@@ -64,20 +65,21 @@ information.
 @section magnum-imageconverter-usage Usage
 
 @code{.sh}
-magnum-imageconverter [-h|--help] [--importer IMPORTER] [--converter CONVERTER]
-    [--plugin-dir DIR] [-i|--importer-options key=val,key2=val2,…]
+magnum-imageconverter [-h|--help] [-I|--importer IMPORTER]
+    [-C|--converter CONVERTER] [--plugin-dir DIR]
+    [-i|--importer-options key=val,key2=val2,…]
     [-c|--converter-options key=val,key2=val2,…] [--image IMAGE]
-    [--level LEVEL][--info] [-v|--verbose] [--] input output
+    [--level LEVEL] [--in-place] [--info] [-v|--verbose] [--] input output
 @endcode
 
 Arguments:
 
 -   `input` --- input image
--   `output` --- output image
+-   `output` --- output image, ignored if `--in-place` or `--info` is present
 -   `-h`, `--help` --- display this help message and exit
--   `--importer IMPORTER` --- image importer plugin (default:
+-   `-I`, `--importer IMPORTER` --- image importer plugin (default:
     @ref Trade::AnyImageImporter "AnyImageImporter")
--   `--converter CONVERTER` --- image converter plugin (default:
+-   `-C`, `--converter CONVERTER` --- image converter plugin (default:
     @ref Trade::AnyImageConverter "AnyImageConverter")
 -   `--plugin-dir DIR` --- override base plugin dir
 -   `-i`, `--importer-options key=val,key2=val2,…` --- configuration options to
@@ -86,11 +88,12 @@ Arguments:
     to pass to the converter
 -   `--image IMAGE` --- image to import (default: `0`)
 -   `--level LEVEL` --- image level to import (default: `0`)
+-   `--in-place` --- overwrite the input image with the output
 -   `--info` --- print info about the input file and exit
 -   `-v`, `--verbose` --- verbose output from importer and converter plugins
 
 Specifying `--importer raw:&lt;format&gt;` will treat the input as a raw
-tightly-packed square of pixels in given @ref PixelFormat. Specifying
+tightly-packed square of pixels in given @ref PixelFormat. Specifying `-C` /
 `--converter raw` will save raw imported data instead of using a converter
 plugin.
 
@@ -142,20 +145,23 @@ using namespace Magnum;
 int main(int argc, char** argv) {
     Utility::Arguments args;
     args.addArgument("input").setHelp("input", "input image")
-        .addArgument("output").setHelp("output", "output image")
-        .addOption("importer", "AnyImageImporter").setHelp("importer", "image importer plugin")
-        .addOption("converter", "AnyImageConverter").setHelp("converter", "image converter plugin")
+        .addArgument("output").setHelp("output", "output image, ignored if --in-place or --info is present")
+        .addOption('I', "importer", "AnyImageImporter").setHelp("importer", "image importer plugin")
+        .addOption('C', "converter", "AnyImageConverter").setHelp("converter", "image converter plugin")
         .addOption("plugin-dir").setHelp("plugin-dir", "override base plugin dir", "DIR")
         .addOption('i', "importer-options").setHelp("importer-options", "configuration options to pass to the importer", "key=val,key2=val2,…")
         .addOption('c', "converter-options").setHelp("converter-options", "configuration options to pass to the converter", "key=val,key2=val2,…")
         .addOption("image", "0").setHelp("image", "image to import")
         .addOption("level", "0").setHelp("level", "image level to import")
+        .addBooleanOption("in-place").setHelp("in-place", "overwrite the input image with the output")
         .addBooleanOption("info").setHelp("info", "print info about the input file and exit")
         .addBooleanOption('v', "verbose").setHelp("verbose", "verbose output from importer and converter plugins")
         .setParseErrorCallback([](const Utility::Arguments& args, Utility::Arguments::ParseError error, const std::string& key) {
-            /* If --info is passed, we don't need the output argument */
+            /* If --in-place or --info is passed, we don't need the output
+               argument */
             if(error == Utility::Arguments::ParseError::MissingArgument &&
-               key == "output" && args.isSet("info")) return true;
+               key == "output" && (args.isSet("in-place") || args.isSet("info")))
+                return true;
 
             /* Handle all other errors as usual */
             return false;
@@ -163,8 +169,8 @@ int main(int argc, char** argv) {
         .setGlobalHelp(R"(Converts images of different formats.
 
 Specifying --importer raw:<format> will treat the input as a raw tightly-packed
-square of pixels in given pixel format. Specifying --converter raw will save
-raw imported data instead of using a converter plugin.
+square of pixels in given pixel format. Specifying -C / --converter raw will
+save raw imported data instead of using a converter plugin.
 
 If --info is given, the utility will print information about all images present
 in the file. In this case no conversion is done and output file doesn't need to
@@ -224,7 +230,7 @@ key=true; configuration subgroups are delimited with /.)")
 
         /* Set options, if passed */
         if(args.isSet("verbose")) importer->setFlags(Trade::ImporterFlag::Verbose);
-        Trade::Implementation::setOptions(*importer, args.value("importer-options"));
+        Implementation::setOptions(*importer, args.value("importer-options"));
 
         /* Print image info, if requested */
         if(args.isSet("info")) {
@@ -239,19 +245,21 @@ key=true; configuration subgroups are delimited with /.)")
                 return 0;
             }
 
-            /* Parse everything first to avoid errors interleaved with output */
-            bool error = false;
+            /* Parse everything first to avoid errors interleaved with output.
+               In case the images have all just a single level and no names,
+               write them in a compact way without listing levels. */
+            bool error = false, compact = true;
             Containers::Array<Trade::Implementation::ImageInfo> infos =
-                Trade::Implementation::imageInfo(*importer, error);
+                Trade::Implementation::imageInfo(*importer, error, compact);
 
             for(const Trade::Implementation::ImageInfo& info: infos) {
                 Debug d;
                 if(info.level == 0) {
                     d << "Image" << info.image << Debug::nospace << ":";
                     if(!info.name.empty()) d << info.name;
-                    d << Debug::newline;
+                    if(!compact) d << Debug::newline;
                 }
-                d << "  Level" << info.level << Debug::nospace << ":";
+                if(!compact) d << "  Level" << info.level << Debug::nospace << ":";
                 if(info.compressed) d << info.compressedFormat;
                 else d << info.format;
                 if(info.size.z()) d << info.size;
@@ -274,6 +282,8 @@ key=true; configuration subgroups are delimited with /.)")
         }
     }
 
+    const std::string output = args.value(args.isSet("in-place") ? "input" : "output");
+
     {
         Debug d;
         if(args.value("converter") == "raw")
@@ -283,12 +293,12 @@ key=true; configuration subgroups are delimited with /.)")
         d << image->size() << "and format";
         if(image->isCompressed()) d << image->compressedFormat();
         else d << image->format();
-        d << "to" << args.value("output");
+        d << "to" << output;
     }
 
     /* Save raw data, if requested */
     if(args.value("converter") == "raw") {
-        Utility::Directory::write(args.value("output"), image->data());
+        Utility::Directory::write(output, image->data());
         return 0;
     }
 
@@ -304,11 +314,11 @@ key=true; configuration subgroups are delimited with /.)")
 
     /* Set options, if passed */
     if(args.isSet("verbose")) converter->setFlags(Trade::ImageConverterFlag::Verbose);
-    Trade::Implementation::setOptions(*converter, args.value("converter-options"));
+    Implementation::setOptions(*converter, args.value("converter-options"));
 
     /* Save output file */
-    if(!converter->exportToFile(*image, args.value("output"))) {
-        Error() << "Cannot save file" << args.value("output");
+    if(!converter->exportToFile(*image, output)) {
+        Error() << "Cannot save file" << output;
         return 5;
     }
 }

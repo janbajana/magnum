@@ -30,7 +30,7 @@
 
 /* Defensive include guards */
 
-#if defined(__gl_h_) || defined(__gl2_h_) || defined(__gl3_h_) || defined(__gl31_h_)
+#if defined(__gl_h_) || defined(__gl2_h_) || defined(__gl3_h_) || defined(__gl31_h_) || defined(__gl32_h_)
 #error Attempt to include auto-generated header after including gl3.h
 #endif
 #if defined(__gl2ext_h_) || defined(__gl3ext_h_)
@@ -44,6 +44,7 @@
 #define __gl2_h_
 #define __gl3_h_
 #define __gl31_h_
+#define __gl32_h_
 #define __gl2ext_h_
 #define __gl3ext_h_
 #define __gl2platform_h_
@@ -759,6 +760,17 @@ typedef struct __GLsync *GLsync;
 #define GL_CLIP_DISTANCE6_EXT 0x3006
 #define GL_CLIP_DISTANCE7_EXT 0x3007
 
+/* GL_EXT_texture_norm16 */
+
+#define GL_R16_EXT 0x822A
+#define GL_RG16_EXT 0x822C
+#define GL_RGBA16_EXT 0x805B
+#define GL_RGB16_EXT 0x8054
+#define GL_R16_SNORM_EXT 0x8F98
+#define GL_RG16_SNORM_EXT 0x8F99
+#define GL_RGB16_SNORM_EXT 0x8F9A
+#define GL_RGBA16_SNORM_EXT 0x8F9B
+
 /* GL_EXT_draw_buffers_indexed */
 
 #define GL_BLEND_EQUATION_RGB 0x8009
@@ -848,6 +860,24 @@ typedef struct __GLsync *GLsync;
 #define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR 0x93DB
 #define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR 0x93DC
 #define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR 0x93DD
+
+/* GL_KHR_blend_equation_advanced */
+
+#define GL_MULTIPLY_KHR 0x9294
+#define GL_SCREEN_KHR 0x9295
+#define GL_OVERLAY_KHR 0x9296
+#define GL_DARKEN_KHR 0x9297
+#define GL_LIGHTEN_KHR 0x9298
+#define GL_COLORDODGE_KHR 0x9299
+#define GL_COLORBURN_KHR 0x929A
+#define GL_HARDLIGHT_KHR 0x929B
+#define GL_SOFTLIGHT_KHR 0x929C
+#define GL_DIFFERENCE_KHR 0x929E
+#define GL_EXCLUSION_KHR 0x92A0
+#define GL_HSL_HUE_KHR 0x92AD
+#define GL_HSL_SATURATION_KHR 0x92AE
+#define GL_HSL_COLOR_KHR 0x92AF
+#define GL_HSL_LUMINOSITY_KHR 0x92B0
 
 /* Function prototypes */
 

@@ -197,6 +197,7 @@ the components. The optional components are:
 -   `Primitives` --- @ref Primitives library
 -   `SceneGraph` --- @ref SceneGraph library
 -   `Shaders` --- @ref Shaders library
+-   `ShaderTools` --- @ref ShaderTools library
 -   `Text` --- @ref Text library
 -   `TextureTools` --- @ref TextureTools library
 -   `Trade` --- @ref Trade library
@@ -230,6 +231,7 @@ There are also extensions to @ref Corrade::TestSuite::Tester for testing GPU
 code:
 
 -   `OpenGLTester` --- @ref GL::OpenGLTester class
+-   `VulkanTester` --- @ref Vk::VulkanTester class
 
 The library also contains a set of plugins for importing essential file
 formats. Additional plugins are provided in separate plugin repository, see
@@ -250,6 +252,8 @@ dependencies, you need to find the dependency and then link to it.
     plugin
 -   `AnySceneImporter` --- @ref Trade::AnySceneImporter "AnySceneImporter"
     plugin
+-   `AnyShaderConverter` --- @ref ShaderTools::AnyConverter "AnyShaderConverter"
+    plugin
 -   `MagnumFont` --- @ref Text::MagnumFont "MagnumFont" plugin
 -   `MagnumFontConverter` --- @ref Text::MagnumFontConverter "MagnumFontConverter"
     plugin
@@ -267,7 +271,12 @@ Lastly, a few utility executables are available:
     executable
 -   `imageconverter` --- @ref magnum-imageconverter "magnum-imageconverter"
     executable
+-   `sceneconverter` --- @ref magnum-sceneconverter "magnum-imageconverter"
+    executable
+-   `shaderconverter` --- @ref magnum-shaderconverter "magnum-shaderconverter"
+    executable
 -   `gl-info` --- @ref magnum-gl-info "magnum-gl-info" executable
+-   `vk-info` --- @ref magnum-vk-info "magnum-vk-info" executable
 -   `al-info` --- @ref magnum-al-info "magnum-al-info" executable
 
 Note that [each namespace](namespaces.html), all @ref Platform libraries and

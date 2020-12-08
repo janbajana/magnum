@@ -229,7 +229,7 @@ Extension                                   | Status
 ------------------------------------------- | ------
 GLSL 4.40                                   | done
 @def_gl{MAX_VERTEX_ATTRIB_STRIDE}           | |
-@gl_extension{ARB,buffer_storage}           | |
+@gl_extension{ARB,buffer_storage}           | done
 @gl_extension{ARB,clear_texture}            | |
 @gl_extension{ARB,enhanced_layouts}         | done (shading language only)
 @gl_extension{ARB,multi_bind}               | missing sampler and vertex buffer binding
@@ -309,6 +309,7 @@ Extension                                   | Status
 Extension                                   | Status
 ------------------------------------------- | ------
 @gl_extension{AMD,transform_feedback3_lines_triangles} | done (nothing to do)
+@gl_extension{AMD,sample_positions}         | |
 @gl_extension{AMD,vertex_shader_layer}      | done (shading language only)
 @gl_extension{AMD,shader_trinary_minmax}    | done (shading language only)
 @gl_extension{AMD,shader_explicit_vertex_parameter} | done (shading language only)
@@ -321,8 +322,9 @@ Extension                                   | Status
 @gl_extension{EXT,shader_integer_mix}       | done (shading language only)
 @gl_extension{EXT,debug_label}              | missing pipeline and sampler label
 @gl_extension{EXT,debug_marker}             | done
-@gl_extension{EXT,sRGB_R8}                  | done
+@gl_extension{EXT,texture_sRGB_R8}          | done
 @gl_extension{GREMEDY,string_marker}        | done
+@gl_extension{NV,sample_locations}          | |
 @gl_extension{NV,fragment_shader_barycentric} | done (shading language only)
 @gl_extension{OVR,multiview}                | |
 @gl_extension{OVR,multiview2}               | |
@@ -468,8 +470,9 @@ Extension                                   | Status
 @gl_extension{EXT,texture_compression_s3tc} | done
 @gl_extension{EXT,pvrtc_sRGB}               | done
 @gl_extension{EXT,shader_integer_mix}       | done (shading language only)
-@gl_extension{EXT,sRGB_R8}                  | done
-@gl_extension{EXT,sRGB_RG8}                 | done
+@gl_extension{EXT,texture_norm16}           | done
+@gl_extension{EXT,texture_sRGB_R8}          | done
+@gl_extension{EXT,texture_sRGB_RG8}         | done
 @gl_extension{EXT,polygon_offset_clamp}     | |
 @gl_extension{EXT,clip_cull_distance}       | done
 @gl_extension{EXT,texture_compression_rgtc} | done
@@ -487,6 +490,7 @@ Extension                                   | Status
 @gl_extension{NV,read_depth_stencil}        | done
 @gl_extension{NV,texture_border_clamp}      | done
 @gl_extension{NV,shader_noperspective_interpolation} | done (shading language only)
+@gl_extension{NV,sample_locations}          | |
 @gl_extension{NV,polygon_mode}              | done
 @gl_extension{OES,depth32}                  | done
 @gl_extension{OES,mapbuffer}                | done
@@ -517,6 +521,8 @@ Extension                                   | Status
 ------------------------------------------- | ------
 @webgl_extension{ANGLE,instanced_arrays}    | done
 @webgl_extension{EXT,color_buffer_half_float} | |
+@webgl_extension{EXT,frag_depth}            | done (shading language only)
+@webgl_extension{EXT,sRGB}                  | done
 @webgl_extension{EXT,blend_minmax}          | done
 @webgl_extension{EXT,shader_texture_lod}    | done (shading language only)
 `MAGNUM_shader_vertex_id` \n @m_span{m-text m-dim} Pseudo-extension denoting support for the @glsl gl_VertexID @ce \n GLSL builtin. Exposed on WebGL 2 builds only. @m_endspan | done
@@ -536,26 +542,35 @@ Extension                                   | Status
     are included in this table because they are subsumed by
     @webgl_extension{EXT,color_buffer_float} in WebGL 2.0.
 
-@subsection opengl-support-webgl-extensions WebGL extensions to match desktop functionality
+@subsection opengl-support-webgl-extensions WebGL extensions
 
 @m_class{m-fullwidth}
 
 Extension                                   | Status
 ------------------------------------------- | ------
 @webgl_extension{EXT,texture_filter_anisotropic} | done
-@webgl_extension{EXT,sRGB}                  | done
 @webgl_extension{EXT,disjoint_timer_query}  | only time elapsed query
+@webgl_extension{EXT,disjoint_timer_query_webgl2}  | [missing support in Emscripten](https://github.com/emscripten-core/emscripten/pull/9652)
 @webgl_extension{EXT,color_buffer_float}    | |
+@webgl_extension{EXT,float_blend}           | |
 @webgl_extension{EXT,texture_compression_rgtc} | done
 @webgl_extension{EXT,texture_compression_bptc} | done
 @webgl_extension{EXT,clip_cull_distance}    | done
+@webgl_extension{EXT,texture_norm16}        | done
 @webgl_extension{EXT,draw_buffers_indexed}  | done
 @webgl_extension{OES,texture_float_linear}  | done
 @webgl_extension{OVR,multiview2}            | |
+@webgl_extension{WEBGL,lose_context}        | |
+@webgl_extension{WEBGL,debug_renderer_info} | |
+@webgl_extension{WEBGL,debug_shaders}       | |
 @webgl_extension{WEBGL,compressed_texture_s3tc} | done
 @webgl_extension{WEBGL,compressed_texture_pvrtc} | done
 @webgl_extension{WEBGL,compressed_texture_astc} | done
 @webgl_extension{WEBGL,compressed_texture_s3tc_srgb} | done
+@webgl_extension{WEBGL,multi_draw}          | missing support in Emscripten
+@webgl_extension{WEBGL,blend_equation_advanced_coherent} | done
+@webgl_extension{WEBGL,draw_instanced_base_vertex_base_instance} | missing support in Emscripten
+@webgl_extension{WEBGL,multi_draw_instanced_base_vertex_base_instance} | missing support in Emscripten
 
 @section opengl-unsupported Unsupported OpenGL features
 
@@ -606,7 +621,10 @@ add any performance gains, is not supported in Magnum. See also
 @subsection opengl-unsupported-extensions Unsupported ARB / Khronos extensions
 
 -   @gl_extension{ARB,shading_language_include} is overly complicated and
-    supported exclusively by NVidia
+    supported exclusively by NVidia. However, see the
+    @ref ShaderTools::GlslangConverter "GlslangShaderConverter" plugin for
+    shader preprocessing/compilation that *does* support @cpp #include @ce
+    directives.
 -   @gl_extension{ARB,cl_event} seems to be not supported anywhere
 -   @gl_extension{ARB,shader_stencil_export} is supported exclusively by AMD
 -   @gl_extension{EXT,texture_compression_latc} is superseded by

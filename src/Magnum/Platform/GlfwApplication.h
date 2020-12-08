@@ -253,7 +253,7 @@ class GlfwApplication {
          * @brief Run one iteration of application main loop
          * @return @cpp false @ce if @ref exit() was called and the application
          *      should exit, @cpp true @ce otherwise
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Called internally from @ref exec(). If you want to have better
          * control over how the main loop behaves, you can call this function
@@ -380,7 +380,7 @@ class GlfwApplication {
         /**
          * @brief Set window size
          * @param size    The size, in screen coordinates
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * To make the sizing work independently of the display DPI, @p size is
          * internally multiplied with @ref dpiScaling() before getting applied.
@@ -481,12 +481,20 @@ class GlfwApplication {
          * @note Available since GLFW 3.2. The function has no effect on macOS
          *      / Wayland, see @m_class{m-doc-external} [glfwSetWindowIcon()](https://www.glfw.org/docs/latest/group__window.html#gadd7ccd39fe7a7d1f0904666ae5932dc5)
          *      for more information.
+         * @see @ref platform-windows-icon "Excecutable icon on Windows",
+         *      @ref Trade::IcoImporter "IcoImporter"
+         */
+        void setWindowIcon(Containers::ArrayView<const ImageView2D> images);
+
+        /**
+         * @overload
+         * @m_since{2020,06}
          */
         void setWindowIcon(std::initializer_list<ImageView2D> images);
 
         /**
          * @overload
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         void setWindowIcon(const ImageView2D& image);
         #endif
@@ -535,18 +543,6 @@ class GlfwApplication {
          */
         virtual void viewportEvent(ViewportEvent& event);
 
-        #ifdef MAGNUM_BUILD_DEPRECATED
-        /** @brief @copybrief viewportEvent(ViewportEvent&)
-         * @m_deprecated_since{2018,10} Use @ref viewportEvent(ViewportEvent&)
-         *      instead. To preserve backwards compatibility, this function is
-         *      called from @ref viewportEvent(ViewportEvent&) with
-         *      @ref ViewportEvent::windowSize() passed to @p size. Overriding
-         *      the new function will cause this function to not be called
-         *      anymore.
-         */
-        virtual CORRADE_DEPRECATED("use viewportEvent(ViewportEvent&) instead") void viewportEvent(const Vector2i& size);
-        #endif
-
         /** @copydoc Sdl2Application::drawEvent() */
         virtual void drawEvent() = 0;
 
@@ -575,7 +571,7 @@ class GlfwApplication {
     public:
         /**
          * @brief Cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref setCursor()
          */
@@ -626,7 +622,7 @@ class GlfwApplication {
 
         /**
          * @brief Set cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Default is @ref Cursor::Arrow.
          */
@@ -634,13 +630,13 @@ class GlfwApplication {
 
         /**
          * @brief Get current cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Cursor cursor();
 
         /**
          * @brief Warp mouse cursor to given coordinates
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         void warpCursor(const Vector2i& position) {
             glfwSetCursorPos(_window, Double(position.x()), Double(position.y()));
@@ -951,22 +947,6 @@ class GlfwApplication::GLConfiguration {
             return *this;
         }
 
-        #ifdef MAGNUM_BUILD_DEPRECATED
-        /**
-         * @brief @copybrief isSrgbCapable()
-         * @m_deprecated_since{2018,10} Use @ref isSrgbCapable() instead.
-         */
-        CORRADE_DEPRECATED("use isSrgbCapable() instead") bool isSRGBCapable() const { return isSrgbCapable(); }
-
-        /**
-         * @brief @copybrief setSrgbCapable()
-         * @m_deprecated_since{2018,10} Use @ref setSrgbCapable() instead.
-         */
-        CORRADE_DEPRECATED("use setSrgbCapable() instead") GLConfiguration& setSRGBCapable(bool enabled) {
-            return setSrgbCapable(enabled);
-        }
-        #endif
-
     private:
         Vector4i _colorBufferSize;
         Int _depthBufferSize, _stencilBufferSize;
@@ -1019,7 +999,7 @@ class GlfwApplication::Configuration {
 
             /**
              * No window decoration
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Borderless = 1 << 1,
 
@@ -1039,14 +1019,14 @@ class GlfwApplication::Configuration {
 
             /**
              * Always on top
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             AlwaysOnTop = 1 << 6,
 
             #ifdef MAGNUM_BUILD_DEPRECATED
             /**
              * Always on top
-             * @deprecated Use @ref WindowFlag::AlwaysOnTop instead.
+             * @m_deprecated_since{2020,06} Use @ref WindowFlag::AlwaysOnTop instead.
              */
             Floating CORRADE_DEPRECATED_ENUM("use AlwaysOnTop instead") = AlwaysOnTop,
             #endif
@@ -1146,14 +1126,14 @@ class GlfwApplication::Configuration {
         /**
          * @brief Cursor mode
          *
-         * @m_deprecated_since_latest Use @ref GlfwApplication::setCursor()
+         * @m_deprecated_since{2020,06} Use @ref GlfwApplication::setCursor()
          *      instead.
          */
         enum class CORRADE_DEPRECATED_ENUM("use GlfwApplication::setCursor() instead") CursorMode: Int {
             /**
              * Visible unconstrained cursor
              *
-             * @m_deprecated_since_latest Use @ref GlfwApplication::setCursor()
+             * @m_deprecated_since{2020,06} Use @ref GlfwApplication::setCursor()
              *      with @ref Cursor::Arrow (or any other) instead.
              */
             Normal CORRADE_DEPRECATED_ENUM("use GlfwApplication::setCursor() with Cursor::Arrow instead") = GLFW_CURSOR_NORMAL,
@@ -1161,7 +1141,7 @@ class GlfwApplication::Configuration {
             /**
              * Hidden cursor
              *
-             * @m_deprecated_since_latest Use @ref GlfwApplication::setCursor()
+             * @m_deprecated_since{2020,06} Use @ref GlfwApplication::setCursor()
              *      with @ref Cursor::Hidden instead.
              */
             Hidden CORRADE_DEPRECATED_ENUM("use GlfwApplication::setCursor() with Cursor::Hidden instead") = GLFW_CURSOR_HIDDEN,
@@ -1169,7 +1149,7 @@ class GlfwApplication::Configuration {
             /**
              * Cursor hidden and locked window
              *
-             * @m_deprecated_since_latest Use @ref GlfwApplication::setCursor()
+             * @m_deprecated_since{2020,06} Use @ref GlfwApplication::setCursor()
              *      with @ref Cursor::HiddenLocked instead.
              */
             Disabled CORRADE_DEPRECATED_ENUM("use GlfwApplication::setCursor() with Cursor::HiddenLocked instead") = GLFW_CURSOR_DISABLED
@@ -1270,7 +1250,7 @@ class GlfwApplication::Configuration {
         /**
          * @brief Add window flags
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Unlike @ref setWindowFlags(), ORs the flags with existing instead of
          * replacing them. Useful for preserving the defaults.
@@ -1284,7 +1264,7 @@ class GlfwApplication::Configuration {
         /**
          * @brief Clear window flags
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Unlike @ref setWindowFlags(), ANDs the inverse of @p flags with
          * existing instead of replacing them. Useful for removing default
@@ -1300,7 +1280,7 @@ class GlfwApplication::Configuration {
         /**
          * @brief Cursor mode
          *
-         * @m_deprecated_since_latest Use @ref GlfwApplication::cursor()
+         * @m_deprecated_since{2020,06} Use @ref GlfwApplication::cursor()
          *      instead.
          */
         CORRADE_IGNORE_DEPRECATED_PUSH
@@ -1315,7 +1295,7 @@ class GlfwApplication::Configuration {
          *
          * Default is @ref CursorMode::Normal.
          *
-         * @m_deprecated_since_latest Use @ref GlfwApplication::setCursor()
+         * @m_deprecated_since{2020,06} Use @ref GlfwApplication::setCursor()
          *      instead.
          */
         CORRADE_IGNORE_DEPRECATED_PUSH
@@ -1644,7 +1624,7 @@ class GlfwApplication::KeyEvent: public GlfwApplication::InputEvent {
 
             /**
              * Quote (<tt>'</tt>)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Quote = GLFW_KEY_APOSTROPHE,
 
@@ -1669,37 +1649,37 @@ class GlfwApplication::KeyEvent: public GlfwApplication::InputEvent {
 
             /**
              * Left bracket (`[`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             LeftBracket = GLFW_KEY_LEFT_BRACKET,
 
             /**
              * Right bracket (`]`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             RightBracket = GLFW_KEY_RIGHT_BRACKET,
 
             /**
              * Backslash (`\`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Backslash = GLFW_KEY_BACKSLASH,
 
             /**
              * Backquote (<tt>`</tt>)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Backquote = GLFW_KEY_GRAVE_ACCENT,
 
             /**
              * Non-US \#1
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             World1 = GLFW_KEY_WORLD_1,
 
             /**
              * Non-US \#2
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             World2 = GLFW_KEY_WORLD_2,
 

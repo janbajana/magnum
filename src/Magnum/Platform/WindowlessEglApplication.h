@@ -3,8 +3,9 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
-              Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
+                2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 Erik Wijmans <etw@gatech.edu>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -36,11 +37,17 @@
 #include <EGL/eglext.h>
 /* undef Xlib nonsense to avoid conflicts */
 #undef Always
+#undef Bool
 #undef Complex
 #undef None
 #undef Status
 #include <Corrade/Containers/EnumSet.h>
 #include <Corrade/Containers/Pointer.h>
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+/* Unfortunately Xlib *needs* the Bool type, so provide a typedef instead */
+typedef int Bool;
+#endif
 
 #include "Magnum/Magnum.h"
 #include "Magnum/GL/OpenGL.h"
@@ -122,7 +129,7 @@ class WindowlessEglContext {
 
         /**
          * @brief Underlying OpenGL context
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Use in case you need to call EGL functionality directly or in order
          * to create a shared context. Returns @cpp nullptr @ce in case the
@@ -250,6 +257,7 @@ class WindowlessEglContext::Configuration {
 
         /**
          * @brief Device ID to use
+         * @m_since{2019,10}
          *
          * @requires_gles Device selection is not available in WebGL.
          */
@@ -258,6 +266,7 @@ class WindowlessEglContext::Configuration {
         /**
          * @brief Set device ID to use
          * @return Reference to self (for method chaining)
+         * @m_since{2019,10}
          *
          * The device ID is expected to be smaller than the count of devices
          * reported by EGL. When using @ref WindowlessEglApplication, this is
@@ -265,6 +274,10 @@ class WindowlessEglContext::Configuration {
          * `MAGNUM_DEVICE` environment variable. If @ref setSharedContext() is
          * set, this value is ignored and the device is picked to be the same
          * as in the shared context instead.
+         *
+         * By default it's set to @cpp 0 @ce, taking the first found EGL
+         * device.
+         * @see @ref setCudaDevice()
          * @requires_gles Device selection is not available in WebGL.
          */
         Configuration& setDevice(UnsignedInt id) {
@@ -273,9 +286,39 @@ class WindowlessEglContext::Configuration {
         }
 
         /**
+         * @brief CUDA device ID to use
+         * @m_since{2020,06}
+         *
+         * @requires_gles Device selection is not available in WebGL.
+         */
+        UnsignedInt cudaDevice() const { return _cudaDevice; }
+
+        /**
+         * @brief Set the CUDA device ID to use
+         * @return Reference to self (for method chaining)
+         * @m_since{2020,06}
+         *
+         * If a device with given CUDA ID is not found, context creation fails.
+         * When using @ref WindowlessEglApplication, this is also exposed as a
+         * `--magnum-cuda-device` command-line option and a
+         * `MAGNUM_CUDA_DEVICE` environment variable. If @ref setSharedContext()
+         * is set, this value is ignored and the device is picked to be the
+         * same as in the shared context instead.
+         *
+         * If a CUDA device is set, it takes precedence over the device ID set
+         * with @ref setDevice(). By default it's set to @cpp 0xffffffffu @ce,
+         * indicating that @ref setDevice() is used instead.
+         * @requires_gles Device selection is not available in WebGL.
+         */
+        Configuration& setCudaDevice(UnsignedInt id) {
+            _cudaDevice = id;
+            return *this;
+        }
+
+        /**
          * @brief Create a shared context
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * When set, the created context will share a subset of OpenGL objects
          * with @p context and its associated @p display, instead of being
@@ -292,7 +335,7 @@ class WindowlessEglContext::Configuration {
 
         /**
          * @brief Shared display
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @requires_gles Context sharing is not available in WebGL.
          */
@@ -300,7 +343,7 @@ class WindowlessEglContext::Configuration {
 
         /**
          * @brief Shared context
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @requires_gles Context sharing is not available in WebGL.
          */
@@ -311,6 +354,8 @@ class WindowlessEglContext::Configuration {
         #ifndef MAGNUM_TARGET_WEBGL
         Flags _flags;
         UnsignedInt _device;
+        /* Assumes that you can't have 2^32 - 1 GPUs */
+        UnsignedInt _cudaDevice = ~UnsignedInt{};
         EGLDisplay _sharedDisplay = EGL_NO_DISPLAY;
         EGLContext _sharedContext = EGL_NO_CONTEXT;
         #endif
@@ -447,6 +492,13 @@ filter named devices, so the best you can do is checking reported device count
 printed by the `--magnum-log verbose` @ref GL-Context-command-line "command-line option",
 and then going from `0` up to figure out the desired device ID.
 
+On systems with NVIDIA GPUs and CUDA, it's possible to directly select a
+particular CUDA device, allowing for EGL and CUDA to both target the same
+physical device for a given ID. This can be chosen via the
+`--magnum-cuda-device` command-line option (and the `MAGNUM_CUDA_DEVICE`
+environment variable), which then takes precedence over `--magnum-device`. The
+same can be also specified via via @ref Configuration::setCudaDevice().
+
 @m_class{m-block m-danger}
 
 @par No EGL devices found
@@ -564,7 +616,7 @@ class WindowlessEglApplication {
 
         /**
          * @brief Underlying OpenGL context
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Use in case you need to call EGL functionality directly or in order
          * to create a shared context. Returns @cpp nullptr @ce in case the
@@ -610,6 +662,7 @@ class WindowlessEglApplication {
         #ifndef MAGNUM_TARGET_WEBGL
         /* These are saved from command-line arguments */
         UnsignedInt _commandLineDevice;
+        UnsignedInt _commandLineCudaDevice = ~UnsignedInt{};
         #endif
 };
 

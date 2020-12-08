@@ -38,7 +38,7 @@
 #endif
 #include "Magnum/GL/Implementation/MeshState.h"
 
-#if defined(CORRADE_TARGET_APPLE) && !defined(CORRADE_TARGET_IOS)
+#if defined(CORRADE_TARGET_APPLE) && !defined(MAGNUM_TARGET_GLES)
 #include "Magnum/GL/Implementation/TextureState.h"
 #endif
 
@@ -305,6 +305,13 @@ Buffer& Buffer::bind(const Target target, const UnsignedInt index) {
 }
 #endif
 
+#ifndef MAGNUM_TARGET_GLES
+Buffer& Buffer::setStorage(const Containers::ArrayView<const void> data, const StorageFlags flags) {
+    (this->*Context::current().state().buffer->storageImplementation)(data, flags);
+    return *this;
+}
+#endif
+
 Int Buffer::size() {
     /**
      * @todo there is something like glGetBufferParameteri64v in 3.2 (I
@@ -434,6 +441,16 @@ void Buffer::copyImplementationDSA(Buffer& read, Buffer& write, const GLintptr r
 #endif
 #endif
 
+#ifndef MAGNUM_TARGET_GLES
+void Buffer::storageImplementationDefault(Containers::ArrayView<const void> data, StorageFlags flags) {
+    glBufferStorage(GLenum(bindSomewhereInternal(_targetHint)), data.size(), data.data(), GLbitfield(flags));
+}
+
+void Buffer::storageImplementationDSA(Containers::ArrayView<const void> data, const StorageFlags flags) {
+    glNamedBufferStorage(_id, data.size(), data.data(), GLbitfield(flags));
+}
+#endif
+
 void Buffer::getParameterImplementationDefault(const GLenum value, GLint* const data) {
     glGetBufferParameteriv(GLenum(bindSomewhereInternal(_targetHint)), value, data);
 }
@@ -550,15 +567,22 @@ bool Buffer::unmapImplementationDSA() {
 #endif
 #endif
 
-#if defined(CORRADE_TARGET_APPLE) && !defined(CORRADE_TARGET_IOS)
+#if defined(CORRADE_TARGET_APPLE) && !defined(MAGNUM_TARGET_GLES)
 /* See apple-buffer-texture-detach-on-data-modify for the gory details. */
 void Buffer::textureWorkaroundAppleBefore() {
-    /* Apple "fortunately" supports just 16 texture units, so this doesn't take
-       too long. */
+    /* My Mac Mini reports 80 texture units, which means this thing can have a
+       pretty significant overhead. Skipping the whole thing if no buffer
+       texture is known to be bound. */
     Implementation::TextureState& textureState = *Context::current().state().texture;
+    if(textureState.bufferTextureBound.none()) return;
     for(GLint textureUnit = 0; textureUnit != GLint(textureState.bindings.size()); ++textureUnit) {
-        std::pair<GLenum, GLuint>& binding = textureState.bindings[textureUnit];
-        if(binding.first != GL_TEXTURE_BUFFER) continue;
+        /* Checking just
+            textureState.bindings[textureUnit].first != GL_TEXTURE_BUFFER
+           isn't enough, as for GL allows to bind different texture types under
+           the same texture unit. Magnum's state tracker ignores that (as it
+           would mean having to maintain a state cache of 128 units times 12
+           targets) and so this state is tracked separately. */
+        if(!textureState.bufferTextureBound[textureUnit]) continue;
 
         /* Activate given texture unit if not already active, update state
            tracker */
@@ -569,7 +593,8 @@ void Buffer::textureWorkaroundAppleBefore() {
         glBindTexture(GL_TEXTURE_BUFFER, 0);
         /* libstdc++ since GCC 6.3 can't handle just = {} (ambiguous overload
            of operator=) */
-        binding = std::pair<GLenum, GLuint>{};
+        textureState.bindings[textureUnit] = std::pair<GLenum, GLuint>{};
+        textureState.bufferTextureBound.set(textureUnit, false);
     }
 }
 

@@ -29,9 +29,43 @@
  * @brief Forward declarations for the @ref Magnum::Vk namespace
  */
 
+#include <Corrade/Containers/Containers.h>
+
+#include "Magnum/Magnum.h"
+
 namespace Magnum { namespace Vk {
 
-
+#ifndef DOXYGEN_GENERATING_OUTPUT
+class Buffer;
+class CommandBuffer;
+class CommandPool;
+class Device;
+class DeviceCreateInfo;
+class DeviceProperties;
+enum class DeviceType: Int;
+class Extension;
+class ExtensionProperties;
+enum class HandleFlag: UnsignedByte;
+typedef Containers::EnumSet<HandleFlag> HandleFlags;
+class Image;
+class Instance;
+class InstanceCreateInfo;
+class InstanceExtension;
+class InstanceExtensionProperties;
+class LayerProperties;
+class Memory;
+class MemoryMapDeleter;
+class MemoryRequirements;
+enum class MemoryFlag: UnsignedInt;
+typedef Containers::EnumSet<MemoryFlag> MemoryFlags;
+enum class MemoryHeapFlag: UnsignedInt;
+typedef Containers::EnumSet<MemoryHeapFlag> MemoryHeapFlags;
+class Queue;
+enum class QueueFlag: UnsignedInt;
+typedef Containers::EnumSet<QueueFlag> QueueFlags;
+enum class Result: Int;
+enum class Version: UnsignedInt;
+#endif
 
 }}
 

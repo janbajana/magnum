@@ -59,24 +59,27 @@ constexpr VkIndexType IndexTypeMapping[]{
 static_assert(VK_FORMAT_UNDEFINED == 0, "VK_FORMAT_UNDEFINED is assumed to be 0");
 
 constexpr VkFormat VertexFormatMapping[] {
+    /* GCC 4.8 doesn't like just a {} for default enum values */
     #define _c(input, format) VK_FORMAT_ ## format,
-    #define _s(input) {},
+    #define _s(input) VkFormat{},
     #include "Magnum/Vk/Implementation/vertexFormatMapping.hpp"
     #undef _s
     #undef _c
 };
 
 constexpr VkFormat PixelFormatMapping[] {
+    /* GCC 4.8 doesn't like just a {} for default enum values */
     #define _c(input, format) VK_FORMAT_ ## format,
-    #define _s(input) {},
+    #define _s(input) VkFormat{},
     #include "Magnum/Vk/Implementation/pixelFormatMapping.hpp"
     #undef _s
     #undef _c
 };
 
 constexpr VkFormat CompressedPixelFormatMapping[] {
+    /* GCC 4.8 doesn't like just a {} for default enum values */
     #define _c(input, format) VK_FORMAT_ ## format,
-    #define _s(input) {},
+    #define _s(input) VkFormat{},
     #include "Magnum/Vk/Implementation/compressedPixelFormatMapping.hpp"
     #undef _s
     #undef _c
@@ -99,7 +102,7 @@ constexpr VkSamplerAddressMode SamplerAddressModeMapping[]{
     VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
     VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
     VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
-    VkSamplerAddressMode(~UnsignedInt{}),
+    VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE,
 };
 
 }

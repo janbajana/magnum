@@ -27,7 +27,7 @@
 
 /** @file
  * @brief Class @ref Magnum::Trade::MeshData, @ref Magnum::Trade::MeshIndexData, @ref Magnum::Trade::MeshAttributeData, enum @ref Magnum::Trade::MeshAttribute, function @ref Magnum::Trade::isMeshAttributeCustom(), @ref Magnum::Trade::meshAttributeCustom()
- * @m_since_latest
+ * @m_since{2020,06}
  */
 
 #include <Corrade/Containers/Array.h>
@@ -42,7 +42,7 @@ namespace Magnum { namespace Trade {
 
 /**
 @brief Mesh attribute name
-@m_since_latest
+@m_since{2020,06}
 
 @see @ref MeshData, @ref MeshAttributeData, @ref VertexFormat,
     @ref AbstractImporter::meshAttributeForName(),
@@ -159,13 +159,13 @@ enum class MeshAttribute: UnsignedShort {
 
 /**
 @debugoperatorenum{MeshAttribute}
-@m_since_latest
+@m_since{2020,06}
 */
 MAGNUM_TRADE_EXPORT Debug& operator<<(Debug& debug, MeshAttribute value);
 
 /**
 @brief Whether a mesh attribute is custom
-@m_since_latest
+@m_since{2020,06}
 
 Returns @cpp true @ce if @p name has a value larger or equal to
 @ref MeshAttribute::Custom, @cpp false @ce otherwise.
@@ -178,7 +178,7 @@ constexpr bool isMeshAttributeCustom(MeshAttribute name) {
 
 /**
 @brief Create a custom mesh attribute
-@m_since_latest
+@m_since{2020,06}
 
 Returns a custom mesh attribute with index @p id. The index is expected to be
 less than the value of @ref MeshAttribute::Custom. Use
@@ -194,7 +194,7 @@ constexpr MeshAttribute meshAttributeCustom(UnsignedShort id) {
 
 /**
 @brief Get index of a custom mesh attribute
-@m_since_latest
+@m_since{2020,06}
 
 Inverse to @ref meshAttributeCustom(UnsignedShort). Expects that the attribute
 is custom.
@@ -208,7 +208,7 @@ constexpr UnsignedShort meshAttributeCustom(MeshAttribute name) {
 
 /**
 @brief Mesh index data
-@m_since_latest
+@m_since{2020,06}
 
 Convenience type for populating @ref MeshData, see its documentation for an
 introduction.
@@ -285,7 +285,7 @@ class MAGNUM_TRADE_EXPORT MeshIndexData {
 
 /**
 @brief Mesh attribute data
-@m_since_latest
+@m_since{2020,06}
 
 Convenience type for populating @ref MeshData, see its documentation for an
 introduction. Additionally usable in various @ref MeshTools algorithms such as
@@ -346,57 +346,31 @@ class MAGNUM_TRADE_EXPORT MeshAttributeData {
          * @param name      Attribute name
          * @param format    Vertex format
          * @param data      Attribute data
-         *
-         * Expects that @p data stride is large enough to fit @p type and that
-         * @p type corresponds to @p name.
-         */
-        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, const Containers::StridedArrayView1D<const void>& data) noexcept: MeshAttributeData{name, format, 0, data} {}
-
-        /**
-         * @brief Type-erased constructor for an array attribute
-         * @param name      Attribute name
-         * @param format    Vertex format
-         * @param arraySize Array size
-         * @param data      Attribute data
+         * @param arraySize Array size. Use @cpp 0 @ce for non-array
+         *      attributes.
          *
          * Expects that @p data stride is large enough to fit all @p arraySize
          * items of @p type, @p type corresponds to @p name and @p arraySize is
-         * zero for builtin attributes. Passing @cpp 0 @ce to @p arraySize is
-         * equivalent to calling the above overload.
+         * zero for builtin attributes.
          */
-        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, UnsignedShort arraySize, const Containers::StridedArrayView1D<const void>& data) noexcept;
+        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, const Containers::StridedArrayView1D<const void>& data, UnsignedShort arraySize = 0) noexcept;
 
         /**
          * @brief Constructor
          * @param name      Attribute name
          * @param format    Vertex format
          * @param data      Attribute data
-         *
-         * Expects that the second dimension of @p data is contiguous and its
-         * size matches @p type; and that @p type corresponds to @p name.
-         */
-        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, const Containers::StridedArrayView2D<const char>& data) noexcept: MeshAttributeData{name, format, 0, data} {}
-
-        /** @overload */
-        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, std::nullptr_t) noexcept: MeshAttributeData{name, format, 0, nullptr, nullptr} {}
-
-        /**
-         * @brief Construct an array attribute
-         * @param name      Attribute name
-         * @param format    Vertex format
-         * @param arraySize Array size
-         * @param data      Attribute data
+         * @param arraySize Array size. Use @cpp 0 @ce for non-array
+         *      attributes.
          *
          * Expects that the second dimension of @p data is contiguous and its
          * size matches @p type and @p arraSize, that @p type corresponds to
-         * @p name and @p arraySize is zero for builtin attributes. Passing
-         * @cpp 0 @ce to @p arraySize is equivalent to calling the above
-         * overload.
+         * @p name and @p arraySize is zero for builtin attributes.
          */
-        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, UnsignedShort arraySize, const Containers::StridedArrayView2D<const char>& data) noexcept;
+        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, const Containers::StridedArrayView2D<const char>& data, UnsignedShort arraySize = 0) noexcept;
 
         /** @overload */
-        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, UnsignedShort arraySize, std::nullptr_t) noexcept: MeshAttributeData{name, format, arraySize, nullptr, nullptr} {}
+        explicit MeshAttributeData(MeshAttribute name, VertexFormat format, std::nullptr_t, UnsignedShort arraySize = 0) noexcept: MeshAttributeData{nullptr, name, format, nullptr, arraySize} {}
 
         /**
          * @brief Constructor
@@ -404,7 +378,7 @@ class MAGNUM_TRADE_EXPORT MeshAttributeData {
          * @param data      Attribute data
          *
          * Detects @ref VertexFormat based on @p T and calls
-         * @ref MeshAttributeData(MeshAttribute, VertexFormat, const Containers::StridedArrayView1D<const void>&).
+         * @ref MeshAttributeData(MeshAttribute, VertexFormat, const Containers::StridedArrayView1D<const void>&, UnsignedShort).
          * For most types known by Magnum, the detected @ref VertexFormat is of
          * the same name as the type (so e.g. @ref Magnum::Vector3ui "Vector3ui"
          * gets recognized as @ref VertexFormat::Vector3ui), with the
@@ -446,7 +420,7 @@ class MAGNUM_TRADE_EXPORT MeshAttributeData {
          * @param data      Attribute data
          *
          * Detects @ref VertexFormat based on @p T and calls
-         * @ref MeshAttributeData(MeshAttribute, VertexFormat, UnsignedShort, const Containers::StridedArrayView1D<const void>&)
+         * @ref MeshAttributeData(MeshAttribute, VertexFormat, const Containers::StridedArrayView1D<const void>&, UnsignedShort)
          * with the second dimension size passed to @p arraySize. Expects that
          * the second dimension is contiguous. At the moment only custom
          * attributes can be arrays, which means this function can't be used
@@ -478,7 +452,7 @@ class MAGNUM_TRADE_EXPORT MeshAttributeData {
          *
          * Note that due to the @cpp constexpr @ce nature of this constructor,
          * no @p format / @p arraySize checks against @p stride can be done.
-         * You're encouraged to use the @ref MeshAttributeData(MeshAttribute, VertexFormat, const Containers::StridedArrayView1D<const void>&)
+         * You're encouraged to use the @ref MeshAttributeData(MeshAttribute, VertexFormat, const Containers::StridedArrayView1D<const void>&, UnsignedShort)
          * constructor if you want additional safeguards.
          * @see @ref isOffsetOnly(), @ref arraySize(),
          *      @ref data(Containers::ArrayView<const void>) const
@@ -570,7 +544,8 @@ class MAGNUM_TRADE_EXPORT MeshAttributeData {
     private:
         friend MeshData;
 
-        constexpr explicit MeshAttributeData(MeshAttribute name, VertexFormat format, UnsignedShort arraySize, const Containers::StridedArrayView1D<const void>& data, std::nullptr_t) noexcept;
+        /* nullptr first, to avoid accidental matches as much as possible */
+        constexpr explicit MeshAttributeData(std::nullptr_t, MeshAttribute name, VertexFormat format, const Containers::StridedArrayView1D<const void>& data, UnsignedShort arraySize) noexcept;
 
         VertexFormat _format;
         MeshAttribute _name;
@@ -600,7 +575,7 @@ class MAGNUM_TRADE_EXPORT MeshAttributeData {
 
 /** @relatesalso MeshAttributeData
 @brief Create a non-owning array of @ref MeshAttributeData items
-@m_since_latest
+@m_since{2020,06}
 
 Useful when you have the attribute definitions statically defined (for example
 when the vertex data themselves are already defined at compile time) and don't
@@ -610,7 +585,7 @@ Containers::Array<MeshAttributeData> MAGNUM_TRADE_EXPORT meshAttributeDataNonOwn
 
 /**
 @brief Mesh data
-@m_since_latest
+@m_since{2020,06}
 
 Provides access to mesh vertex and index data, together with additional
 information such as primitive type. Populated instances of this class are
@@ -687,7 +662,7 @@ too:
 
 In cases where you want the @ref MeshData instance to only refer to external
 data without taking ownership (for example in a memory-mapped file, constant
-memory etc., instead of moving in an @ref Corrade::Containers::Array you pass
+memory etc.). Instead of moving in an @ref Corrade::Containers::Array you pass
 @ref DataFlags describing if the data is mutable or not together with an
 @ref Corrade::Containers::ArrayView. A variant of the above where the index
 data is constant and vertex data mutable, both referenced externally:
@@ -1076,7 +1051,8 @@ class MAGNUM_TRADE_EXPORT MeshData {
          * @ref vertexCount() which returns count of elements in every
          * @ref attribute() array, and @ref attributeCount() which returns
          * count of different per-vertex attribute arrays.
-         * @see @ref isIndexed(), @ref indexType()
+         * @see @ref isIndexed(), @ref indexType(),
+         *      @ref MeshTools::primitiveCount(MeshPrimitive, UnsignedInt)
          */
         UnsignedInt indexCount() const;
 
@@ -1152,6 +1128,7 @@ class MAGNUM_TRADE_EXPORT MeshData {
          * count of elements in the @ref indices() array, and
          * @ref attributeCount() which returns count of different per-vertex
          * attribute arrays.
+         * @see @ref MeshTools::primitiveCount(MeshPrimitive, UnsignedInt)
          */
         UnsignedInt vertexCount() const { return _vertexCount; }
 
@@ -2086,7 +2063,7 @@ namespace Implementation {
     #endif
 }
 
-constexpr MeshAttributeData::MeshAttributeData(const MeshAttribute name, const VertexFormat format, const UnsignedShort arraySize, const Containers::StridedArrayView1D<const void>& data, std::nullptr_t) noexcept:
+constexpr MeshAttributeData::MeshAttributeData(std::nullptr_t, const MeshAttribute name, const VertexFormat format, const Containers::StridedArrayView1D<const void>& data, const UnsignedShort arraySize) noexcept:
     _format{(CORRADE_CONSTEXPR_ASSERT(!arraySize || !isVertexFormatImplementationSpecific(format),
         "Trade::MeshAttributeData: array attributes can't have an implementation-specific format"), format)},
     _name{(CORRADE_CONSTEXPR_ASSERT(Implementation::isVertexFormatCompatibleWithAttribute(name, format),
@@ -2114,9 +2091,9 @@ constexpr MeshAttributeData::MeshAttributeData(const MeshAttribute name, const V
         "Trade::MeshAttributeData:" << name << "can't be an array attribute"), arraySize)},
     _data{offset} {}
 
-template<class T> constexpr MeshAttributeData::MeshAttributeData(MeshAttribute name, const Containers::StridedArrayView1D<T>& data) noexcept: MeshAttributeData{name, Implementation::vertexFormatFor<typename std::remove_const<T>::type>(), 0, data, nullptr} {}
+template<class T> constexpr MeshAttributeData::MeshAttributeData(MeshAttribute name, const Containers::StridedArrayView1D<T>& data) noexcept: MeshAttributeData{nullptr, name, Implementation::vertexFormatFor<typename std::remove_const<T>::type>(), data, 0} {}
 
-template<class T> constexpr MeshAttributeData::MeshAttributeData(MeshAttribute name, const Containers::StridedArrayView2D<T>& data) noexcept: MeshAttributeData{name, Implementation::vertexFormatFor<typename std::remove_const<T>::type>(), UnsignedShort(data.size()[1]), Containers::StridedArrayView1D<const void>{{data.data(), ~std::size_t{}}, data.size()[0], data.stride()[0]}, (CORRADE_CONSTEXPR_ASSERT(data.stride()[1] == sizeof(T), "Trade::MeshAttributeData: second view dimension is not contiguous"), nullptr)} {}
+template<class T> constexpr MeshAttributeData::MeshAttributeData(MeshAttribute name, const Containers::StridedArrayView2D<T>& data) noexcept: MeshAttributeData{(CORRADE_CONSTEXPR_ASSERT(data.stride()[1] == sizeof(T), "Trade::MeshAttributeData: second view dimension is not contiguous"), nullptr), name, Implementation::vertexFormatFor<typename std::remove_const<T>::type>(), Containers::StridedArrayView1D<const void>{{data.data(), ~std::size_t{}}, data.size()[0], data.stride()[0]}, UnsignedShort(data.size()[1])} {}
 
 template<class T> Containers::ArrayView<const T> MeshData::indices() const {
     CORRADE_ASSERT(isIndexed(),

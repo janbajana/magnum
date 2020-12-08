@@ -30,7 +30,9 @@
  */
 
 #include <utility>
+#ifndef CORRADE_NO_DEBUG
 #include <Corrade/Utility/Utility.h>
+#endif
 
 #include "Magnum/visibility.h"
 #include "Magnum/Math/Math.h"
@@ -57,8 +59,8 @@ for more information about half floats.
 The class provides explicit conversion from and to @ref Magnum::Float "Float",
 equality comparison with correct treatment of NaN values, promotion and
 negation operator, an @link Literals::operator""_h() operator""_h() @endlink
-literal and an @ref operator<<(Debug&, Half) debug operator. Internally the class uses
-@ref packHalf() and @ref unpackHalf(). Example usage:
+literal and an @ref operator<<(Debug&, Half) debug operator. Internally the
+class uses @ref packHalf() and @ref unpackHalf(). Example usage:
 
 @snippet MagnumMath.cpp Half-usage
 
@@ -102,7 +104,7 @@ class Half {
         explicit Half(Double value) noexcept: _data{packHalf(Float(value))} {}
 
         /** @brief Construct without initializing the contents */
-        explicit Half(NoInitT) noexcept {}
+        explicit Half(Magnum::NoInitT) noexcept {}
 
         /**
          * @brief Equality comparison
@@ -211,7 +213,7 @@ template<> struct MAGNUM_EXPORT TweakableParser<Magnum::Math::Half> {
     TweakableParser() = delete;
 
     /** @brief Parse the value */
-    static std::pair<TweakableState, Magnum::Math::Half> parse(Containers::ArrayView<const char> value);
+    static std::pair<TweakableState, Magnum::Math::Half> parse(Containers::StringView value);
 };
 
 }}

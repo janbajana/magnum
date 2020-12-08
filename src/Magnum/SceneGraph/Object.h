@@ -157,6 +157,23 @@ template<class Transformation> class Object: public AbstractObject<Transformatio
             return Containers::LinkedListItem<Object<Transformation>, Object<Transformation>>::list();
         }
 
+        /**
+         * @brief Move a child object before another
+         * @return Reference to self (for method chaining)
+         * @m_since_latest
+         *
+         * Doesn't have any effect on draw order, only on the child order when
+         * iterating through @ref children(). The @p child is expected to be a
+         * child of this object, @p before is either a child of this object or
+         * @cpp nullptr @ce in which case the @p child is moved to the last
+         * position in the child list.
+         * @see @ref Corrade::Containers::LinkedList::move()
+         */
+        Object<Transformation>& move(Object<Transformation>& child, Object<Transformation>* before) {
+            Containers::LinkedList<Object<Transformation>>::move(&child, before);
+            return *this;
+        }
+
         /** @brief Previous sibling object or `nullptr`, if this is the first object */
         Object<Transformation>* previousSibling() {
             return Containers::LinkedListItem<Object<Transformation>, Object<Transformation>>::previous();
@@ -195,10 +212,13 @@ template<class Transformation> class Object: public AbstractObject<Transformatio
          * @brief Add a child
          *
          * Calling `object.addChild<MyObject>(args...)` is equivalent to
-         * `new MyObject{args..., &object}`.
+         * `new MyObject{args...}` followed by an appropriate @ref setParent()
+         * call.
          */
         template<class T, class ...Args> T& addChild(Args&&... args) {
-            return *(new T{std::forward<Args>(args)..., this});
+            T* child = new T{std::forward<Args>(args)...};
+            child->setParent(this);
+            return *child;
         }
 
         /**

@@ -248,7 +248,7 @@ void Matrix4Test::constructNoInit() {
                  {4.5f,  4.0f, 7.0f,  2.0f},
                  {1.0f,  2.0f, 3.0f, -1.0f},
                  {7.9f, -1.0f, 8.0f, -1.5f}};
-    new(&a) Matrix4{NoInit};
+    new(&a) Matrix4{Magnum::NoInit};
     {
         #if defined(__GNUC__) && __GNUC__*100 + __GNUC_MINOR__ >= 601 && __OPTIMIZE__
         CORRADE_EXPECT_FAIL("GCC 6.1+ misoptimizes and overwrites the value.");
@@ -259,10 +259,10 @@ void Matrix4Test::constructNoInit() {
                                    {7.9f, -1.0f, 8.0f, -1.5f}));
     }
 
-    CORRADE_VERIFY((std::is_nothrow_constructible<Matrix4, NoInitT>::value));
+    CORRADE_VERIFY((std::is_nothrow_constructible<Matrix4, Magnum::NoInitT>::value));
 
     /* Implicit construction is not allowed */
-    CORRADE_VERIFY(!(std::is_convertible<NoInitT, Matrix4>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Magnum::NoInitT, Matrix4>::value));
 }
 
 void Matrix4Test::constructOneValue() {
@@ -395,7 +395,7 @@ void Matrix4Test::rotation() {
                    { 0.47987163f,  0.59757626f,  0.6423596f, 0.0f},
                    {-0.80181062f,  0.00151846f, 0.59757626f, 0.0f},
                    {        0.0f,         0.0f,        0.0f, 1.0f});
-    CORRADE_COMPARE(Matrix4::rotation(Deg(-74.0f), Vector3(-1.0f, 2.0f, 2.0f).normalized()), matrix);
+    CORRADE_COMPARE(Matrix4::rotation(-74.0_degf, Vector3(-1.0f, 2.0f, 2.0f).normalized()), matrix);
 }
 
 void Matrix4Test::rotationNotNormalized() {
@@ -406,7 +406,7 @@ void Matrix4Test::rotationNotNormalized() {
     std::ostringstream out;
     Error redirectError{&out};
 
-    Matrix4::rotation(Deg(-74.0f), {-1.0f, 2.0f, 2.0f});
+    Matrix4::rotation(-74.0_degf, {-1.0f, 2.0f, 2.0f});
     CORRADE_COMPARE(out.str(), "Math::Matrix4::rotation(): axis Vector(-1, 2, 2) is not normalized\n");
 }
 
@@ -546,7 +546,7 @@ void Matrix4Test::perspectiveProjectionFov() {
                      {      0.0f, 9.788454f,         0.0f,  0.0f},
                      {      0.0f,      0.0f,  -1.9411764f, -1.0f},
                      {      0.0f,      0.0f, -94.1176452f,  0.0f});
-    CORRADE_COMPARE(Matrix4::perspectiveProjection(Deg(27.0f), 2.35f, 32.0f, 100.0f), expected);
+    CORRADE_COMPARE(Matrix4::perspectiveProjection(27.0_degf, 2.35f, 32.0f, 100.0f), expected);
 }
 
 void Matrix4Test::perspectiveProjectionFovInfiniteFar() {
@@ -554,7 +554,7 @@ void Matrix4Test::perspectiveProjectionFovInfiniteFar() {
                      {      0.0f, 9.788454f,   0.0f,  0.0f},
                      {      0.0f,      0.0f,  -1.0f, -1.0f},
                      {      0.0f,      0.0f, -64.0f,  0.0f});
-    CORRADE_COMPARE(Matrix4::perspectiveProjection(Deg(27.0f), 2.35f, 32.0f, Constants::inf()), expected);
+    CORRADE_COMPARE(Matrix4::perspectiveProjection(27.0_degf, 2.35f, 32.0f, Constants::inf()), expected);
 }
 
 void Matrix4Test::perspectiveProjectionOffCenter() {
@@ -832,6 +832,47 @@ void Matrix4Test::uniformScalingPartNotUniform() {
         "       0, 0, 1)\n");
 }
 
+namespace {
+
+/* FFS. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60491 */
+#ifdef minor
+#undef minor
+#endif
+
+/* From https://github.com/graphitemaster/normals_revisited#sample-code */
+float minor(const float* m, int r0, int r1, int r2, int c0, int c1, int c2) {
+  return m[4*r0+c0] * (m[4*r1+c1] * m[4*r2+c2] - m[4*r2+c1] * m[4*r1+c2]) -
+         m[4*r0+c1] * (m[4*r1+c0] * m[4*r2+c2] - m[4*r2+c0] * m[4*r1+c2]) +
+         m[4*r0+c2] * (m[4*r1+c0] * m[4*r2+c1] - m[4*r2+c0] * m[4*r1+c1]);
+}
+
+void cofactor(const float* src, float* dst) {
+  dst[ 0] =  minor(src, 1, 2, 3, 1, 2, 3);
+  dst[ 1] = -minor(src, 1, 2, 3, 0, 2, 3);
+  dst[ 2] =  minor(src, 1, 2, 3, 0, 1, 3);
+  dst[ 3] = -minor(src, 1, 2, 3, 0, 1, 2);
+  dst[ 4] = -minor(src, 0, 2, 3, 1, 2, 3);
+  dst[ 5] =  minor(src, 0, 2, 3, 0, 2, 3);
+  dst[ 6] = -minor(src, 0, 2, 3, 0, 1, 3);
+  dst[ 7] =  minor(src, 0, 2, 3, 0, 1, 2);
+  dst[ 8] =  minor(src, 0, 1, 3, 1, 2, 3);
+  dst[ 9] = -minor(src, 0, 1, 3, 0, 2, 3);
+  dst[10] =  minor(src, 0, 1, 3, 0, 1, 3);
+  dst[11] = -minor(src, 0, 1, 3, 0, 1, 2);
+  dst[12] = -minor(src, 0, 1, 2, 1, 2, 3);
+  dst[13] =  minor(src, 0, 1, 2, 0, 2, 3);
+  dst[14] = -minor(src, 0, 1, 2, 0, 1, 3);
+  dst[15] =  minor(src, 0, 1, 2, 0, 1, 2);
+}
+
+Matrix4 cofactorGroundTruth(const Matrix4& src) {
+    Matrix4 out;
+    cofactor(src.data(), out.data());
+    return out;
+}
+
+}
+
 void Matrix4Test::normalMatrixPart() {
     /* Comparing normalized matrices -- we care only about orientation, not
        scaling as that's renormalized in the shader anyway */
@@ -846,22 +887,30 @@ void Matrix4Test::normalMatrixPart() {
     auto a = Matrix4::rotationY(35.0_degf);
     CORRADE_COMPARE(a.normalMatrix(), a.rotationScaling());
     CORRADE_COMPARE(a.normalMatrix(), a.rotationScaling().inverted().transposed());
+    /* It should be also the same result as the original code */
+    CORRADE_COMPARE(a.normalMatrix(), cofactorGroundTruth(a).rotationScaling());
 
     /* For rotation + uniform scaling, normalMatrix is the same as the
        normalized upper-left part (and the same as the "classic" calculation) */
     auto b = Matrix4::rotationZ(35.0_degf)*Matrix4::scaling(Vector3{3.5f});
     CORRADE_COMPARE(unit(b.normalMatrix()), unit(b.rotation()));
     CORRADE_COMPARE(unit(b.normalMatrix()), unit(b.rotationScaling().inverted().transposed()));
+    /* It should be also the same result as the original code */
+    CORRADE_COMPARE(b.normalMatrix(), cofactorGroundTruth(b).rotationScaling());
 
     /* Rotation and non-uniform scaling (= shear) is the same as the
        "classic" calculation */
     auto c = Matrix4::rotationX(35.0_degf)*Matrix4::scaling({0.3f, 1.1f, 3.5f});
     CORRADE_COMPARE(unit(c.normalMatrix()), unit(c.rotationScaling().inverted().transposed()));
+    /* It should be also the same result as the original code */
+    CORRADE_COMPARE(c.normalMatrix(), cofactorGroundTruth(c).rotationScaling());
 
     /* Reflection (or scaling by -1) is not -- the "classic" way has the sign
        flipped */
     auto d = Matrix4::rotationZ(35.0_degf)*Matrix4::reflection(Vector3{1.0f/Constants::sqrt3()});
     CORRADE_COMPARE(-unit(d.normalMatrix()), unit(d.rotationScaling().inverted().transposed()));
+    /* It should be also the same result as the original code */
+    CORRADE_COMPARE(d.normalMatrix(), cofactorGroundTruth(d).rotationScaling());
 }
 
 void Matrix4Test::vectorParts() {
@@ -893,12 +942,12 @@ void Matrix4Test::vectorParts() {
 }
 
 void Matrix4Test::invertedRigid() {
-    Matrix4 actual = Matrix4::rotation(Deg(-74.0f), Vector3(-1.0f, 0.5f, 2.0f).normalized())*
+    Matrix4 actual = Matrix4::rotation(-74.0_degf, Vector3(-1.0f, 0.5f, 2.0f).normalized())*
                      Matrix4::reflection(Vector3(0.5f, -2.0f, 2.0f).normalized())*
                      Matrix4::translation({1.0f, 2.0f, -3.0f});
     Matrix4 expected = Matrix4::translation({-1.0f, -2.0f, 3.0f})*
                        Matrix4::reflection(Vector3(0.5f, -2.0f, 2.0f).normalized())*
-                       Matrix4::rotation(Deg(74.0f), Vector3(-1.0f, 0.5f, 2.0f).normalized());
+                       Matrix4::rotation(74.0_degf, Vector3(-1.0f, 0.5f, 2.0f).normalized());
 
 
     CORRADE_COMPARE(actual.invertedRigid(), expected);
@@ -923,7 +972,7 @@ void Matrix4Test::invertedRigidNotRigid() {
 }
 
 void Matrix4Test::transform() {
-    Matrix4 a = Matrix4::translation({1.0f, -5.0f, 3.5f})*Matrix4::rotation(Deg(90.0f), Vector3::zAxis());
+    Matrix4 a = Matrix4::translation({1.0f, -5.0f, 3.5f})*Matrix4::rotation(90.0_degf, Vector3::zAxis());
     Vector3 v(1.0f, -2.0f, 5.5f);
 
     CORRADE_COMPARE(a.transformVector(v), Vector3(2.0f, 1.0f, 5.5f));

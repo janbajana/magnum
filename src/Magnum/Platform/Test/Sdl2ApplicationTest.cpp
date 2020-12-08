@@ -47,6 +47,10 @@
 #pragma clang diagnostic pop
 #endif
 
+#ifdef MAGNUM_TARGET_GL
+#include "Magnum/GL/DefaultFramebuffer.h"
+#endif
+
 namespace Magnum { namespace Platform { namespace Test { namespace {
 
 struct Sdl2ApplicationTest: Platform::Application {
@@ -68,6 +72,10 @@ struct Sdl2ApplicationTest: Platform::Application {
 
     void drawEvent() override {
         Debug{} << "draw event";
+        #ifdef MAGNUM_TARGET_GL
+        GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
+        #endif
+
         swapBuffers();
     }
 
@@ -122,7 +130,7 @@ struct Sdl2ApplicationTest: Platform::Application {
         #else
         else if(event.key() == KeyEvent::Key::F) {
             Debug{} << "toggling fullscreen";
-            setContainerCssClass((_fullscreen ^= true) ? "fullsize" : "");
+            setContainerCssClass((_fullscreen ^= true) ? "mn-fullsize" : "");
         }
         #endif
     }

@@ -5,6 +5,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2019 Marco Melorio <m.melorio@icloud.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -318,7 +319,7 @@ template<class T> class Quaternion {
         constexpr explicit Quaternion(ZeroInitT) noexcept: _vector{ZeroInit}, _scalar{T{0}} {}
 
         /** @brief Construct without initializing the contents */
-        explicit Quaternion(NoInitT) noexcept: _vector{NoInit} {}
+        explicit Quaternion(Magnum::NoInitT) noexcept: _vector{Magnum::NoInit} {}
 
         /**
          * @brief Construct from a vector and a scalar
@@ -432,7 +433,7 @@ template<class T> class Quaternion {
 
         /**
          * @brief Convert to an euler vector
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Expects that the quaternion is normalized. Returns the angles in an
          * XYZ order, you can combine them back to a quaternion like this:
@@ -783,7 +784,7 @@ template<class T> Vector3<Rad<T>> Quaternion<T>::toEuler() const {
     CORRADE_ASSERT(isNormalized(),
         "Math::Quaternion::toEuler():" << *this << "is not normalized", {});
 
-    Vector3<Rad<T>> euler{NoInit};
+    Vector3<Rad<T>> euler{Magnum::NoInit};
 
     Matrix3x3<T> rotMatrix = toMatrix();
 

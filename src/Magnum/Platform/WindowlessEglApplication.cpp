@@ -1,8 +1,9 @@
 /*
     This file is part of Magnum.
 
-    Copyright © 2010, 2011, 2012, 2013, 2014, 2015
-              Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
+                2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 Erik Wijmans <etw@gatech.edu>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -45,6 +46,10 @@
 
 #ifndef EGL_EXT_device_base
 typedef void *EGLDeviceEXT;
+#endif
+
+#ifndef EGL_NV_device_cuda
+#define EGL_CUDA_DEVICE_NV 0x323A
 #endif
 
 #ifndef EGL_EXT_platform_device
@@ -153,16 +158,63 @@ WindowlessEglContext::WindowlessEglContext(const Configuration& configuration, G
                 return;
             }
 
-            if(magnumContext && (magnumContext->internalFlags() >= GL::Context::InternalFlag::DisplayVerboseInitializationLog)) {
-                Debug{} << "Platform::WindowlessEglApplication: found" << count << "EGL devices, choosing device" << configuration.device();
+            UnsignedInt selectedDevice;
+            Containers::Array<EGLDeviceEXT> devices;
+
+            /* Look for CUDA devices */
+            if(configuration.cudaDevice() != ~UnsignedInt{}) {
+                if(!(extensionSupported(extensions, "EGL_EXT_device_query") || extensionSupported(extensions, "EGL_EXT_device_base"))) {
+                    Error e;
+                    e << "Platform::WindowlessEglApplication: CUDA device selection requires EGL_EXT_device_query or EGL_EXT_device_base extensions";
+                    return;
+                }
+
+                devices = Containers::Array<EGLDeviceEXT>{std::size_t(count)};
+                /* Assuming the same thing won't suddenly start failing when
+                   called the second time */
+                CORRADE_INTERNAL_ASSERT_OUTPUT(eglQueryDevices(devices.size(), devices, &count));
+
+                auto eglQueryDeviceAttribEXT = reinterpret_cast<EGLBoolean (*)(EGLDeviceEXT, EGLint, EGLAttrib*)>(eglGetProcAddress("eglQueryDeviceAttribEXT"));
+                auto eglQueryDeviceStringEXT = reinterpret_cast<const char* (*)(EGLDeviceEXT, EGLint)>(eglGetProcAddress("eglQueryDeviceStringEXT"));
+
+                /* Go through the EGL devices and find one that has the desired
+                   CUDA device number */
+                for(selectedDevice = 0; selectedDevice < UnsignedInt(count); ++selectedDevice) {
+                    if(magnumContext && (magnumContext->internalFlags() >= GL::Context::InternalFlag::DisplayVerboseInitializationLog))
+                        Debug{} << "Platform::WindowlessEglApplication: eglQueryDeviceStringEXT(EGLDevice=" << Debug::nospace << selectedDevice << Debug::nospace << "):" << eglQueryDeviceStringEXT(devices[selectedDevice], EGL_EXTENSIONS);
+
+                    EGLAttrib cudaDeviceNumber;
+                    if(eglQueryDeviceAttribEXT(devices[selectedDevice], EGL_CUDA_DEVICE_NV, &cudaDeviceNumber) && UnsignedInt(cudaDeviceNumber) == configuration.cudaDevice())
+                        break;
+                }
+
+                /* None found */
+                if(selectedDevice == UnsignedInt(count)) {
+                    Error e;
+                    e << "Platform::WindowlessEglApplication::tryCreateContext(): unable to find EGL device for CUDA device" << configuration.cudaDevice();
+                    return;
+                }
+
+                if(magnumContext && (magnumContext->internalFlags() >= GL::Context::InternalFlag::DisplayVerboseInitializationLog)) {
+                    Debug{} << "Platform::WindowlessEglApplication: found" << count << "EGL devices, choosing EGL device" << selectedDevice << "for CUDA device" << configuration.cudaDevice();
+                }
+
+            /* Otherwise just a normal EGL device */
+            } else {
+                /* Print the log *before* calling eglQueryDevices() again, as
+                   the `count` gets overwritten by it */
+                if(magnumContext && (magnumContext->internalFlags() >= GL::Context::InternalFlag::DisplayVerboseInitializationLog)) {
+                    Debug{} << "Platform::WindowlessEglApplication: found" << count << "EGL devices, choosing device" << configuration.device();
+                }
+
+                selectedDevice = configuration.device();
+                devices = Containers::Array<EGLDeviceEXT>{configuration.device() + 1};
+                /* Assuming the same thing won't suddenly start failing when
+                   called the second time */
+                CORRADE_INTERNAL_ASSERT_OUTPUT(eglQueryDevices(configuration.device() + 1, devices, &count));
             }
 
-            /* Assuming the same thing won't suddenly start failing when called
-               the second time */
-            Containers::Array<EGLDeviceEXT> devices{configuration.device() + 1};
-            CORRADE_INTERNAL_ASSERT_OUTPUT(eglQueryDevices(configuration.device() + 1, devices, &count));
-
-            if(!(_display = reinterpret_cast<EGLDisplay(*)(EGLenum, void*, const EGLint*)>(eglGetProcAddress("eglGetPlatformDisplayEXT"))(EGL_PLATFORM_DEVICE_EXT, devices[configuration.device()], nullptr))) {
+            if(!(_display = reinterpret_cast<EGLDisplay(*)(EGLenum, void*, const EGLint*)>(eglGetProcAddress("eglGetPlatformDisplayEXT"))(EGL_PLATFORM_DEVICE_EXT, devices[selectedDevice], nullptr))) {
                 Error{} << "Platform::WindowlessEglApplication::tryCreateContext(): cannot get platform display for a device:" << Implementation::eglErrorString(eglGetError());
                 return;
             }
@@ -390,7 +442,19 @@ WindowlessEglContext::WindowlessEglContext(WindowlessEglContext&& other):
 }
 
 WindowlessEglContext::~WindowlessEglContext() {
-    if(_context) eglDestroyContext(_display, _context);
+    if(_context) {
+        /* eglDestroyContext() doesn't actually destroy the context if it's
+           still current, it's only destroyed once eglMakeCurrent() makes some
+           other context current. This causes the "cannot make the previous
+           context current" error from above to appear if one creates an EGL
+           context again for a second time --- we switch from the (now zombie)
+           context to a new one to read the vendor string for the
+           "no-forward-compatible-core-context" workaround, at which point the
+           zombie gets finally killed, which then means we can't
+           eglMakeCurrent() it back after. */
+        eglMakeCurrent(_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglDestroyContext(_display, _context);
+    }
     #if defined(MAGNUM_TARGET_GLES) && !defined(MAGNUM_TARGET_WEBGL)
     if(_surface) eglDestroySurface(_display, _surface);
     #endif
@@ -451,7 +515,9 @@ WindowlessEglApplication::WindowlessEglApplication(const Arguments& arguments, N
     Utility::Arguments args{"magnum"};
     #ifndef MAGNUM_TARGET_WEBGL
     args.addOption("device", "").setHelp("device", "GPU device to use", "N")
-        .setFromEnvironment("device");
+        .setFromEnvironment("device")
+        .addOption("cuda-device", "").setHelp("cuda-device", "CUDA device to use. Takes precedence over --magnum-device.", "N")
+        .setFromEnvironment("cuda-device");
     #endif
     _context.reset(new GLContext{NoCreate, args, arguments.argc, arguments.argv});
 
@@ -460,6 +526,11 @@ WindowlessEglApplication::WindowlessEglApplication(const Arguments& arguments, N
         _commandLineDevice = 0;
     else
         _commandLineDevice = args.value<UnsignedInt>("device");
+
+    if (args.value("cuda-device").empty())
+        _commandLineCudaDevice = ~UnsignedInt{};
+    else
+        _commandLineCudaDevice = args.value<UnsignedInt>("cuda-device");
     #endif
 }
 
@@ -476,7 +547,7 @@ bool WindowlessEglApplication::tryCreateContext(const Configuration& configurati
     Configuration mergedConfiguration{configuration};
     #ifndef MAGNUM_TARGET_WEBGL
     if(!mergedConfiguration.device())
-        mergedConfiguration.setDevice(_commandLineDevice);
+        mergedConfiguration.setDevice(_commandLineDevice).setCudaDevice(_commandLineCudaDevice);
     #endif
 
     WindowlessEglContext glContext{mergedConfiguration, _context.get()};

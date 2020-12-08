@@ -85,7 +85,7 @@ template<class T> class Frustum {
         constexpr explicit Frustum(IdentityInitT) noexcept;
 
         /** @brief Construct a frustum without initializing the contents */
-        explicit Frustum(NoInitT) noexcept: _data{Vector4<T>{NoInit}, Vector4<T>{NoInit}, Vector4<T>{NoInit}, Vector4<T>{NoInit}, Vector4<T>{NoInit}, Vector4<T>{NoInit}} {}
+        explicit Frustum(Magnum::NoInitT) noexcept: _data{Vector4<T>{Magnum::NoInit}, Vector4<T>{Magnum::NoInit}, Vector4<T>{Magnum::NoInit}, Vector4<T>{Magnum::NoInit}, Vector4<T>{Magnum::NoInit}, Vector4<T>{Magnum::NoInit}} {}
 
         /**
          * @brief Construct a frustum from plane equations
@@ -146,7 +146,7 @@ template<class T> class Frustum {
 
         /**
          * @brief Plane at given index
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Expects that @p i is less than @cpp 6 @ce.
          */
@@ -206,42 +206,42 @@ template<class T> class Frustum {
 
         /**
          * @brief Left plane
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Vector4<T>& left() { return _data[0]; }
         constexpr Vector4<T> left() const { return _data[0]; } /**< @overload */
 
         /**
          * @brief Right plane
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Vector4<T>& right() { return _data[1]; }
         constexpr Vector4<T> right() const { return _data[1]; } /**< @overload */
 
         /**
          * @brief Bottom plane
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Vector4<T>& bottom() { return _data[2]; }
         constexpr Vector4<T> bottom() const { return _data[2]; } /**< @overload */
 
         /**
          * @brief Top plane
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Vector4<T>& top() { return _data[3]; }
         constexpr Vector4<T> top() const { return _data[3]; } /**< @overload */
 
         /**
          * @brief Near plane
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Vector4<T>& near() { return _data[4]; }
         constexpr Vector4<T> near() const { return _data[4]; } /**< @overload */
 
         /**
          * @brief Far plane
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Vector4<T>& far() { return _data[5]; }
         constexpr Vector4<T> far() const { return _data[5]; } /**< @overload */

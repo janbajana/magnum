@@ -5,6 +5,9 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 Nghia Truong <nghiatruong.vn@gmail.com>
+    Copyright © 2020 Pablo Escobar <mail@rvrs.in>
+    Copyright © 2020 janos <janos.meny@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -75,6 +78,50 @@ template<class Integral> inline std::pair<Integral, Integral> div(Integral x, In
     const auto result = std::div(x, y);
     return {result.quot, result.rem};
 }
+
+/**
+@brief [Binomial coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient).
+@m_since_latest
+
+Returns the number of combinations of @f$ n @f$ things taken @f$ k @f$ at a
+time, with @f$ n \ge k \ge 0 @f$: @f[
+    \begin{pmatrix} n \\ k \end{pmatrix} =
+        \frac{n! (n - k)!}{k!} =
+        \frac{n (n - 1) (n - 2) ~ \cdots ~ (n - (k - 1))}{k (k - 1) ~ \cdots ~ 1} =
+        \prod_{i=1}^k \frac{n + 1 - i}{i}
+@f]
+*/
+UnsignedLong MAGNUM_EXPORT binomialCoefficient(UnsignedInt n, UnsignedInt k);
+
+/**
+@brief Count of bits set in a number
+@m_since_latest
+
+Expands to `__builtin_popcount` / `__builtin_popcountll` on GCC and Clang, uses
+the [Counting bits set, in parallel](https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel)
+implementation from Sean Eron Anderson Bit Twiddling Hacks page on MSVC and
+elsewhere.
+*/
+/* Explicitly checking for Clang in addition to GCC to catch also clang-cl */
+#if defined(CORRADE_TARGET_GCC) || defined(CORRADE_TARGET_CLANG)
+inline UnsignedInt popcount(UnsignedInt number) {
+    return __builtin_popcount(number);
+}
+#else
+MAGNUM_EXPORT UnsignedInt popcount(UnsignedInt number);
+#endif
+
+/**
+@overload
+@m_since_latest
+*/
+#if defined(CORRADE_TARGET_GCC) || defined(CORRADE_TARGET_CLANG)
+inline UnsignedInt popcount(UnsignedLong number) {
+    return __builtin_popcountll(number);
+}
+#else
+MAGNUM_EXPORT UnsignedInt popcount(UnsignedLong number);
+#endif
 
 /**
 @{ @name Trigonometric functions
@@ -245,7 +292,7 @@ template<class T> constexpr typename std::enable_if<IsScalar<T>::value, T>::type
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> min(const Vector<size, T>& value, const Vector<size, T>& min) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::min(value[i], min[i]);
     return out;
@@ -253,7 +300,7 @@ template<std::size_t size, class T> inline Vector<size, T> min(const Vector<size
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> min(const Vector<size, T>& value, T min) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::min(value[i], min);
     return out;
@@ -272,7 +319,7 @@ template<class T> constexpr typename std::enable_if<IsScalar<T>::value, T>::type
 
 /** @overload */
 template<std::size_t size, class T> Vector<size, T> max(const Vector<size, T>& value, const Vector<size, T>& max) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::max(value[i], max[i]);
     return out;
@@ -280,7 +327,7 @@ template<std::size_t size, class T> Vector<size, T> max(const Vector<size, T>& v
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> max(const Vector<size, T>& value, T max) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::max(value[i], max);
     return out;
@@ -323,7 +370,7 @@ template<class T> constexpr typename std::enable_if<IsScalar<T>::value, T>::type
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> clamp(const Vector<size, T>& value, const Vector<size, T>& min, const Vector<size, T>& max) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::clamp(value[i], min[i], max[i]);
     return out;
@@ -331,7 +378,7 @@ template<std::size_t size, class T> inline Vector<size, T> clamp(const Vector<si
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> clamp(const Vector<size, T>& value, T min, T max) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::clamp(value[i], min, max);
     return out;
@@ -350,7 +397,7 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type si
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> sign(const Vector<size, T>& a) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::sign(a[i]);
     return out;
@@ -363,7 +410,7 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type ab
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> abs(const Vector<size, T>& a) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::abs(a[i]);
     return out;
@@ -376,7 +423,7 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type fl
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> floor(const Vector<size, T>& a) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::floor(a[i]);
     return out;
@@ -389,7 +436,7 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type ro
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> round(const Vector<size, T>& a) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::round(a[i]);
     return out;
@@ -402,9 +449,40 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type ce
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> ceil(const Vector<size, T>& a) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::ceil(a[i]);
+    return out;
+}
+
+/**
+@brief Floating point division remainder
+@param a     Numerator
+@param b     Denumerator
+@m_since_latest
+
+Calculates the remainder @f$ r @f$ of a floating point division: @f[
+    r = a - b ~ \operatorname{trunc}(\frac{a}{b})
+@f]
+
+@attention This function differs from the GLSL @glsl mod() @ce function when
+    @f$ \frac{a}{b} @f$ is negative. The return value has the same sign as the
+    numerator, whereas @glsl mod() @ce keeps the denumerator's sign.
+
+@m_keyword{mod(),GLSL mod(),}
+*/
+template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type fmod(T a, T b) {
+    return T(std::fmod(UnderlyingTypeOf<T>(a), UnderlyingTypeOf<T>(b)));
+}
+
+/**
+@overload
+@m_since_latest
+*/
+template<std::size_t size, class T> inline Vector<size, T> fmod(const Vector<size, T>& a, const Vector<size, T>& b) {
+    Vector<size, T> out{Magnum::NoInit};
+    for(std::size_t i = 0; i != size; ++i)
+        out[i] = Math::fmod(a[i], b[i]);
     return out;
 }
 
@@ -450,7 +528,7 @@ component-wise selection from either @p a or @p b based on values in @p t.
 @m_keyword{mix(),GLSL mix(),}
 */
 template<std::size_t size, class T> inline Vector<size, T> lerp(const Vector<size, T>& a, const Vector<size, T>& b, const BoolVector<size>& t) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = t[i] ? b[i] : a[i];
     return out;
@@ -599,7 +677,7 @@ template<UnsignedInt exponent, class T> constexpr typename std::enable_if<IsScal
 
 /** @overload */
 template<UnsignedInt exponent, std::size_t size, class T> inline Vector<size, T> pow(const Vector<size, T>& base) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::pow<exponent>(base[i]);
     return out;
@@ -619,7 +697,7 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type po
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> pow(const Vector<size, T>& base, T exponent) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::pow(base[i], exponent);
     return out;
@@ -638,7 +716,7 @@ template<class T> inline typename std::enable_if<IsScalar<T>::value, T>::type sq
 
 /** @overload */
 template<std::size_t size, class T> inline Vector<size, T> sqrt(const Vector<size, T>& a) {
-    Vector<size, T> out{NoInit};
+    Vector<size, T> out{Magnum::NoInit};
     for(std::size_t i = 0; i != size; ++i)
         out[i] = Math::sqrt(a[i]);
     return out;
@@ -661,9 +739,15 @@ template<std::size_t size, class T> inline Vector<size, T> sqrtInverted(const Ve
     return Vector<size, T>(T(1))/Math::sqrt(a);
 }
 
+/* Since 1.8.17, the original short-hand group closing doesn't work anymore.
+   FFS. */
+/**
+ * @}
+ */
+
 /**
 @brief Reflect a vector
-@m_since_latest
+@m_since{2020,06}
 
 Reflects the vector off a surface given the surface outward normal. Expects
 that the normal vector is normalized. For a vector @f$ \boldsymbol{v} @f$ and a
@@ -683,7 +767,7 @@ template<std::size_t size, class T> inline Vector<size, T> reflect(const Vector<
 
 /**
 @brief Refract a vector
-@m_since_latest
+@m_since{2020,06}
 
 Refracts a vector through a medium given the surface outward normal and ratio
 of indices of refraction eta. Expects that both @p vector and @p normal is
@@ -712,12 +796,6 @@ template<std::size_t size, class T> inline Vector<size, T> refract(const Vector<
     if(k < T(0.0)) return {};
     return eta*vector - (eta*dot + std::sqrt(k))*normal;
 }
-
-/* Since 1.8.17, the original short-hand group closing doesn't work anymore.
-   FFS. */
-/**
- * @}
- */
 
 }}
 

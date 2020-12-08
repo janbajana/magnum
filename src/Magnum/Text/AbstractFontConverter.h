@@ -37,10 +37,6 @@
 #include "Magnum/Text/Text.h"
 #include "Magnum/Text/visibility.h"
 
-#ifdef MAGNUM_BUILD_DEPRECATED
-#include <Corrade/Containers/PointerStl.h>
-#endif
-
 #ifdef CORRADE_TARGET_LIBCXX
 #include <string> /* Libc++ doesn't have std::u32string in the fwdecl */
 #else
@@ -51,7 +47,7 @@ namespace Magnum { namespace Text {
 
 /**
 @brief Features supported by a font converter
-@m_since_latest
+@m_since{2020,06}
 
 @see @ref FontConverterFeatures, @ref AbstractFontConverter::features()
 */
@@ -105,7 +101,7 @@ enum class FontConverterFeature: UnsignedByte {
 
 /**
 @brief Features supported by a font converter
-@m_since_latest
+@m_since{2020,06}
 
 @see @ref AbstractFontConverter::features()
 */
@@ -128,6 +124,12 @@ namespace for available font converter plugins.
 
 You can use the @ref magnum-fontconverter "magnum-fontconverter" utility to do
 font conversion on command-line.
+
+@m_class{m-note m-success}
+
+@par
+    There's also a @ref magnum-fontconverter "magnum-fontconverter" tool,
+    exposing functionality of all font converter plugins on a command line.
 
 @section Text-AbstractFontConverter-subclassing Subclassing
 
@@ -159,12 +161,12 @@ class MAGNUM_TEXT_EXPORT AbstractFontConverter: public PluginManager::AbstractPl
     public:
         #ifdef MAGNUM_BUILD_DEPRECATED
         /** @brief @copybrief FontConverterFeature
-         * @m_deprecated_since_latest Use @ref FontConverterFeature instead.
+         * @m_deprecated_since{2020,06} Use @ref FontConverterFeature instead.
          */
         typedef CORRADE_DEPRECATED("use FontConverterFeature instead") FontConverterFeature Feature;
 
         /** @brief @copybrief FontConverterFeatures
-         * @m_deprecated_since_latest Use @ref FontConverterFeatures instead.
+         * @m_deprecated_since{2020,06} Use @ref FontConverterFeatures instead.
          */
         typedef CORRADE_DEPRECATED("use FontConverterFeatures instead") FontConverterFeatures Features;
         #endif
@@ -172,9 +174,7 @@ class MAGNUM_TEXT_EXPORT AbstractFontConverter: public PluginManager::AbstractPl
         /**
          * @brief Plugin interface
          *
-         * @code{.cpp}
-         * "cz.mosra.magnum.Text.AbstractFontConverter/0.2"
-         * @endcode
+         * @snippet Magnum/Text/AbstractFontConverter.cpp interface
          */
         static std::string pluginInterface();
 

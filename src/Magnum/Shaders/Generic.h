@@ -31,10 +31,6 @@
 
 #include "Magnum/GL/Attribute.h"
 
-#ifdef MAGNUM_BUILD_DEPRECATED
-#include <Corrade/Utility/Macros.h>
-#endif
-
 namespace Magnum { namespace Shaders {
 
 /**
@@ -322,7 +318,7 @@ template<UnsignedInt dimensions> struct Generic {
 
     /**
      * @brief Vertex tangent with a bitangent sign
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * @ref Magnum::Vector4 "Vector4", defined only in 3D. The last component
      * is a sign value (@cpp -1.0f @ce or @cpp +1.0f @ce) defining handedness
@@ -338,7 +334,7 @@ template<UnsignedInt dimensions> struct Generic {
 
     /**
      * @brief Vertex bitangent
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * @ref Magnum::Vector3 "Vector3", defined only in 3D. For better storage
      * efficiency, the bitangent can be also reconstructed from the normal and
@@ -354,7 +350,7 @@ template<UnsignedInt dimensions> struct Generic {
     #ifndef MAGNUM_TARGET_GLES2
     /**
      * @brief (Instanced) object ID
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * @ref Magnum::UnsignedInt "UnsignedInt". Corresponds to
      * @ref Trade::MeshAttribute::ObjectId.
@@ -385,7 +381,7 @@ template<UnsignedInt dimensions> struct Generic {
 
     /**
      * @brief (Instanced) transformation matrix
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * @ref Magnum::Matrix3 "Matrix3" in 2D and @ref Magnum::Matrix4 "Matrix4"
      * in 3D. Currently doesn't have a corresponding @ref Trade::MeshAttribute.
@@ -402,7 +398,7 @@ template<UnsignedInt dimensions> struct Generic {
 
     /**
      * @brief (Instanced) normal matrix
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * @ref Magnum::Matrix3 "Matrix3x3", defined only in 3D. Currently doesn't
      * have a corresponding @ref Trade::MeshAttribute.
@@ -419,7 +415,7 @@ template<UnsignedInt dimensions> struct Generic {
 
     /**
      * @brief (Instanced) texture offset
-     * @m_since_latest
+     * @m_since{2020,06}
      *
      * @ref Magnum::Vector2 "Vector2". Currently doesn't have a corresponding
      * @ref Trade::MeshAttribute.
@@ -431,29 +427,6 @@ template<UnsignedInt dimensions> struct Generic {
      *      in WebGL 1.0.
      */
     typedef GL::Attribute<15, Vector2> TextureOffset;
-
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    /**
-     * @brief Vertex color
-     * @m_deprecated_since{2018,10} Use @ref Color3 or @ref Color4 instead.
-     */
-    struct Color: GL::Attribute<3, Magnum::Color4> {
-        /**
-         * @brief Constructor
-         * @param components    Component count
-         * @param dataType      Type of passed data
-         * @param dataOptions   Data options
-         *
-         * @m_deprecated_since{2018,10} Use @ref Color3 or @ref Color4 instead.
-         */
-        CORRADE_DEPRECATED("use Color3 or Color4 instead") constexpr explicit Color(Components components, DataType dataType = DataType::Float, DataOptions dataOptions = {});
-
-        /** @brief @copybrief Color(Components, DataType, DataOptions)
-         * @m_deprecated_since{2018,10} Use @ref Color3 or @ref Color4 instead.
-         */
-        CORRADE_DEPRECATED("use Color3 or Color4 instead") constexpr explicit Color(DataType dataType = DataType::Float, DataOptions dataOptions = {});
-    };
-    #endif
 };
 #endif
 
@@ -480,14 +453,6 @@ struct BaseGeneric {
     #endif
 
     typedef GL::Attribute<15, Vector2> TextureOffset;
-
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    struct Color: GL::Attribute<3, Magnum::Color4> {
-        CORRADE_DEPRECATED("use Color3 or Color4 instead") constexpr explicit Color(Components components, DataType dataType = DataType::Float, DataOptions dataOptions = DataOptions()): Attribute<3, Magnum::Color4>{components, dataType, dataOptions} {}
-
-        CORRADE_DEPRECATED("use Color3 or Color4 instead") constexpr explicit Color(DataType dataType = DataType::Float, DataOptions dataOptions = DataOptions()): Attribute<3, Magnum::Color4>{Components::Three, dataType, dataOptions} {}
-    };
-    #endif
 };
 
 template<> struct Generic<2>: BaseGeneric {

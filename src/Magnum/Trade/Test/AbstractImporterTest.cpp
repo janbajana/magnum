@@ -27,6 +27,7 @@
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/TestSuite/Tester.h>
+#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/Directory.h>
 
@@ -43,6 +44,7 @@
 #include "Magnum/Trade/MeshObjectData3D.h"
 #include "Magnum/Trade/PhongMaterialData.h"
 #include "Magnum/Trade/SceneData.h"
+#include "Magnum/Trade/SkinData.h"
 #include "Magnum/Trade/TextureData.h"
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -140,6 +142,24 @@ struct AbstractImporterTest: TestSuite::Tester {
     void object3DNotImplemented();
     void object3DOutOfRange();
 
+    void skin2D();
+    void skin2DNameNotImplemented();
+    void skin2DNameOutOfRange();
+    void skin2DNotImplemented();
+    void skin2DOutOfRange();
+    void skin2DNonOwningDeleters();
+    void skin2DCustomJointDataDeleter();
+    void skin2DCustomInverseBindMatrixDataDeleter();
+
+    void skin3D();
+    void skin3DNameNotImplemented();
+    void skin3DNameOutOfRange();
+    void skin3DNotImplemented();
+    void skin3DOutOfRange();
+    void skin3DNonOwningDeleters();
+    void skin3DCustomJointDataDeleter();
+    void skin3DCustomInverseBindMatrixDataDeleter();
+
     void mesh();
     #ifdef MAGNUM_BUILD_DEPRECATED
     void meshDeprecatedFallback();
@@ -189,10 +209,16 @@ struct AbstractImporterTest: TestSuite::Tester {
     #endif
 
     void material();
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    void materialDeprecatedFallback();
+    #endif
     void materialNameNotImplemented();
     void materialNameOutOfRange();
     void materialNotImplemented();
     void materialOutOfRange();
+    void materialNonOwningDeleters();
+    void materialCustomAttributeDataDeleter();
+    void materialCustomLayerDataDeleter();
 
     void texture();
     void textureNameNotImplemented();
@@ -342,6 +368,24 @@ AbstractImporterTest::AbstractImporterTest() {
               &AbstractImporterTest::object3DNotImplemented,
               &AbstractImporterTest::object3DOutOfRange,
 
+              &AbstractImporterTest::skin2D,
+              &AbstractImporterTest::skin2DNameNotImplemented,
+              &AbstractImporterTest::skin2DNameOutOfRange,
+              &AbstractImporterTest::skin2DNotImplemented,
+              &AbstractImporterTest::skin2DOutOfRange,
+              &AbstractImporterTest::skin2DNonOwningDeleters,
+              &AbstractImporterTest::skin2DCustomJointDataDeleter,
+              &AbstractImporterTest::skin2DCustomInverseBindMatrixDataDeleter,
+
+              &AbstractImporterTest::skin3D,
+              &AbstractImporterTest::skin3DNameNotImplemented,
+              &AbstractImporterTest::skin3DNameOutOfRange,
+              &AbstractImporterTest::skin3DNotImplemented,
+              &AbstractImporterTest::skin3DOutOfRange,
+              &AbstractImporterTest::skin3DNonOwningDeleters,
+              &AbstractImporterTest::skin3DCustomJointDataDeleter,
+              &AbstractImporterTest::skin3DCustomInverseBindMatrixDataDeleter,
+
               &AbstractImporterTest::mesh,
               #ifdef MAGNUM_BUILD_DEPRECATED
               &AbstractImporterTest::meshDeprecatedFallback,
@@ -391,10 +435,16 @@ AbstractImporterTest::AbstractImporterTest() {
               #endif
 
               &AbstractImporterTest::material,
+              #ifdef MAGNUM_BUILD_DEPRECATED
+              &AbstractImporterTest::materialDeprecatedFallback,
+              #endif
               &AbstractImporterTest::materialNameNotImplemented,
               &AbstractImporterTest::materialNameOutOfRange,
               &AbstractImporterTest::materialNotImplemented,
               &AbstractImporterTest::materialOutOfRange,
+              &AbstractImporterTest::materialNonOwningDeleters,
+              &AbstractImporterTest::materialCustomAttributeDataDeleter,
+              &AbstractImporterTest::materialCustomLayerDataDeleter,
 
               &AbstractImporterTest::texture,
               &AbstractImporterTest::textureNameNotImplemented,
@@ -1020,6 +1070,9 @@ void AbstractImporterTest::thingCountNotImplemented() {
     CORRADE_COMPARE(importer.object2DCount(), 0);
     CORRADE_COMPARE(importer.object3DCount(), 0);
 
+    CORRADE_COMPARE(importer.skin2DCount(), 0);
+    CORRADE_COMPARE(importer.skin3DCount(), 0);
+
     CORRADE_COMPARE(importer.meshCount(), 0);
     CORRADE_COMPARE(importer.materialCount(), 0);
     CORRADE_COMPARE(importer.textureCount(), 0);
@@ -1051,6 +1104,9 @@ void AbstractImporterTest::thingCountNoFile() {
     importer.object2DCount();
     importer.object3DCount();
 
+    importer.skin2DCount();
+    importer.skin3DCount();
+
     importer.meshCount();
     importer.meshLevelCount(7);
     importer.materialCount();
@@ -1068,12 +1124,16 @@ void AbstractImporterTest::thingCountNoFile() {
         "Trade::AbstractImporter::animationCount(): no file opened\n"
         "Trade::AbstractImporter::lightCount(): no file opened\n"
         "Trade::AbstractImporter::cameraCount(): no file opened\n"
+
         "Trade::AbstractImporter::object2DCount(): no file opened\n"
         "Trade::AbstractImporter::object3DCount(): no file opened\n"
+
+        "Trade::AbstractImporter::skin2DCount(): no file opened\n"
+        "Trade::AbstractImporter::skin3DCount(): no file opened\n"
+
         "Trade::AbstractImporter::meshCount(): no file opened\n"
         "Trade::AbstractImporter::meshLevelCount(): no file opened\n"
         "Trade::AbstractImporter::materialCount(): no file opened\n"
-
         "Trade::AbstractImporter::textureCount(): no file opened\n"
 
         "Trade::AbstractImporter::image1DCount(): no file opened\n"
@@ -1098,6 +1158,9 @@ void AbstractImporterTest::thingForNameNotImplemented() {
 
     CORRADE_COMPARE(importer.object2DForName(""), -1);
     CORRADE_COMPARE(importer.object3DForName(""), -1);
+
+    CORRADE_COMPARE(importer.skin2DForName(""), -1);
+    CORRADE_COMPARE(importer.skin3DForName(""), -1);
 
     CORRADE_COMPARE(importer.meshForName(""), -1);
     CORRADE_COMPARE(importer.materialForName(""), -1);
@@ -1130,6 +1193,9 @@ void AbstractImporterTest::thingForNameNoFile() {
     importer.object2DForName("");
     importer.object3DForName("");
 
+    importer.skin2DForName("");
+    importer.skin3DForName("");
+
     importer.meshForName("");
     importer.materialForName("");
     importer.textureForName("");
@@ -1146,6 +1212,9 @@ void AbstractImporterTest::thingForNameNoFile() {
 
         "Trade::AbstractImporter::object2DForName(): no file opened\n"
         "Trade::AbstractImporter::object3DForName(): no file opened\n"
+
+        "Trade::AbstractImporter::skin2DForName(): no file opened\n"
+        "Trade::AbstractImporter::skin3DForName(): no file opened\n"
 
         "Trade::AbstractImporter::meshForName(): no file opened\n"
         "Trade::AbstractImporter::materialForName(): no file opened\n"
@@ -1179,6 +1248,9 @@ void AbstractImporterTest::thingByNameNotFound() {
         CORRADE_VERIFY(!importer.object2D("foobar"));
         CORRADE_VERIFY(!importer.object3D("foobar"));
 
+        CORRADE_VERIFY(!importer.skin2D("foobar"));
+        CORRADE_VERIFY(!importer.skin3D("foobar"));
+
         CORRADE_VERIFY(!importer.mesh("foobar"));
         CORRADE_VERIFY(!importer.material("foobar"));
         CORRADE_VERIFY(!importer.texture("foobar"));
@@ -1197,6 +1269,9 @@ void AbstractImporterTest::thingByNameNotFound() {
 
             "Trade::AbstractImporter::object2D(): object foobar not found\n"
             "Trade::AbstractImporter::object3D(): object foobar not found\n"
+
+            "Trade::AbstractImporter::skin2D(): skin foobar not found\n"
+            "Trade::AbstractImporter::skin3D(): skin foobar not found\n"
 
             "Trade::AbstractImporter::mesh(): mesh foobar not found\n"
             "Trade::AbstractImporter::material(): material foobar not found\n"
@@ -1230,6 +1305,9 @@ void AbstractImporterTest::thingNameNoFile() {
     importer.object2DName(42);
     importer.object3DName(42);
 
+    importer.skin2DName(42);
+    importer.skin3DName(42);
+
     importer.meshName(42);
     importer.materialName(42);
     importer.textureName(42);
@@ -1243,8 +1321,13 @@ void AbstractImporterTest::thingNameNoFile() {
         "Trade::AbstractImporter::animationName(): no file opened\n"
         "Trade::AbstractImporter::lightName(): no file opened\n"
         "Trade::AbstractImporter::cameraName(): no file opened\n"
+
         "Trade::AbstractImporter::object2DName(): no file opened\n"
         "Trade::AbstractImporter::object3DName(): no file opened\n"
+
+        "Trade::AbstractImporter::skin2DName(): no file opened\n"
+        "Trade::AbstractImporter::skin3DName(): no file opened\n"
+
         "Trade::AbstractImporter::meshName(): no file opened\n"
         "Trade::AbstractImporter::materialName(): no file opened\n"
         "Trade::AbstractImporter::textureName(): no file opened\n"
@@ -1283,6 +1366,11 @@ void AbstractImporterTest::thingNoFile() {
     importer.object3D(42);
     importer.object3D("foo");
 
+    importer.skin2D(42);
+    importer.skin2D("foo");
+    importer.skin3D(42);
+    importer.skin3D("foo");
+
     importer.mesh(42);
     importer.mesh("foo");
     importer.material(42);
@@ -1296,6 +1384,8 @@ void AbstractImporterTest::thingNoFile() {
     importer.image2D("foo");
     importer.image3D(42);
     importer.image3D("foo");
+
+    importer.importerState();
 
     CORRADE_COMPARE(out.str(),
         "Trade::AbstractImporter::defaultScene(): no file opened\n"
@@ -1313,6 +1403,11 @@ void AbstractImporterTest::thingNoFile() {
         "Trade::AbstractImporter::object3D(): no file opened\n"
         "Trade::AbstractImporter::object3D(): no file opened\n"
 
+        "Trade::AbstractImporter::skin2D(): no file opened\n"
+        "Trade::AbstractImporter::skin2D(): no file opened\n"
+        "Trade::AbstractImporter::skin3D(): no file opened\n"
+        "Trade::AbstractImporter::skin3D(): no file opened\n"
+
         "Trade::AbstractImporter::mesh(): no file opened\n"
         "Trade::AbstractImporter::mesh(): no file opened\n"
         "Trade::AbstractImporter::material(): no file opened\n"
@@ -1325,7 +1420,9 @@ void AbstractImporterTest::thingNoFile() {
         "Trade::AbstractImporter::image2D(): no file opened\n"
         "Trade::AbstractImporter::image2D(): no file opened\n"
         "Trade::AbstractImporter::image3D(): no file opened\n"
-        "Trade::AbstractImporter::image3D(): no file opened\n");
+        "Trade::AbstractImporter::image3D(): no file opened\n"
+
+        "Trade::AbstractImporter::importerState(): no file opened\n");
 }
 
 void AbstractImporterTest::defaultScene() {
@@ -1334,7 +1431,7 @@ void AbstractImporterTest::defaultScene() {
         bool doIsOpened() const override { return true; }
         void doClose() override {}
 
-        Int doDefaultScene() override { return 42; }
+        Int doDefaultScene() const override { return 42; }
     } importer;
 
     CORRADE_COMPARE(importer.defaultScene(), 42);
@@ -1361,15 +1458,15 @@ void AbstractImporterTest::scene() {
         UnsignedInt doSceneCount() const override { return 8; }
         Int doSceneForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doSceneName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<SceneData> doScene(UnsignedInt id) override {
             if(id == 7) return SceneData{{}, {}, &state};
-            else return SceneData{{}, {}};
+            return SceneData{{}, {}};
         }
     } importer;
 
@@ -1469,11 +1566,11 @@ void AbstractImporterTest::animation() {
         UnsignedInt doAnimationCount() const override { return 8; }
         Int doAnimationForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doAnimationName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override {
             /* Verify that initializer list is converted to an array with
@@ -1482,7 +1579,7 @@ void AbstractImporterTest::animation() {
                 AnimationTrackData{AnimationTrackType::Vector3,
                     AnimationTrackTargetType::Scaling3D, 0, {}}
                 }, &state};
-            else return AnimationData{{}, {}};
+            return AnimationData{{}, {}};
         }
     } importer;
 
@@ -1677,15 +1774,15 @@ void AbstractImporterTest::light() {
         UnsignedInt doLightCount() const override { return 8; }
         Int doLightForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doLightName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<LightData> doLight(UnsignedInt id) override {
             if(id == 7) return LightData{{}, {}, {}, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -1785,15 +1882,15 @@ void AbstractImporterTest::camera() {
         UnsignedInt doCameraCount() const override { return 8; }
         Int doCameraForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doCameraName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<CameraData> doCamera(UnsignedInt id) override {
             if(id == 7) return CameraData{{}, Vector2{}, {}, {}, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -1893,15 +1990,15 @@ void AbstractImporterTest::object2D() {
         UnsignedInt doObject2DCount() const override { return 8; }
         Int doObject2DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doObject2DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Pointer<ObjectData2D> doObject2D(UnsignedInt id) override {
             if(id == 7) return Containers::pointer(new ObjectData2D{{}, {}, &state});
-            else return {};
+            return {};
         }
     } importer;
 
@@ -2001,15 +2098,15 @@ void AbstractImporterTest::object3D() {
         UnsignedInt doObject3DCount() const override { return 8; }
         Int doObject3DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doObject3DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override {
             if(id == 7) return Containers::pointer(new ObjectData3D{{}, {}, &state});
-            else return {};
+            return {};
         }
     } importer;
 
@@ -2100,6 +2197,390 @@ void AbstractImporterTest::object3DOutOfRange() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::object3D(): index 8 out of range for 8 entries\n");
 }
 
+void AbstractImporterTest::skin2D() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 8; }
+        Int doSkin2DForName(const std::string& name) override {
+            if(name == "eighth") return 7;
+            return -1;
+        }
+        std::string doSkin2DName(UnsignedInt id) override {
+            if(id == 7) return "eighth";
+            return {};
+        }
+        Containers::Optional<SkinData2D> doSkin2D(UnsignedInt id) override {
+            /* Verify that initializer list is converted to an array with
+               the default deleter and not something disallowed */
+            if(id == 7) return SkinData2D{{1}, {{}}, &state};
+            return {};
+        }
+    } importer;
+
+    CORRADE_COMPARE(importer.skin2DCount(), 8);
+    CORRADE_COMPARE(importer.skin2DForName("eighth"), 7);
+    CORRADE_COMPARE(importer.skin2DName(7), "eighth");
+
+    {
+        auto data = importer.skin2D(7);
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE(data->importerState(), &state);
+    } {
+        auto data = importer.skin2D("eighth");
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE(data->importerState(), &state);
+    }
+}
+
+void AbstractImporterTest::skin2DNameNotImplemented() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 8; }
+    } importer;
+
+    CORRADE_COMPARE(importer.skin2DName(7), "");
+}
+
+void AbstractImporterTest::skin2DNameOutOfRange() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 8; }
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin2DName(8);
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::skin2DName(): index 8 out of range for 8 entries\n");
+}
+
+void AbstractImporterTest::skin2DNotImplemented() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 8; }
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin2D(7);
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::skin2D(): not implemented\n");
+}
+
+void AbstractImporterTest::skin2DOutOfRange() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 8; }
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin2D(8);
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::skin2D(): index 8 out of range for 8 entries\n");
+}
+
+void AbstractImporterTest::skin2DNonOwningDeleters() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 1; }
+        Int doSkin2DForName(const std::string&) override { return 0; }
+        Containers::Optional<SkinData2D> doSkin2D(UnsignedInt) override {
+            return SkinData2D{{}, jointData, {}, inverseBindMatrixData};
+        }
+
+        UnsignedInt jointData[1]{};
+        Matrix3 inverseBindMatrixData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    auto data = importer.skin2D(0);
+    CORRADE_COMPARE(data->joints(), importer.jointData);
+    CORRADE_COMPARE(data->inverseBindMatrices(), importer.inverseBindMatrixData);
+}
+
+void AbstractImporterTest::skin2DCustomJointDataDeleter() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 1; }
+        Int doSkin2DForName(const std::string&) override { return 0; }
+        Containers::Optional<SkinData2D> doSkin2D(UnsignedInt) override {
+            return SkinData2D{Containers::Array<UnsignedInt>{jointData, 1, [](UnsignedInt*, std::size_t){}}, Containers::Array<Matrix3>{1}};
+        }
+
+        UnsignedInt jointData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin2D(0);
+    importer.skin2D("");
+    CORRADE_COMPARE(out.str(),
+        "Trade::AbstractImporter::skin2D(): implementation is not allowed to use a custom Array deleter\n"
+        "Trade::AbstractImporter::skin2D(): implementation is not allowed to use a custom Array deleter\n");
+}
+
+void AbstractImporterTest::skin2DCustomInverseBindMatrixDataDeleter() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin2DCount() const override { return 1; }
+        Int doSkin2DForName(const std::string&) override { return 0; }
+        Containers::Optional<SkinData2D> doSkin2D(UnsignedInt) override {
+            return SkinData2D{Containers::Array<UnsignedInt>{1}, Containers::Array<Matrix3>{inverseBindMatrixData, 1, [](Matrix3*, std::size_t){}}};
+        }
+
+        Matrix3 inverseBindMatrixData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin2D(0);
+    importer.skin2D("");
+    CORRADE_COMPARE(out.str(),
+        "Trade::AbstractImporter::skin2D(): implementation is not allowed to use a custom Array deleter\n"
+        "Trade::AbstractImporter::skin2D(): implementation is not allowed to use a custom Array deleter\n");
+}
+
+void AbstractImporterTest::skin3D() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 8; }
+        Int doSkin3DForName(const std::string& name) override {
+            if(name == "eighth") return 7;
+            return -1;
+        }
+        std::string doSkin3DName(UnsignedInt id) override {
+            if(id == 7) return "eighth";
+            return {};
+        }
+        Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override {
+            /* Verify that initializer list is converted to an array with
+               the default deleter and not something disallowed */
+            if(id == 7) return SkinData3D{{1}, {{}}, &state};
+            return {};
+        }
+    } importer;
+
+    CORRADE_COMPARE(importer.skin3DCount(), 8);
+    CORRADE_COMPARE(importer.skin3DForName("eighth"), 7);
+    CORRADE_COMPARE(importer.skin3DName(7), "eighth");
+
+    {
+        auto data = importer.skin3D(7);
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE(data->importerState(), &state);
+    } {
+        auto data = importer.skin3D("eighth");
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE(data->importerState(), &state);
+    }
+}
+
+void AbstractImporterTest::skin3DNameNotImplemented() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 8; }
+    } importer;
+
+    CORRADE_COMPARE(importer.skin3DName(7), "");
+}
+
+void AbstractImporterTest::skin3DNameOutOfRange() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 8; }
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin3DName(8);
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::skin3DName(): index 8 out of range for 8 entries\n");
+}
+
+void AbstractImporterTest::skin3DNotImplemented() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 8; }
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin3D(7);
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::skin3D(): not implemented\n");
+}
+
+void AbstractImporterTest::skin3DOutOfRange() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 8; }
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin3D(8);
+    CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::skin3D(): index 8 out of range for 8 entries\n");
+}
+
+void AbstractImporterTest::skin3DNonOwningDeleters() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 1; }
+        Int doSkin3DForName(const std::string&) override { return 0; }
+        Containers::Optional<SkinData3D> doSkin3D(UnsignedInt) override {
+            return SkinData3D{{}, jointData, {}, inverseBindMatrixData};
+        }
+
+        UnsignedInt jointData[1]{};
+        Matrix4 inverseBindMatrixData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    auto data = importer.skin3D(0);
+    CORRADE_COMPARE(data->joints(), importer.jointData);
+    CORRADE_COMPARE(data->inverseBindMatrices(), importer.inverseBindMatrixData);
+}
+
+void AbstractImporterTest::skin3DCustomJointDataDeleter() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 1; }
+        Int doSkin3DForName(const std::string&) override { return 0; }
+        Containers::Optional<SkinData3D> doSkin3D(UnsignedInt) override {
+            return SkinData3D{Containers::Array<UnsignedInt>{jointData, 1, [](UnsignedInt*, std::size_t){}}, Containers::Array<Matrix4>{1}};
+        }
+
+        UnsignedInt jointData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin3D(0);
+    importer.skin3D("");
+    CORRADE_COMPARE(out.str(),
+        "Trade::AbstractImporter::skin3D(): implementation is not allowed to use a custom Array deleter\n"
+        "Trade::AbstractImporter::skin3D(): implementation is not allowed to use a custom Array deleter\n");
+}
+
+void AbstractImporterTest::skin3DCustomInverseBindMatrixDataDeleter() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doSkin3DCount() const override { return 1; }
+        Int doSkin3DForName(const std::string&) override { return 0; }
+        Containers::Optional<SkinData3D> doSkin3D(UnsignedInt) override {
+            return SkinData3D{Containers::Array<UnsignedInt>{1}, Containers::Array<Matrix4>{inverseBindMatrixData, 1, [](Matrix4*, std::size_t){}}};
+        }
+
+        Matrix4 inverseBindMatrixData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.skin3D(0);
+    importer.skin3D("");
+    CORRADE_COMPARE(out.str(),
+        "Trade::AbstractImporter::skin3D(): implementation is not allowed to use a custom Array deleter\n"
+        "Trade::AbstractImporter::skin3D(): implementation is not allowed to use a custom Array deleter\n");
+}
+
 void AbstractImporterTest::mesh() {
     struct: AbstractImporter {
         ImporterFeatures doFeatures() const override { return {}; }
@@ -2109,21 +2590,21 @@ void AbstractImporterTest::mesh() {
         UnsignedInt doMeshCount() const override { return 8; }
         UnsignedInt doMeshLevelCount(UnsignedInt id) override {
             if(id == 7) return 3;
-            else return {};
+            return {};
         }
         Int doMeshForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doMeshName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override {
             /* Verify that initializer list is converted to an array with
                the default deleter and not something disallowed */
             if(id == 7 && level == 2) return MeshData{MeshPrimitive::Points, nullptr, {MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, nullptr}}, MeshData::ImplicitVertexCount, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -2152,15 +2633,15 @@ void AbstractImporterTest::meshDeprecatedFallback() {
         UnsignedInt doMeshCount() const override { return 8; }
         Int doMeshForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doMeshName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<MeshData> doMesh(UnsignedInt id, UnsignedInt level) override {
             if(id == 7 && level == 0) return MeshData{MeshPrimitive::Points, nullptr, {MeshAttributeData{MeshAttribute::Position, VertexFormat::Vector3, nullptr}}, MeshData::ImplicitVertexCount, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -2540,16 +3021,16 @@ void AbstractImporterTest::mesh2D() {
         UnsignedInt doMesh2DCount() const override { return 8; }
         Int doMesh2DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doMesh2DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<MeshData2D> doMesh2D(UnsignedInt id) override {
             if(id == 7) return MeshData2D{{}, {}, {{}}, {}, {}, &state};
-            else return {};
+            return {};
         }
         CORRADE_IGNORE_DEPRECATED_POP
     } importer;
@@ -2758,16 +3239,16 @@ void AbstractImporterTest::mesh3D() {
         UnsignedInt doMesh3DCount() const override { return 8; }
         Int doMesh3DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doMesh3DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         CORRADE_IGNORE_DEPRECATED_PUSH
         Containers::Optional<MeshData3D> doMesh3D(UnsignedInt id) override {
             if(id == 7) return MeshData3D{{}, {}, {{}}, {}, {}, {}, &state};
-            else return {};
+            return {};
         }
         CORRADE_IGNORE_DEPRECATED_POP
     } importer;
@@ -2979,19 +3460,15 @@ void AbstractImporterTest::material() {
         UnsignedInt doMaterialCount() const override { return 8; }
         Int doMaterialForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doMaterialName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
-        Containers::Pointer<AbstractMaterialData> doMaterial(UnsignedInt id) override {
-            if(id == 7) return Containers::pointer(new PhongMaterialData{{},
-                {}, {},
-                {}, {},
-                {}, {}, {}, {},
-                {}, {}, {}, &state});
-            else return {};
+        Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override {
+            if(id == 7) return Containers::optional<MaterialData>(MaterialTypes{}, nullptr, &state);
+            return {};
         }
     } importer;
 
@@ -3009,6 +3486,49 @@ void AbstractImporterTest::material() {
         CORRADE_COMPARE(data->importerState(), &state);
     }
 }
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+void AbstractImporterTest::materialDeprecatedFallback() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doMaterialCount() const override { return 8; }
+        Int doMaterialForName(const std::string&) override { return 0; }
+        /* Using a deprecated PhongMaterialData constructor to verify that
+           propagating such instance works as well (array deleters etc.) */
+        Containers::Optional<MaterialData> doMaterial(UnsignedInt) override {
+            CORRADE_IGNORE_DEPRECATED_PUSH
+            return Containers::Optional<MaterialData>{std::move(PhongMaterialData{{},
+                {}, {},
+                {}, {},
+                {}, {},
+                {},
+                {}, {}, {}, {}, &state
+            })};
+            CORRADE_IGNORE_DEPRECATED_POP
+        }
+    } importer;
+
+    {
+        CORRADE_IGNORE_DEPRECATED_PUSH
+        Containers::Pointer<MaterialData> data = importer.material(0);
+        CORRADE_IGNORE_DEPRECATED_POP
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE_AS(data->attributeCount(), 0, TestSuite::Compare::Greater);
+        CORRADE_COMPARE(data->importerState(), &state);
+    } {
+        CORRADE_IGNORE_DEPRECATED_PUSH
+        Containers::Pointer<MaterialData> data = importer.material("");
+        CORRADE_IGNORE_DEPRECATED_POP
+        CORRADE_VERIFY(data);
+        CORRADE_COMPARE_AS(data->attributeCount(), 0, TestSuite::Compare::Greater);
+        CORRADE_COMPARE(data->importerState(), &state);
+    }
+}
+#endif
+
 void AbstractImporterTest::materialNameNotImplemented() {
     struct: AbstractImporter {
         ImporterFeatures doFeatures() const override { return {}; }
@@ -3081,6 +3601,89 @@ void AbstractImporterTest::materialOutOfRange() {
     CORRADE_COMPARE(out.str(), "Trade::AbstractImporter::material(): index 8 out of range for 8 entries\n");
 }
 
+void AbstractImporterTest::materialNonOwningDeleters() {
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doMaterialCount() const override { return 1; }
+        Containers::Optional<MaterialData> doMaterial(UnsignedInt) override {
+            return MaterialData{{}, {}, attributeData, {}, layerData};
+        }
+
+        UnsignedInt layerData[1]{};
+        MaterialAttributeData attributeData[1]{
+            {MaterialAttribute::DiffuseColor, Color4{}}
+        };
+    } importer;
+
+    auto data = importer.material(0);
+    CORRADE_VERIFY(data);
+    CORRADE_COMPARE(static_cast<const void*>(data->attributeData()), importer.attributeData);
+    CORRADE_COMPARE(static_cast<const void*>(data->layerData()), importer.layerData);
+}
+
+void AbstractImporterTest::materialCustomAttributeDataDeleter() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doMaterialCount() const override { return 1; }
+        Int doMaterialForName(const std::string&) override { return 0; }
+        Containers::Optional<MaterialData> doMaterial(UnsignedInt) override {
+            return MaterialData{{}, Containers::Array<MaterialAttributeData>{attributeData, 1, [](MaterialAttributeData*, std::size_t) {}}};
+        }
+
+        MaterialAttributeData attributeData[1]{
+            {MaterialAttribute::DiffuseColor, Color4{}}
+        };
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.material(0);
+    importer.material("");
+    CORRADE_COMPARE(out.str(),
+        "Trade::AbstractImporter::material(): implementation is not allowed to use a custom Array deleter\n"
+        "Trade::AbstractImporter::material(): implementation is not allowed to use a custom Array deleter\n");
+}
+
+void AbstractImporterTest::materialCustomLayerDataDeleter() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    struct: AbstractImporter {
+        ImporterFeatures doFeatures() const override { return {}; }
+        bool doIsOpened() const override { return true; }
+        void doClose() override {}
+
+        UnsignedInt doMaterialCount() const override { return 1; }
+        Int doMaterialForName(const std::string&) override { return 0; }
+        Containers::Optional<MaterialData> doMaterial(UnsignedInt) override {
+            return MaterialData{{}, nullptr, Containers::Array<UnsignedInt>{layerData, 1, [](UnsignedInt*, std::size_t) {}}};
+        }
+
+        UnsignedInt layerData[1]{};
+    } importer;
+
+    std::ostringstream out;
+    Error redirectError{&out};
+
+    importer.material(0);
+    importer.material("");
+    CORRADE_COMPARE(out.str(),
+        "Trade::AbstractImporter::material(): implementation is not allowed to use a custom Array deleter\n"
+        "Trade::AbstractImporter::material(): implementation is not allowed to use a custom Array deleter\n");
+}
+
 void AbstractImporterTest::texture() {
     struct: AbstractImporter {
         ImporterFeatures doFeatures() const override { return {}; }
@@ -3090,15 +3693,15 @@ void AbstractImporterTest::texture() {
         UnsignedInt doTextureCount() const override { return 8; }
         Int doTextureForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doTextureName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<TextureData> doTexture(UnsignedInt id) override {
             if(id == 7) return TextureData{{}, {}, {}, {}, {}, {}, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -3198,19 +3801,19 @@ void AbstractImporterTest::image1D() {
         UnsignedInt doImage1DCount() const override { return 8; }
         UnsignedInt doImage1DLevelCount(UnsignedInt id) override {
             if(id == 7) return 3;
-            else return {};
+            return {};
         }
         Int doImage1DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doImage1DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<ImageData1D> doImage1D(UnsignedInt id, UnsignedInt level) override {
             if(id == 7 && level == 2) return ImageData1D{PixelFormat::RGBA8Unorm, {}, {}, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -3459,19 +4062,19 @@ void AbstractImporterTest::image2D() {
         UnsignedInt doImage2DCount() const override { return 8; }
         UnsignedInt doImage2DLevelCount(UnsignedInt id) override {
             if(id == 7) return 3;
-            else return {};
+            return {};
         }
         Int doImage2DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doImage2DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<ImageData2D> doImage2D(UnsignedInt id, UnsignedInt level) override {
             if(id == 7 && level == 2) return ImageData2D{PixelFormat::RGBA8Unorm, {}, {}, &state};
-            else return {};
+            return {};
         }
     } importer;
 
@@ -3720,19 +4323,19 @@ void AbstractImporterTest::image3D() {
         UnsignedInt doImage3DCount() const override { return 8; }
         UnsignedInt doImage3DLevelCount(UnsignedInt id) override {
             if(id == 7) return 3;
-            else return {};
+            return {};
         }
         Int doImage3DForName(const std::string& name) override {
             if(name == "eighth") return 7;
-            else return -1;
+            return -1;
         }
         std::string doImage3DName(UnsignedInt id) override {
             if(id == 7) return "eighth";
-            else return {};
+            return {};
         }
         Containers::Optional<ImageData3D> doImage3D(UnsignedInt id, UnsignedInt level) override {
             if(id == 7 && level == 2) return ImageData3D{PixelFormat::RGBA8Unorm, {}, {}, &state};
-            else return {};
+            return {};
         }
     } importer;
 

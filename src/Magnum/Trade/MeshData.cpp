@@ -60,7 +60,7 @@ MeshIndexData::MeshIndexData(const Containers::StridedArrayView2D<const char>& d
     _data = data.asContiguous();
 }
 
-MeshAttributeData::MeshAttributeData(const MeshAttribute name, const VertexFormat format, UnsignedShort arraySize, const Containers::StridedArrayView1D<const void>& data) noexcept: MeshAttributeData{name, format, arraySize, data, nullptr} {
+MeshAttributeData::MeshAttributeData(const MeshAttribute name, const VertexFormat format, const Containers::StridedArrayView1D<const void>& data, UnsignedShort arraySize) noexcept: MeshAttributeData{nullptr, name, format, data, arraySize} {
     /* Yes, this calls into a constexpr function defined in the header --
        because I feel that makes more sense than duplicating the full assert
        logic */
@@ -69,7 +69,7 @@ MeshAttributeData::MeshAttributeData(const MeshAttribute name, const VertexForma
         "Trade::MeshAttributeData: expected stride to be positive and enough to fit" << format << Debug::nospace << (arraySize ? Utility::format("[{}]", arraySize).data() : "") << Debug::nospace << ", got" << data.stride(), );
 }
 
-MeshAttributeData::MeshAttributeData(const MeshAttribute name, const VertexFormat format, UnsignedShort arraySize, const Containers::StridedArrayView2D<const char>& data) noexcept: MeshAttributeData{name, format, arraySize, Containers::StridedArrayView1D<const void>{{data.data(), ~std::size_t{}}, data.size()[0], data.stride()[0]}, nullptr} {
+MeshAttributeData::MeshAttributeData(const MeshAttribute name, const VertexFormat format, const Containers::StridedArrayView2D<const char>& data, UnsignedShort arraySize) noexcept: MeshAttributeData{nullptr, name, format, Containers::StridedArrayView1D<const void>{{data.data(), ~std::size_t{}}, data.size()[0], data.stride()[0]}, arraySize} {
     /* Yes, this calls into a constexpr function defined in the header --
        because I feel that makes more sense than duplicating the full assert
        logic */
@@ -814,7 +814,7 @@ Debug& operator<<(Debug& debug, const MeshAttribute value) {
 
     switch(value) {
         /* LCOV_EXCL_START */
-        #define _c(value) case MeshAttribute::value: return debug << "::" << Debug::nospace << #value;
+        #define _c(value) case MeshAttribute::value: return debug << "::" #value;
         _c(Position)
         _c(Tangent)
         _c(Bitangent)

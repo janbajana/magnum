@@ -72,9 +72,13 @@ endif()
 # API-independent utilities
 option(WITH_IMAGECONVERTER "Build magnum-imageconverter utility" OFF)
 option(WITH_SCENECONVERTER "Build magnum-sceneconverter utility" OFF)
+option(WITH_SHADERCONVERTER "Build magnum-shaderconverter utility" OFF)
 
 # Magnum AL Info
 option(WITH_AL_INFO "Build magnum-al-info utility" OFF)
+
+# Magnum Vk Info
+option(WITH_VK_INFO "Build magnum-vk-info utility" OFF)
 
 # Plugins
 option(WITH_ANYIMAGEIMPORTER "Build AnyImageImporter plugin" OFF)
@@ -82,6 +86,7 @@ option(WITH_ANYAUDIOIMPORTER "Build AnyAudioImporter plugin" OFF)
 option(WITH_ANYIMAGECONVERTER "Build AnyImageConverter plugin" OFF)
 option(WITH_ANYSCENECONVERTER "Build AnySceneConverter plugin" OFF)
 option(WITH_ANYSCENEIMPORTER "Build AnySceneImporter plugin" OFF)
+option(WITH_ANYSHADERCONVERTER "Build AnyShaderConverter plugin" OFF)
 option(WITH_WAVAUDIOIMPORTER "Build WavAudioImporter plugin" OFF)
 option(WITH_MAGNUMFONT "Build MagnumFont plugin" OFF)
 option(WITH_MAGNUMFONTCONVERTER "Build MagnumFontConverter plugin" OFF)
@@ -96,20 +101,25 @@ option(WITH_DEBUGTOOLS "Build DebugTools library" ON)
 cmake_dependent_option(WITH_MESHTOOLS "Build MeshTools library" ON "NOT WITH_OBJIMPORTER;NOT WITH_SCENECONVERTER" ON)
 option(WITH_SCENEGRAPH "Build SceneGraph library" ON)
 option(WITH_SHADERS "Build Shaders library" ON)
+cmake_dependent_option(WITH_SHADERTOOLS "Build ShaderTools library" ON "NOT WITH_SHADERCONVERTER" ON)
 cmake_dependent_option(WITH_TEXT "Build Text library" ON "NOT WITH_FONTCONVERTER;NOT WITH_MAGNUMFONT;NOT WITH_MAGNUMFONTCONVERTER" ON)
 cmake_dependent_option(WITH_TEXTURETOOLS "Build TextureTools library" ON "NOT WITH_TEXT;NOT WITH_DISTANCEFIELDCONVERTER" ON)
 cmake_dependent_option(WITH_TRADE "Build Trade library" ON "NOT WITH_MESHTOOLS;NOT WITH_PRIMITIVES;NOT WITH_IMAGECONVERTER;NOT WITH_ANYIMAGEIMPORTER;NOT WITH_ANYIMAGECONVERTER;NOT WITH_ANYSCENEIMPORTER;NOT WITH_OBJIMPORTER;NOT WITH_TGAIMAGECONVERTER;NOT WITH_TGAIMPORTER" ON)
 cmake_dependent_option(WITH_GL "Build GL library" ON "NOT WITH_SHADERS;NOT WITH_GL_INFO;NOT WITH_ANDROIDAPPLICATION;NOT WITH_WINDOWLESSIOSAPPLICATION;NOT WITH_CGLCONTEXT;NOT WITH_GLXAPPLICATION;NOT WITH_GLXCONTEXT;NOT WITH_XEGLAPPLICATION;NOT WITH_WINDOWLESSWGLAPPLICATION;NOT WITH_WGLCONTEXT;NOT WITH_WINDOWLESSWINDOWSEGLAPPLICATION;NOT WITH_DISTANCEFIELDCONVERTER" ON)
 option(WITH_PRIMITIVES "Builf Primitives library" ON)
-option(WITH_VK "Build Vk library" OFF)
 
 cmake_dependent_option(TARGET_HEADLESS "Build command-line utilities for use on a headless machines" OFF "WITH_GL" OFF)
 cmake_dependent_option(TARGET_GL "Build libraries with OpenGL interoperability" ON "WITH_GL" OFF)
-cmake_dependent_option(TARGET_VK "Build libraries with Vulkan interoperability" ON "WITH_VK" OFF)
 
 # EGL context and windowless EGL application, available everywhere
 cmake_dependent_option(WITH_WINDOWLESSEGLAPPLICATION "Build WindowlessEglApplication library" OFF "NOT TARGET_GLES OR TARGET_DESKTOP_GLES OR NOT WITH_GL_INFO;NOT TARGET_HEADLESS" ON)
 option(WITH_EGLCONTEXT "Build EglContext library" OFF)
+
+# Vulkan, everywhere except Emscripten
+if(NOT CORRADE_TARGET_EMSCRIPTEN)
+    cmake_dependent_option(WITH_VK "Build Vk library" OFF "NOT WITH_VK_INFO" ON)
+    cmake_dependent_option(TARGET_VK "Build libraries with Vulkan interoperability" ON "WITH_VK" OFF)
+endif()
 
 # Android-specific application libraries
 if(CORRADE_TARGET_ANDROID)
@@ -149,8 +159,10 @@ endif()
 
 # Platform-independent (almost) application libraries
 if(NOT CORRADE_TARGET_ANDROID)
-    option(WITH_GLFWAPPLICATION "Build GlfwApplication library" OFF)
     option(WITH_SDL2APPLICATION "Build Sdl2Application library" OFF)
+endif()
+if(NOT CORRADE_TARGET_ANDROID AND NOT CORRADE_TARGET_IOS AND NOT CORRADE_TARGET_EMSCRIPTEN)
+    option(WITH_GLFWAPPLICATION "Build GlfwApplication library" OFF)
 endif()
 
 option(BUILD_DEPRECATED "Include deprecated API in the build" ON)
@@ -190,6 +202,7 @@ option(BUILD_PLUGINS_STATIC "Build static plugins (default are dynamic)" OFF)
 option(BUILD_TESTS "Build unit tests" OFF)
 cmake_dependent_option(BUILD_GL_TESTS "Build unit tests for OpenGL code" OFF "BUILD_TESTS;TARGET_GL" OFF)
 cmake_dependent_option(BUILD_AL_TESTS "Build unit tests for OpenAL code" ON "BUILD_TESTS;WITH_AUDIO" OFF)
+cmake_dependent_option(BUILD_VK_TESTS "Build unit tests for Vulkan code" OFF "BUILD_TESTS;TARGET_VK" OFF)
 if(BUILD_TESTS)
     find_package(Corrade REQUIRED TestSuite)
     if(CORRADE_TARGET_IOS)
@@ -205,8 +218,10 @@ if(BUILD_TESTS)
     endif()
 endif()
 
-# OpenGLTester library, built by default only if GL tests are enabled
+# OpenGLTester / VulkanTester libraries, built by default only if GL / VK tests
+# are enabled
 cmake_dependent_option(WITH_OPENGLTESTER "Build OpenGLTester library" OFF "NOT BUILD_GL_TESTS" ON)
+cmake_dependent_option(WITH_VULKANTESTER "Build VulkanTester library" OFF "NOT BUILD_VK_TESTS" ON)
 
 # Dynamic linking is meaningless on Emscripten and too inconvenient on Android
 if(CORRADE_TARGET_EMSCRIPTEN OR CORRADE_TARGET_ANDROID)
@@ -363,6 +378,10 @@ set(MAGNUM_PLUGINS_SCENECONVERTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBU
 set(MAGNUM_PLUGINS_SCENECONVERTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/sceneconverters)
 set(MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/sceneconverters)
 set(MAGNUM_PLUGINS_SCENECONVERTER_RELEASE_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_LIBRARY_INSTALL_DIR}/sceneconverters)
+set(MAGNUM_PLUGINS_SHADERCONVERTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_BINARY_INSTALL_DIR}/shaderconverters)
+set(MAGNUM_PLUGINS_SHADERCONVERTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/shaderconverters)
+set(MAGNUM_PLUGINS_SHADERCONVERTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/shaderconverters)
+set(MAGNUM_PLUGINS_SHADERCONVERTER_RELEASE_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_LIBRARY_INSTALL_DIR}/shaderconverters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_BINARY_INSTALL_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_DEBUG_LIBRARY_INSTALL_DIR ${MAGNUM_PLUGINS_DEBUG_LIBRARY_INSTALL_DIR}/audioimporters)
 set(MAGNUM_PLUGINS_AUDIOIMPORTER_RELEASE_BINARY_INSTALL_DIR ${MAGNUM_PLUGINS_RELEASE_BINARY_INSTALL_DIR}/audioimporters)
@@ -401,6 +420,7 @@ set(MAGNUM_PLUGINS_DIR ""
 # Plugin directories. Set only if the above are non-empty. otherwise empty as
 # well.
 if(MAGNUM_PLUGINS_DIR)
+    set(MAGNUM_PLUGINS_SHADERCONVERTER_DIR ${MAGNUM_PLUGINS_DIR}/shaderconverters)
     set(MAGNUM_PLUGINS_FONT_DIR ${MAGNUM_PLUGINS_DIR}/fonts)
     set(MAGNUM_PLUGINS_FONTCONVERTER_DIR ${MAGNUM_PLUGINS_DIR}/fontconverters)
     set(MAGNUM_PLUGINS_IMAGECONVERTER_DIR ${MAGNUM_PLUGINS_DIR}/imageconverters)
@@ -410,6 +430,7 @@ if(MAGNUM_PLUGINS_DIR)
     set(MAGNUM_PLUGINS_VIDEOIMPORTER_DIR ${MAGNUM_PLUGINS_DIR}/videoimporters)
 endif()
 if(MAGNUM_PLUGINS_DEBUG_DIR)
+    set(MAGNUM_PLUGINS_SHADERCONVERTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/shaderconverters)
     set(MAGNUM_PLUGINS_FONT_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/fonts)
     set(MAGNUM_PLUGINS_FONTCONVERTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/fontconverters)
     set(MAGNUM_PLUGINS_IMAGECONVERTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/imageconverters)
@@ -419,6 +440,7 @@ if(MAGNUM_PLUGINS_DEBUG_DIR)
     set(MAGNUM_PLUGINS_VIDEOIMPORTER_DEBUG_DIR ${MAGNUM_PLUGINS_DEBUG_DIR}/videoimporters)
 endif()
 if(MAGNUM_PLUGINS_RELEASE_DIR)
+    set(MAGNUM_PLUGINS_SHADERCONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/shaderconverters)
     set(MAGNUM_PLUGINS_FONTCONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/fontconverters)
     set(MAGNUM_PLUGINS_IMAGECONVERTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/imageconverters)
     set(MAGNUM_PLUGINS_IMPORTER_RELEASE_DIR ${MAGNUM_PLUGINS_RELEASE_DIR}/importers)
@@ -429,10 +451,10 @@ endif()
 
 # Library version. MAGNUM_VERSION_YEAR/MONTH is used in
 # src/Magnum/CMakeLists.txt to generate the version.h header.
-set(MAGNUM_LIBRARY_VERSION 2.3)
+set(MAGNUM_LIBRARY_VERSION 2.4)
 set(MAGNUM_LIBRARY_SOVERSION 2)
-set(MAGNUM_VERSION_YEAR 2019)
-set(MAGNUM_VERSION_MONTH 10)
+set(MAGNUM_VERSION_YEAR 2020)
+set(MAGNUM_VERSION_MONTH 6)
 
 # A single output location. After a decade of saying NO THIS IS A NON-SOLUTION
 # TO A NON-PROBLEM I reconsidered my views and enabled this, because:

@@ -21,6 +21,7 @@ build() {
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/i686-w64-mingw32 \
         -DWITH_AUDIO=ON \
+        -DWITH_VK=OFF \
         -DWITH_SDL2APPLICATION=ON \
         -DWITH_WINDOWLESSWGLAPPLICATION=ON \
         -DWITH_WGLCONTEXT=ON \
@@ -30,6 +31,7 @@ build() {
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENECONVERTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ANYSHADERCONVERTER=ON \
         -DWITH_MAGNUMFONT=ON \
         -DWITH_MAGNUMFONTCONVERTER=ON \
         -DWITH_OBJIMPORTER=ON \
@@ -40,10 +42,13 @@ build() {
         -DWITH_FONTCONVERTER=ON \
         -DWITH_IMAGECONVERTER=ON \
         -DWITH_SCENECONVERTER=ON \
+        -DWITH_SHADERCONVERTER=ON \
         -DWITH_GL_INFO=ON \
+        -DWITH_VK_INFO=OFF \
         -DWITH_AL_INFO=ON \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DBUILD_VK_TESTS=OFF \
         -G Ninja
     ninja
 
@@ -55,6 +60,7 @@ build() {
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
         -DWITH_AUDIO=ON \
+        -DWITH_VK=OFF \
         -DWITH_SDL2APPLICATION=ON \
         -DWITH_WINDOWLESSWGLAPPLICATION=ON \
         -DWITH_WGLCONTEXT=ON \
@@ -64,6 +70,7 @@ build() {
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENECONVERTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ANYSHADERCONVERTER=ON \
         -DWITH_MAGNUMFONT=ON \
         -DWITH_MAGNUMFONTCONVERTER=ON \
         -DWITH_OBJIMPORTER=ON \
@@ -74,10 +81,13 @@ build() {
         -DWITH_FONTCONVERTER=ON \
         -DWITH_IMAGECONVERTER=ON \
         -DWITH_SCENECONVERTER=ON \
+        -DWITH_SHADERCONVERTER=ON \
         -DWITH_GL_INFO=ON \
+        -DWITH_VK_INFO=OFF \
         -DWITH_AL_INFO=ON \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DBUILD_VK_TESTS=OFF \
         -G Ninja
     ninja
 }

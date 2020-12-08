@@ -93,7 +93,7 @@ layout(location = 6)
 #endif
 uniform lowp vec4 specularColor
     #ifndef GL_ES
-    = vec4(1.0)
+    = vec4(1.0, 1.0, 1.0, 0.0)
     #endif
     ;
 
@@ -107,9 +107,20 @@ uniform mediump float shininess
     ;
 #endif
 
-#ifdef ALPHA_MASK
+#ifdef NORMAL_TEXTURE
 #ifdef EXPLICIT_UNIFORM_LOCATION
 layout(location = 8)
+#endif
+uniform mediump float normalTextureScale
+    #ifndef GL_ES
+    = 1.0
+    #endif
+    ;
+#endif
+
+#ifdef ALPHA_MASK
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = 9)
 #endif
 uniform lowp float alphaMask
     #ifndef GL_ES
@@ -120,22 +131,41 @@ uniform lowp float alphaMask
 
 #ifdef OBJECT_ID
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 9)
+layout(location = 10)
 #endif
 /* mediump is just 2^10, which might not be enough, this is 2^16 */
 uniform highp uint objectId; /* defaults to zero */
 #endif
 
 #if LIGHT_COUNT
-/* Needs to be last because it uses locations 10 + LIGHT_COUNT to
-   10 + 2*LIGHT_COUNT - 1. Location 10 is lightPositions. Also it can't be
-   specified as 10 + LIGHT_COUNT because that requires ARB_enhanced_layouts. */
+/* Needs to be last because it uses locations 11 + LIGHT_COUNT to
+   11 + 2*LIGHT_COUNT - 1. Location 11 is lightPositions. Also it can't be
+   specified as 11 + LIGHT_COUNT because that requires ARB_enhanced_layouts.
+   Same for lightSpecularColors and lightRanges below. */
 #ifdef EXPLICIT_UNIFORM_LOCATION
 layout(location = LIGHT_COLORS_LOCATION) /* I fear this will blow up some drivers */
 #endif
-uniform lowp vec4 lightColors[LIGHT_COUNT]
+uniform lowp vec3 lightColors[LIGHT_COUNT]
     #ifndef GL_ES
-    = vec4[](LIGHT_COLOR_INITIALIZER)
+    = vec3[](LIGHT_COLOR_INITIALIZER)
+    #endif
+    ;
+
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = LIGHT_SPECULAR_COLORS_LOCATION)
+#endif
+uniform lowp vec3 lightSpecularColors[LIGHT_COUNT]
+    #ifndef GL_ES
+    = vec3[](LIGHT_COLOR_INITIALIZER)
+    #endif
+    ;
+
+#ifdef EXPLICIT_UNIFORM_LOCATION
+layout(location = LIGHT_RANGES_LOCATION)
+#endif
+uniform lowp float lightRanges[LIGHT_COUNT]
+    #ifndef GL_ES
+    = float[](LIGHT_RANGE_INITIALIZER)
     #endif
     ;
 #endif
@@ -143,9 +173,14 @@ uniform lowp vec4 lightColors[LIGHT_COUNT]
 #if LIGHT_COUNT
 in mediump vec3 transformedNormal;
 #ifdef NORMAL_TEXTURE
+#ifndef BITANGENT
+in mediump vec4 transformedTangent;
+#else
 in mediump vec3 transformedTangent;
+in mediump vec3 transformedBitangent;
 #endif
-in highp vec3 lightDirections[LIGHT_COUNT];
+#endif
+in highp vec4 lightDirections[LIGHT_COUNT];
 in highp vec3 cameraDirection;
 #endif
 
@@ -207,27 +242,47 @@ void main() {
     /* Normal */
     mediump vec3 normalizedTransformedNormal = normalize(transformedNormal);
     #ifdef NORMAL_TEXTURE
+    #ifndef BITANGENT
+    mediump vec3 normalizedTransformedTangent = normalize(transformedTangent.xyz);
+    #else
     mediump vec3 normalizedTransformedTangent = normalize(transformedTangent);
+    mediump vec3 normalizedTransformedBitangent = normalize(transformedBitangent);
+    #endif
     mediump mat3 tbn = mat3(
         normalizedTransformedTangent,
+        #ifndef BITANGENT
         normalize(cross(normalizedTransformedNormal,
-                        normalizedTransformedTangent)),
+                        normalizedTransformedTangent)*transformedTangent.w),
+        #else
+        normalizedTransformedBitangent,
+        #endif
         normalizedTransformedNormal
     );
-    normalizedTransformedNormal = tbn*(texture(normalTexture, interpolatedTextureCoordinates).rgb*2.0 - vec3(1.0));
+    normalizedTransformedNormal = tbn*(normalize((texture(normalTexture, interpolatedTextureCoordinates).rgb*2.0 - vec3(1.0))*vec3(normalTextureScale, normalTextureScale, 1.0)));
     #endif
 
     /* Add diffuse color for each light */
     for(int i = 0; i < LIGHT_COUNT; ++i) {
-        highp vec3 normalizedLightDirection = normalize(lightDirections[i]);
-        lowp float intensity = max(0.0, dot(normalizedTransformedNormal, normalizedLightDirection));
-        fragmentColor += vec4(finalDiffuseColor.rgb*lightColors[i].rgb*intensity, lightColors[i].a*finalDiffuseColor.a/float(LIGHT_COUNT));
+        /* Attenuation. Directional lights have the .w component set to 0, use
+           that to make the distance zero -- which will then ensure the
+           attenuation is always 1.0 */
+        highp float dist = length(lightDirections[i].xyz)*lightDirections[i].w;
+        /* If range is 0 for whatever reason, clamp it to a small value to
+           avoid a NaN when dist is 0 as well (which is the case for
+           directional lights). */
+        highp float attenuation = clamp(1.0 - pow(dist/max(lightRanges[i], 0.0001), 4.0), 0.0, 1.0);
+        attenuation = attenuation*attenuation/(1.0 + dist*dist);
+
+        highp vec3 normalizedLightDirection = normalize(lightDirections[i].xyz);
+        lowp float intensity = max(0.0, dot(normalizedTransformedNormal, normalizedLightDirection))*attenuation;
+        fragmentColor += vec4(finalDiffuseColor.rgb*lightColors[i]*intensity, finalDiffuseColor.a/float(LIGHT_COUNT));
 
         /* Add specular color, if needed */
         if(intensity > 0.001) {
             highp vec3 reflection = reflect(-normalizedLightDirection, normalizedTransformedNormal);
-            mediump float specularity = clamp(pow(max(0.0, dot(normalize(cameraDirection), reflection)), shininess), 0.0, 1.0);
-            fragmentColor += vec4(finalSpecularColor.rgb*specularity, finalSpecularColor.a);
+            /* Use attenuation for the specularity as well */
+            mediump float specularity = clamp(pow(max(0.0, dot(normalize(cameraDirection), reflection)), shininess), 0.0, 1.0)*attenuation;
+            fragmentColor += vec4(finalSpecularColor.rgb*lightSpecularColors[i].rgb*specularity, finalSpecularColor.a);
         }
     }
     #endif

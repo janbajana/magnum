@@ -37,11 +37,16 @@ if(Git_FOUND)
     execute_process(COMMAND ${GIT_EXECUTABLE} describe --match "v*" --long
         OUTPUT_VARIABLE MAGNUM_VERSION_STRING
         RESULT_VARIABLE _MAGNUM_VERSION_RESULT
+        # Otherwise this gets executed in the build dir, which might be inside
+        # a totally different Git working copy
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(MAGNUM_VERSION_STRING MATCHES "^v([0-9][0-9][0-9][0-9])\\.0?([0-9][0-9])-([0-9]+)-g([a-f0-9]+)$")
+    if(MAGNUM_VERSION_STRING MATCHES "^v([0-9][0-9][0-9][0-9])\\.0?([0-9][0-9]?)-([0-9]+)-g([a-f0-9]+)$")
         set(MAGNUM_VERSION_YEAR ${CMAKE_MATCH_1})
         set(MAGNUM_VERSION_MONTH ${CMAKE_MATCH_2})
         set(MAGNUM_VERSION_COMMIT ${CMAKE_MATCH_3})
+        # Otherwise if commit is 0, it would #undef the variable
+        set(MAGNUM_VERSION_COMMIT " ${MAGNUM_VERSION_COMMIT}")
         set(MAGNUM_VERSION_HASH ${CMAKE_MATCH_4})
     elseif(_MAGNUM_VERSION_RESULT EQUAL 0)
         message(WARNING "Can't match Git version from ${MAGNUM_VERSION_STRING}")
@@ -92,6 +97,7 @@ set(Magnum_HEADERS
 set(Magnum_PRIVATE_HEADERS
     Implementation/ImageProperties.h
 
+    Implementation/converterUtilities.h
     Implementation/meshIndexTypeMapping.hpp
     Implementation/meshPrimitiveMapping.hpp
     Implementation/compressedPixelFormatMapping.hpp
@@ -109,11 +115,11 @@ set(MagnumMath_SRCS
     Math/Angle.cpp
     Math/Color.cpp
     Math/Half.cpp
-    Math/Functions.cpp
     Math/Packing.cpp
     Math/instantiation.cpp)
 
 set(MagnumMath_GracefulAssert_SRCS
+    Math/Functions.cpp
     Math/PackingBatch.cpp)
 
 # Objects shared between main and math test library
@@ -211,6 +217,10 @@ endif()
 
 if(WITH_SHADERS)
     add_subdirectory(Shaders)
+endif()
+
+if(WITH_SHADERTOOLS)
+    add_subdirectory(ShaderTools)
 endif()
 
 if(WITH_TEXT)

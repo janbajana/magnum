@@ -6,6 +6,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2018, 2019 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2020 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -93,7 +94,7 @@ webserver, e.g.  `/srv/http/emscripten`).
 @code{.sh}
 mkdir build-emscripten && cd build-emscripten
 cmake .. \
-    -DCMAKE_TOOLCHAIN_FILE="../toolchains/generic/Emscripten.cmake" \
+    -DCMAKE_TOOLCHAIN_FILE=path/to/toolchains/generic/Emscripten-wasm.cmake \
     -DCMAKE_PREFIX_PATH=/usr/lib/emscripten/system \
     -DCMAKE_INSTALL_PREFIX=/srv/http/emscripten
 cmake --build .
@@ -517,12 +518,21 @@ class EmscriptenApplication {
         /**
          * @brief Set container CSS class
          *
-         * Assigns given CSS class to the @cb{.html} <div class="container"> @ce.
-         * Useful for example to change aspect ratio of the view or stretch it
-         * to cover the full page. See @ref platforms-html5-layout for more
-         * information about possible values. Note that this replaces any
-         * existing class, to set multiple classes separate them with
-         * whitespace.
+         * Assigns given CSS class to the @cb{.html} <div class="mn-container"> @ce
+         * enclosing the application @cb{.html} <canvas> @ce. Useful for
+         * example to change aspect ratio of the view or stretch it to cover
+         * the full page. See @ref platforms-html5-layout for more information
+         * about possible values. Note that this replaces any existing class
+         * (except for @cb{.css} .mn-container @ce, which is kept), to set
+         * multiple classes separate them with whitespace.
+         *
+         * @m_class{m-note m-danger}
+         *
+         * @par
+         *      For backwards compatibility purposes the function will look for
+         *      *any* @cb{.html} <div id="container"> @ce in case the
+         *      @cb{.html} <div class="mn-container"> @ce is not found. This
+         *      compatibility is scheduled to be removed in the future.
          */
         void setContainerCssClass(const std::string& cssClass);
 
@@ -568,7 +578,7 @@ class EmscriptenApplication {
     public:
         /**
          * @brief Cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Value names in this enum don't necessarily match the CSS names in
          * order to be compatible with @ref Sdl2Application and
@@ -757,7 +767,7 @@ class EmscriptenApplication {
 
         /**
          * @brief Set cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Default is @ref Cursor::Arrow.
          */
@@ -765,7 +775,7 @@ class EmscriptenApplication {
 
         /**
          * @brief Get current cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Cursor cursor();
 
@@ -886,6 +896,9 @@ class EmscriptenApplication {
 
         Flags _flags;
         Cursor _cursor;
+
+        bool _deprecatedTargetBehavior{};
+        std::string _canvasTarget;
 
         #ifdef MAGNUM_TARGET_GL
         EMSCRIPTEN_WEBGL_CONTEXT_HANDLE _glContext{};
@@ -1705,7 +1718,7 @@ class EmscriptenApplication::KeyEvent: public EmscriptenApplication::InputEvent 
 
             /**
              * Semicolon (`;`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Semicolon,
 

@@ -73,11 +73,15 @@ uniform mediump mat3 textureMatrix
 #endif
 
 #if LIGHT_COUNT
-/* Needs to be last because it uses locations 10 to 10 + LIGHT_COUNT - 1 */
+/* Needs to be last because it uses locations 11 to 11 + LIGHT_COUNT - 1 */
 #ifdef EXPLICIT_UNIFORM_LOCATION
-layout(location = 10)
+layout(location = 11)
 #endif
-uniform highp vec3 lightPositions[LIGHT_COUNT]; /* defaults to zero */
+uniform highp vec4 lightPositions[LIGHT_COUNT]
+    #ifndef GL_ES
+    = vec4[](LIGHT_POSITION_INITIALIZER)
+    #endif
+    ;
 #endif
 
 #ifdef EXPLICIT_ATTRIB_LOCATION
@@ -95,7 +99,20 @@ in mediump vec3 normal;
 #ifdef EXPLICIT_ATTRIB_LOCATION
 layout(location = TANGENT_ATTRIBUTE_LOCATION)
 #endif
-in mediump vec3 tangent;
+in mediump
+    #ifndef BITANGENT
+    vec4
+    #else
+    vec3
+    #endif
+    tangent;
+#endif
+
+#ifdef BITANGENT
+#ifdef EXPLICIT_ATTRIB_LOCATION
+layout(location = BITANGENT_ATTRIBUTE_LOCATION)
+#endif
+in mediump vec3 bitangent;
 #endif
 #endif
 
@@ -148,9 +165,14 @@ in mediump vec2 instancedTextureOffset;
 #if LIGHT_COUNT
 out mediump vec3 transformedNormal;
 #ifdef NORMAL_TEXTURE
+#ifndef BITANGENT
+out mediump vec4 transformedTangent;
+#else
 out mediump vec3 transformedTangent;
+out mediump vec3 transformedBitangent;
 #endif
-out highp vec3 lightDirections[LIGHT_COUNT];
+#endif
+out highp vec4 lightDirections[LIGHT_COUNT];
 out highp vec3 cameraDirection;
 #endif
 
@@ -171,16 +193,30 @@ void main() {
         #endif
         normal;
     #ifdef NORMAL_TEXTURE
+    #ifndef BITANGENT
+    transformedTangent = vec4(normalMatrix*
+        #ifdef INSTANCED_TRANSFORMATION
+        instancedNormalMatrix*
+        #endif
+        tangent.xyz, tangent.w);
+    #else
     transformedTangent = normalMatrix*
         #ifdef INSTANCED_TRANSFORMATION
         instancedNormalMatrix*
         #endif
         tangent;
+    transformedBitangent = normalMatrix*
+        #ifdef INSTANCED_TRANSFORMATION
+        instancedNormalMatrix*
+        #endif
+        bitangent;
+    #endif
     #endif
 
-    /* Direction to the light */
+    /* Direction to the light. Directional lights have the last component set
+       to 0, which gets used to ignore the transformed position. */
     for(int i = 0; i < LIGHT_COUNT; ++i)
-        lightDirections[i] = normalize(lightPositions[i] - transformedPosition);
+        lightDirections[i] = vec4(lightPositions[i].xyz - transformedPosition*lightPositions[i].w, lightPositions[i].w);
 
     /* Direction to the camera */
     cameraDirection = -transformedPosition;

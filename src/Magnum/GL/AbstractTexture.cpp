@@ -256,8 +256,7 @@ void AbstractTexture::createIfNotAlready() {
     /* glGen*() does not create the object, just reserves the name. Some
        commands (such as glBindTextures() or glObjectLabel()) operate with IDs
        directly and they require the object to be created. Binding the texture
-       to desired target finally creates it. Also all EXT DSA functions
-       implicitly create it. */
+       to desired target finally creates it. */
     bindInternal();
     CORRADE_INTERNAL_ASSERT(_flags & ObjectFlag::Created);
 }
@@ -369,6 +368,14 @@ void AbstractTexture::bindImplementationDSAIntelWindows(const GLint textureUnit)
     /* See the "intel-windows-half-baked-dsa-texture-bind" workaround */
     if(_target == GL_TEXTURE_CUBE_MAP) bindImplementationDefault(textureUnit);
     else bindImplementationDSA(textureUnit);
+}
+#endif
+
+#ifdef CORRADE_TARGET_APPLE
+void AbstractTexture::bindImplementationAppleBufferTextureWorkaround(const GLint textureUnit) {
+    bindImplementationDefault(textureUnit);
+    if(_target == GL_TEXTURE_BUFFER)
+        Context::current().state().texture->bufferTextureBound.set(textureUnit, true);
 }
 #endif
 #endif
@@ -526,13 +533,17 @@ void AbstractTexture::bindInternal() {
     if(textureState.currentTextureUnit != internalTextureUnit)
         glActiveTexture(GL_TEXTURE0 + (textureState.currentTextureUnit = internalTextureUnit));
 
-    /* Bind the texture to internal unit if not already, update state tracker */
+    /* If already bound in given texture unit, nothing to do */
     if(textureState.bindings[internalTextureUnit].second == _id) return;
-    textureState.bindings[internalTextureUnit] = {_target, _id};
 
-    /* Binding the texture finally creates it */
-    _flags |= ObjectFlag::Created;
-    glBindTexture(_target, _id);
+    /* Update state tracker, bind the texture to the unit. Not directly calling
+       glBindTexture() here because we may need to include various
+       platform-specific workarounds (Apple, Intel Windpws), also can't just
+       reuse textureState.bindImplementation as we *need* to call
+       glBindTexture() in order to create it and have ObjectFlag::Created set
+       (which is then asserted in createIfNotAlready()) */
+    textureState.bindings[internalTextureUnit] = {_target, _id};
+    (this->*textureState.bindInternalImplementation)(internalTextureUnit);
 }
 
 #if !defined(MAGNUM_TARGET_GLES) || defined(MAGNUM_TARGET_GLES2)
@@ -553,7 +564,7 @@ PixelFormat pixelFormatForInternalFormat(const TextureFormat internalFormat) {
         #ifndef MAGNUM_TARGET_WEBGL
         case TextureFormat::SR8:
         #endif
-        #ifndef MAGNUM_TARGET_GLES
+        #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::R16:
         case TextureFormat::R16Snorm:
         #endif
@@ -603,7 +614,7 @@ PixelFormat pixelFormatForInternalFormat(const TextureFormat internalFormat) {
         #ifdef MAGNUM_TARGET_GLES
         case TextureFormat::SRG8:
         #endif
-        #ifndef MAGNUM_TARGET_GLES
+        #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::RG16:
         case TextureFormat::RG16Snorm:
         #endif
@@ -651,7 +662,8 @@ PixelFormat pixelFormatForInternalFormat(const TextureFormat internalFormat) {
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::RGB8Snorm:
         #endif
-        #ifndef MAGNUM_TARGET_GLES
+        /* Available everywhere except ES2 (WebGL 1 has it) */
+        #if !(defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL))
         case TextureFormat::RGB16:
         case TextureFormat::RGB16Snorm:
         #endif
@@ -729,7 +741,8 @@ PixelFormat pixelFormatForInternalFormat(const TextureFormat internalFormat) {
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::RGBA8Snorm:
         #endif
-        #ifndef MAGNUM_TARGET_GLES
+        /* Available everywhere except ES2 (WebGL 1 has it) */
+        #if !(defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL))
         case TextureFormat::RGBA16:
         case TextureFormat::RGBA16Snorm:
         #endif
@@ -840,8 +853,16 @@ PixelFormat pixelFormatForInternalFormat(const TextureFormat internalFormat) {
 
         #ifdef MAGNUM_TARGET_GLES2
         case TextureFormat::Luminance:
+        #ifdef MAGNUM_TARGET_WEBGL
+        case TextureFormat::R16:
+        case TextureFormat::R16Snorm:
+        #endif
             return PixelFormat::Luminance;
         case TextureFormat::LuminanceAlpha:
+        #ifdef MAGNUM_TARGET_WEBGL
+        case TextureFormat::RG16:
+        case TextureFormat::RG16Snorm:
+        #endif
             return PixelFormat::LuminanceAlpha;
         #endif
 
@@ -1035,7 +1056,8 @@ PixelType pixelTypeForInternalFormat(const TextureFormat internalFormat) {
             #endif
         #endif
 
-        #ifndef MAGNUM_TARGET_GLES
+        /* Available everywhere except ES2 (WebGL 1 has it) */
+        #if !(defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL))
         case TextureFormat::R16:
         case TextureFormat::RG16:
         case TextureFormat::RGB16:
@@ -1056,17 +1078,18 @@ PixelType pixelTypeForInternalFormat(const TextureFormat internalFormat) {
         #endif
             return PixelType::UnsignedShort;
 
-        #ifndef MAGNUM_TARGET_GLES2
-        #ifndef MAGNUM_TARGET_GLES
+        /* Available everywhere except ES2 (WebGL 1 has it) */
+        #if !(defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL))
         case TextureFormat::R16Snorm:
         case TextureFormat::RG16Snorm:
         case TextureFormat::RGB16Snorm:
         case TextureFormat::RGBA16Snorm:
-        #endif
+        #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::R16I:
         case TextureFormat::RG16I:
         case TextureFormat::RGB16I:
         case TextureFormat::RGBA16I:
+        #endif
             return PixelType::Short;
         #endif
 
@@ -2061,7 +2084,7 @@ Math::Vector<1, GLint> AbstractTexture::DataHelper<1>::compressedBlockSize(const
 }
 
 Vector2i AbstractTexture::DataHelper<2>::compressedBlockSize(const GLenum target, const TextureFormat format) {
-    Vector2i value{Math::NoInit};
+    Vector2i value{NoInit};
     glGetInternalformativ(target, GLenum(format), GL_TEXTURE_COMPRESSED_BLOCK_WIDTH, 1, &value.x());
     glGetInternalformativ(target, GLenum(format), GL_TEXTURE_COMPRESSED_BLOCK_HEIGHT, 1, &value.y());
     return value;

@@ -29,6 +29,7 @@
 #include <Corrade/TestSuite/Tester.h>
 #include <Corrade/Utility/DebugStl.h>
 #if defined(DOXYGEN_GENERATING_OUTPUT) || defined(CORRADE_TARGET_UNIX) || (defined(CORRADE_TARGET_WINDOWS) && !defined(CORRADE_TARGET_WINDOWS_RT)) || defined(CORRADE_TARGET_EMSCRIPTEN)
+#include <Corrade/Containers/StringStl.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/TweakableParser.h>
 #endif
@@ -179,8 +180,8 @@ void AngleTest::constructDefault() {
 void AngleTest::constructNoInit() {
     Deg a{25.0f};
     Rad b{3.14f};
-    new(&a) Deg{NoInit};
-    new(&b) Rad{NoInit};
+    new(&a) Deg{Magnum::NoInit};
+    new(&b) Rad{Magnum::NoInit};
     {
         #if defined(__GNUC__) && __GNUC__*100 + __GNUC_MINOR__ >= 601
         /* The warning is reported for both debug and release build */
@@ -197,12 +198,12 @@ void AngleTest::constructNoInit() {
         #endif
     }
 
-    CORRADE_VERIFY((std::is_nothrow_constructible<Deg, NoInitT>::value));
-    CORRADE_VERIFY((std::is_nothrow_constructible<Rad, NoInitT>::value));
+    CORRADE_VERIFY((std::is_nothrow_constructible<Deg, Magnum::NoInitT>::value));
+    CORRADE_VERIFY((std::is_nothrow_constructible<Rad, Magnum::NoInitT>::value));
 
     /* Implicit construction is not allowed */
-    CORRADE_VERIFY(!(std::is_convertible<NoInitT, Deg>::value));
-    CORRADE_VERIFY(!(std::is_convertible<NoInitT, Rad>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Magnum::NoInitT, Deg>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Magnum::NoInitT, Rad>::value));
 }
 
 void AngleTest::constructConversion() {
@@ -258,31 +259,31 @@ void AngleTest::conversion() {
     constexpr Deg a = Rad(1.57079633f);
     CORRADE_COMPARE(Float(a), 90.0f);
 
-    constexpr Rad b = Deg(90.0f);
+    constexpr Rad b = 90.0_degf;
     CORRADE_COMPARE(Float(b), 1.57079633f);
 }
 
 void AngleTest::debugDeg() {
     std::ostringstream o;
 
-    Debug(&o) << Deg(90.0f);
+    Debug(&o) << 90.0_degf;
     CORRADE_COMPARE(o.str(), "Deg(90)\n");
 
     /* Verify that this compiles */
     o.str({});
-    Debug(&o) << Deg(56.0f) - Deg(34.0f);
+    Debug(&o) << 56.0_degf - 34.0_degf;
     CORRADE_COMPARE(o.str(), "Deg(22)\n");
 }
 
 void AngleTest::debugRad() {
     std::ostringstream o;
 
-    Debug(&o) << Rad(1.5708f);
+    Debug(&o) << 1.5708_radf;
     CORRADE_COMPARE(o.str(), "Rad(1.5708)\n");
 
     /* Verify that this compiles */
     o.str({});
-    Debug(&o) << Rad(1.5708f) - Rad(3.1416f);
+    Debug(&o) << 1.5708_radf - 3.1416_radf;
     CORRADE_COMPARE(o.str(), "Rad(-1.5708)\n");
 }
 
@@ -294,7 +295,7 @@ template<class T> void AngleTest::tweakable() {
     std::string input = Corrade::Utility::formatString(data.data, TweakableTraits<T>::literal());
     Corrade::Utility::TweakableState state;
     T result;
-    std::tie(state, result) = Corrade::Utility::TweakableParser<T>::parse({input.data(), input.size()});
+    std::tie(state, result) = Corrade::Utility::TweakableParser<T>::parse(input);
     CORRADE_COMPARE(state, Corrade::Utility::TweakableState::Success);
     CORRADE_COMPARE(result, T(typename T::Type(data.result)));
 }
@@ -308,7 +309,7 @@ template<class T> void AngleTest::tweakableError() {
     std::ostringstream out;
     Warning redirectWarning{&out};
     Error redirectError{&out};
-    Corrade::Utility::TweakableState state = Corrade::Utility::TweakableParser<T>::parse({input.data(), input.size()}).first;
+    Corrade::Utility::TweakableState state = Corrade::Utility::TweakableParser<T>::parse(input).first;
     CORRADE_COMPARE(out.str(), Corrade::Utility::formatString(data.error, TweakableTraits<T>::literal()));
     CORRADE_COMPARE(state, data.state);
 }

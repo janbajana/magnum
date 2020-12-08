@@ -40,8 +40,6 @@
 #include "Magnum/MeshTools/visibility.h"
 
 #ifdef MAGNUM_BUILD_DEPRECATED
-#include <tuple>
-#include <memory> /* deliberately kept here */
 #include <Corrade/Utility/Macros.h>
 #endif
 
@@ -81,7 +79,7 @@ enum class CompileFlag: UnsignedByte {
      * @ref compile(const Trade::MeshData&, GL::Buffer&, GL::Buffer&) or
      * handling them in some other way on the application side already, use
      * this flag to suppress the warning messages.
-     * @m_since_latest
+     * @m_since{2020,06}
      */
     NoWarnOnCustomAttributes = 1 << 2
 };
@@ -98,7 +96,7 @@ CORRADE_ENUMSET_OPERATORS(CompileFlags)
 
 /**
 @brief Compile mesh data
-@m_since_latest
+@m_since{2020,06}
 
 Configures a mesh for a @ref Shaders::Generic shader with a vertex buffer and
 possibly also an index buffer, if the mesh is indexed.
@@ -142,7 +140,7 @@ MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData& meshData, Compil
 
 /**
  * @overload
- * @m_since_latest
+ * @m_since{2020,06}
  */
 /* Separately because this one doesn't rely on duplicate() / interleave() /
    generate*Normals() and thus the exe can be smaller when using this function
@@ -151,7 +149,7 @@ MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData& meshData);
 
 /**
 @brief Compile mesh data using external buffers
-@m_since_latest
+@m_since{2020,06}
 
 Assumes the whole vertex / index data are already uploaded to @p indices /
 @p vertices and sets up the mesh using those. Can be used to have a single
@@ -180,26 +178,26 @@ MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData& meshData, GL::Bu
 
 /**
  * @overload
- * @m_since_latest
+ * @m_since{2020,06}
  */
 MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData& meshData, GL::Buffer& indices, GL::Buffer&& vertices);
 
 /**
  * @overload
- * @m_since_latest
+ * @m_since{2020,06}
  */
 MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData& meshData, GL::Buffer&& indices, GL::Buffer& vertices);
 
 /**
  * @overload
- * @m_since_latest
+ * @m_since{2020,06}
  */
 MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData& meshData, GL::Buffer&& indices, GL::Buffer&& vertices);
 
 #ifdef MAGNUM_BUILD_DEPRECATED
 /**
 @brief Compile 2D mesh data
-@m_deprecated_since_latest Use @ref compile(const Trade::MeshData&, CompileFlags)
+@m_deprecated_since{2020,06} Use @ref compile(const Trade::MeshData&, CompileFlags)
     instead.
 
 Configures a mesh for @ref Shaders::Generic2D shader with vertex buffer and
@@ -227,18 +225,9 @@ CORRADE_IGNORE_DEPRECATED_PUSH
 CORRADE_DEPRECATED("use compile(const Trade::MeshData&) instead") MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData2D& meshData);
 CORRADE_IGNORE_DEPRECATED_POP
 
-/** @brief Compile 2D mesh data
- * @m_deprecated_since{2018,10} Use @ref compile(const Trade::MeshData&)
- *      instead. The @p usage parameter is ignored and returned buffer
- *      instances are empty.
- */
-CORRADE_IGNORE_DEPRECATED_PUSH
-CORRADE_DEPRECATED("use compile(const Trade::MeshData&) instead") MAGNUM_MESHTOOLS_EXPORT std::tuple<GL::Mesh, std::unique_ptr<GL::Buffer>, std::unique_ptr<GL::Buffer>> compile(const Trade::MeshData2D& meshData, GL::BufferUsage usage);
-CORRADE_IGNORE_DEPRECATED_POP
-
 /**
 @brief Compile 3D mesh data
-@m_deprecated_since_latest Use @ref compile(const Trade::MeshData&, CompileFlags)
+@m_deprecated_since{2020,06} Use @ref compile(const Trade::MeshData&, CompileFlags)
     instead.
 
 Configures mesh for @ref Shaders::Generic3D shader with vertex buffer and
@@ -265,15 +254,6 @@ greater flexibility.
 */
 CORRADE_IGNORE_DEPRECATED_PUSH
 CORRADE_DEPRECATED("use compile(const Trade::MeshData&, CompileFlags) instead") MAGNUM_MESHTOOLS_EXPORT GL::Mesh compile(const Trade::MeshData3D& meshData, CompileFlags flags = {});
-CORRADE_IGNORE_DEPRECATED_POP
-
-/** @brief Compile 3D mesh data
- * @m_deprecated_since{2018,10} Use @ref compile(const Trade::MeshData&, CompileFlags)
- *      instead. The @p usage parameter is ignored and returned buffer
- *      instances are empty.
- */
-CORRADE_IGNORE_DEPRECATED_PUSH
-CORRADE_DEPRECATED("use compile(const Trade::MeshData&) instead") MAGNUM_MESHTOOLS_EXPORT std::tuple<GL::Mesh, std::unique_ptr<GL::Buffer>, std::unique_ptr<GL::Buffer>> compile(const Trade::MeshData3D& meshData, GL::BufferUsage usage);
 CORRADE_IGNORE_DEPRECATED_POP
 #endif
 

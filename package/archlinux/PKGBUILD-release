@@ -8,6 +8,7 @@ url="https://magnum.graphics"
 license=('MIT')
 depends=('corrade' 'openal' 'sdl2' 'glfw' 'vulkan-icd-loader')
 makedepends=('cmake' 'ninja')
+checkdepends=('swiftshader')
 options=('!strip')
 provides=('magnum-git')
 
@@ -35,6 +36,7 @@ build() {
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENECONVERTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ANYSHADERCONVERTER=ON \
         -DWITH_MAGNUMFONT=ON \
         -DWITH_MAGNUMFONTCONVERTER=ON \
         -DWITH_OBJIMPORTER=ON \
@@ -45,10 +47,13 @@ build() {
         -DWITH_FONTCONVERTER=ON \
         -DWITH_IMAGECONVERTER=ON \
         -DWITH_SCENECONVERTER=ON \
+        -DWITH_SHADERCONVERTER=ON \
         -DWITH_GL_INFO=ON \
+        -DWITH_VK_INFO=ON \
         -DWITH_AL_INFO=ON \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DBUILD_VK_TESTS=ON \
         -G Ninja
     ninja
 
@@ -73,6 +78,7 @@ build() {
         -DWITH_ANYIMAGEIMPORTER=ON \
         -DWITH_ANYSCENECONVERTER=ON \
         -DWITH_ANYSCENEIMPORTER=ON \
+        -DWITH_ANYSHADERCONVERTER=ON \
         -DWITH_MAGNUMFONT=ON \
         -DWITH_MAGNUMFONTCONVERTER=ON \
         -DWITH_OBJIMPORTER=ON \
@@ -83,20 +89,34 @@ build() {
         -DWITH_FONTCONVERTER=ON \
         -DWITH_IMAGECONVERTER=ON \
         -DWITH_SCENECONVERTER=ON \
+        -DWITH_SHADERCONVERTER=ON \
         -DWITH_GL_INFO=ON \
+        -DWITH_VK_INFO=ON \
         -DWITH_AL_INFO=ON \
         -DBUILD_TESTS=ON \
         -DBUILD_GL_TESTS=ON \
+        -DBUILD_VK_TESTS=ON \
         -G Ninja
     ninja
 }
 
 check() {
-    cd "$_rootdir/build"
-    CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5
+    for i in build build-release; do
+        cd "$_rootdir/$i"
+        CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5
+        MAGNUM_DISABLE_EXTENSIONS="GL_ARB_invalidate_subdata GL_ARB_multi_bind GL_ARB_robustness GL_ARB_separate_shader_objects GL_ARB_texture_storage GL_ARB_texture_storage_multisample GL_ARB_shading_language_420pack GL_ARB_explicit_uniform_location GL_ARB_explicit_attrib_location GL_ARB_texture_filter_anisotropic" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R GLTest
+        MAGNUM_DISABLE_EXTENSIONS="GL_ARB_direct_state_access" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R GLTest
+        MAGNUM_DISABLE_EXTENSIONS="GL_ARB_get_texture_sub_image" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R GLTest
+        MAGNUM_DISABLE_EXTENSIONS="GL_ARB_vertex_array_object" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R GLTest
+        MAGNUM_DISABLE_EXTENSIONS="GL_KHR_debug" CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R GLTest
 
-    cd "$_rootdir/build-release"
-    CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5
+        # Run all Vulkan tests with SwiftShader as well
+        MAGNUM_DEVICE=cpu CORRADE_TEST_SKIP_BENCHMARKS=ON CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R VkTest
+        for device in "" cpu; do
+            MAGNUM_DEVICE=$device MAGNUM_VULKAN_VERSION=1.0 CORRADE_TEST_SKIP_BENCHMARKS=ON CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R VkTest
+            MAGNUM_DEVICE=$device MAGNUM_DISABLE_EXTENSIONS="VK_KHR_get_physical_device_properties2 VK_KHR_get_memory_requirements2 VK_KHR_bind_memory2" MAGNUM_VULKAN_VERSION=1.0 CORRADE_TEST_SKIP_BENCHMARKS=ON CORRADE_TEST_COLOR=ON ctest --output-on-failure -j5 -R VkTest
+        done
+    done
 }
 
 package() {
@@ -104,7 +124,7 @@ package() {
     DESTDIR="$pkgdir/" ninja install
 
     # Prevent the release version from overwriting the debug binary
-    for i in al-info gl-info distancefieldconverter fontconverter imageconverter sceneconverter; do
+    for i in al-info gl-info distancefieldconverter fontconverter imageconverter sceneconverter shaderconverter; do
         mv $pkgdir/usr/bin/magnum-${i}{,d}
     done
 

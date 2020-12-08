@@ -38,10 +38,10 @@ namespace Magnum {
 The following guide explains how to build Android projects using minimal
 command-line tools, without Android Studio involved.
 
-At the very least you need to have Android SDK and Android NDK installed.
-Running console utilities and tests on the device don't need much more, in case
-you want to develop actual applications, you need also the SDK and a platform +
-SDK platform build tools for version of your choice.
+At the very least you need to have Android SDK and Android NDK installed, the guide assumes NDK r19 and newer. Running console utilities and tests on the
+device don't need much more, in case you want to develop actual applications,
+you need also the SDK and a platform + SDK platform build tools for version of
+your choice.
 
 For APK building it's possible to use either an experimental support in CMake
 or the official way with Gradle. Gradle is able to download all the
@@ -55,30 +55,36 @@ for a cleaner setup.
     -   [android-ndk](https://aur.archlinux.org/packages/android-ndk/)
     -   [android-sdk-build-tools](https://aur.archlinux.org/packages/android-sdk-build-tools/)
     -   [android-sdk-platform-tools](https://aur.archlinux.org/packages/android-sdk-platform-tools/)
-    -   [android-platform-22](https://aur.archlinux.org/packages/android-platform-22/)
+    -   [android-platform-24](https://aur.archlinux.org/packages/android-platform-24/)
     -   [android-sdk-cmake](https://aur.archlinux.org/packages/android-sdk-cmake/)
 
 Gradle requires Android SDK version of CMake, which is currently at version
-3.6. See below for an experimental way to @ref platforms-android-system-cmake "use the system CMake"
+3.10. See below for an experimental way to @ref platforms-android-system-cmake "use the system CMake"
 instead. On the other hand, while it's possible to use the CMake from Android
-SDK to build Magnum itself, the following guide is written with CMake 3.7 and
-newer in mind, which has Android support built-in. In older versions you'd need
-to supply a toolchain file instead and the configuration values are different.
+SDK to build Magnum itself, the following guide is written with CMake 3.16 and
+newer in mind, which has Android NDK r19+ support built-in. In older versions
+you'd need to supply a toolchain file instead and the configuration values are
+different.
 
 @section platforms-android-console Building and running console applications
 
 Android allows to run arbitrary console utilities and tests via ADB. Assuming
 you have Magnum installed in the NDK path as described in @ref building-cross-android,
-build your project simply as this (adapt version numbers and ABIs as needed):
+build your project as below. The `CMAKE_FIND_ROOT_PATH` is unfortunately needed
+for CMake to correctly find Android libraries, otherwise it falls back to
+looking in native system locations. Adapt paths to your system, Android ABI and
+version and NDK location as needed:
+
+@m_class{m-console-wrap}
 
 @code{.sh}
 mkdir build-android-arm64 && cd build-android-arm64
 cmake .. \
     -DCMAKE_SYSTEM_NAME=Android \
-    -DCMAKE_SYSTEM_VERSION=22 \
+    -DCMAKE_SYSTEM_VERSION=24 \
     -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
-    -DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=clang \
     -DCMAKE_ANDROID_STL_TYPE=c++_static \
+    -DCMAKE_FIND_ROOT_PATH="/opt/android-ndk/platforms/android-24/arch-arm64;/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot" \
     -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 @endcode
@@ -87,10 +93,11 @@ After that you can use ADB to upload your executable to the device and run it
 there. The global temporary directory is `/data/local/tmp` and while the parent
 directories often don't have permissions, it's possible to @cb{.sh} cd @ce into
 it and create arbitrary files there. Assuming you built an executable in
-`build-android-arm64/src/my-application`, the workflow would be like this:
+`build-android-arm64/Release/bin/my-application`, the workflow would be like
+this:
 
 @code{.sh}
-adb push build-android-arm64/src/my-application /data/local/tmp
+adb push build-android-arm64/Release/bin/my-application /data/local/tmp
 adb shell /data/local/tmp/my-application
 @endcode
 
@@ -404,17 +411,19 @@ After that, you can add the additional ABIs to the `abiFilters` list in your
 For example, building Magnum for 32-bit and 64-bit ARM with SDK version 24
 could look like this:
 
+@m_class{m-console-wrap}
+
 @code{.sh}
 mkdir build-android-arm && cd build-android-arm
 cmake .. \
     -DCMAKE_SYSTEM_NAME=Android \
     -DCMAKE_SYSTEM_VERSION=24 \
     -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a \
-    -DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=clang \
     -DCMAKE_ANDROID_STL_TYPE=c++_static \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=<ndk>/platforms/android-24/arch-arm/usr \
-    -DMAGNUM_INCLUDE_INSTALL_PREFIX=<ndk>/sysroot/usr
+    -DCMAKE_FIND_ROOT_PATH="<ndk>platforms/android-24/arch-arm;<ndk>/toolchains/llvm/prebuilt/linux-x86_64/sysroot" \
+    -DMAGNUM_INCLUDE_INSTALL_PREFIX=<ndk>/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr
 cmake --build . --target install
 
 cd ..
@@ -424,11 +433,11 @@ cmake .. \
     -DCMAKE_SYSTEM_NAME=Android \
     -DCMAKE_SYSTEM_VERSION=24 \
     -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
-    -DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=clang \
     -DCMAKE_ANDROID_STL_TYPE=c++_static \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=<ndk>/platforms/android-24/arch-arm64/usr \
-    -DMAGNUM_INCLUDE_INSTALL_PREFIX=<ndk>/sysroot/usr
+    -DCMAKE_FIND_ROOT_PATH="<ndk>platforms/android-24/arch-arm64;<ndk>/toolchains/llvm/prebuilt/linux-x86_64/sysroot" \
+    -DMAGNUM_INCLUDE_INSTALL_PREFIX=<ndk>/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr
 cmake --build . --target install
 @endcode
 
@@ -502,7 +511,7 @@ $ adb logcat *:S magnum
 
 According to the [official documentation](https://developer.android.com/studio/projects/add-native-code.html#vanilla_cmake),
 it's possible to use system CMake installation without needing to install
-Android SDK version of CMake 3.6. Simply update the
+Android SDK version of CMake 3.10. Simply update the
 @cb{.gradle} externalNativeBuild @ce in your `build.gradle` file to specify
 CMake version that you have installed in your system, for example:
 
@@ -513,15 +522,13 @@ android {
         cmake {
             path 'CMakeLists.txt'
             ...
-            version '3.10.2'
+            version '3.17'
         }
     }
 }
 @endcode
 
-However, be aware that this is an experimental feature and may be broken. At
-the time of writing (March 2018), it didn't work for me with NDK r16b, Android
-buid plugin 3.0.1 and CMake 3.10.
+However, be aware that this is an experimental feature and may be broken.
 
 @section platforms-android-gradlew Using gradlew wrappers instead of a system installation
 
@@ -743,19 +750,52 @@ gradle build
 
 @section platforms-android-troubleshooting Troubleshooting
 
-@subsection platforms-android-cmake-too-old CMake is too old
+@subsection platforms-android-cmake-too-old CMake or NDK is too old
 
 While the minimal CMake version that's required for building Magnum for Android
-is 3.7, you might want to grab at least CMake 3.9.2, as it
-[fixes an issue with the Clang toolchain](https://gitlab.kitware.com/cmake/cmake/issues/17253).
+is 3.7, NDK r19 and newer need at least CMake 3.16 to work. For older NDKs you
+might want to grab at least CMake 3.9.2, as it [fixes an issue with the Clang toolchain](https://gitlab.kitware.com/cmake/cmake/issues/17253).
 
-@subsection platforms-android-ndk-too-new NDK is too new
+With NDK r18 and older you'll need to additionally supply
+`-DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=clang`, on the other hand the
+`-DCMAKE_FIND_ROOT_PATH` isn't needed --- CMake is able to figure out the paths
+on its own in that case.
 
-Last NDK version that's known to be reliably working with CMake is r17, newer
-versions suffer from various issues due to changes introduced in NDK internals.
-No work has been done yet on Magnum side to counter / work around those issues,
-optimistically waiting on CMake devs to figure it out instead. See
-[mosra/magnum#310](https://github.com/mosra/magnum/issues/310) for details.
+@subsection platforms-android-compiler-fails-at-life Compiler suddenly fails at life
+
+If you're suddenly greeted with an overwhelming amount of strange errors coming
+from standard library C++ headers including things like
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1/cmath:319:9: error: no member named 'isnormal' in the global namespace
+using ::isnormal;
+      ~~^
+/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1/cmath:320:9: error: no member named 'isgreater' in the global namespace
+using ::isgreater;
+      ~~^
+/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1/cmath:321:9: error: no member named 'isgreaterequal' in the global namespace
+using ::isgreaterequal;
+      ~~^
+/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1/cmath:322:9: error: no member named 'isless' in the global namespace
+using ::isless;
+      ~~^
+/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1/cmath:323:9: error: no member named 'islessequal' in the global namespace
+using ::islessequal;
+      ~~^
+/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1/cmath:324:9: error: no member named 'islessgreater' in the global namespace
+using ::islessgreater;
+      ~~^
+@endcode
+
+@m_class{m-noindent}
+
+it might be due to `&lt;ndk&gt;/sysroot/usr/include` being present in your
+include path. For some reason the NDK has two copies of system includes, one in
+`&lt;ndk&gt;/toolchains/llvm/prebuilt/&lt;host&gt;/sysroot/usr` and one here,
+and the one in `&lt;ndk&gt;/sysroot` causes the above errors. Find the
+offending include dir and point it to the other location to fix the error.
 
 @subsection platforms-android-troubleshooting-windows-nsight CMake complaining about some NVIDIA Nsight Tegra Visual Studio Edition on Windows
 
@@ -860,7 +900,79 @@ You can also add further arguments to `apksigner` here. See the
 [official documentaton for apksigner](https://developer.android.com/studio/command-line/apksigner)
 for details.
 
-@subsection platforms-android-troubleshooting-cant-find Gradle CMake can't find dependencies
+@subsection platforms-android-troubleshooting-ndk-home-deprecated Warning about ANDROID_NDK_HOME being deprecated
+
+If you see the following warning when building with Android Gradle Plugin 3.6.0
+and newer, it's because an @cb{.sh} $ANDROID_NDK_HOME @ce environment variable
+is defined.
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+$ gradle build
+
+> Configure project :
+WARNING: Support for ANDROID_NDK_HOME is deprecated and will be removed in the future. Use android.ndkVersion in build.gradle instead.
+Support for ANDROID_NDK_HOME is deprecated and will be removed in the future. Use android.ndkVersion in build.gradle instead.
+@endcode
+
+Ignore it, it's the best way. If you *really* want to get rid of the warning
+you can @cb{.sh} unset ANDROID_NDK_HOME @ce or edit your default system environment and remove this entry, but at that point Gradle will most probably
+suddenly want to download the NDK again somewhere inside the SDK installation
+directory, which may fail @ref platforms-android-troubleshooting-permissions "due to readonly directory permissions".
+At that point you're on your own, sorry. This path hasn't been investigated
+yet.
+
+@subsection platforms-android-troubleshooting-ndk-version Specifying NDK version in gradle.build
+
+With Android Gradle plugin 3.6.0 and newer it's possible to specify which NDK
+to use via `android.ndkVersion`. However it requires you to
+[specify the full version](https://developer.android.com/studio/projects/install-ndk#apply-specific-version) and doing something like
+
+@code{.gradle}
+android {
+    ndkVersion "19"
+
+
+    // ...
+@endcode
+
+@m_class{m-noindent}
+
+will result in the following error, or worse, a
+@ref platforms-android-troubleshooting-no-signature-applicable "cryptic error about some closure".
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+> Specified android.ndkVersion '19' does not have enough precision. Use major.minor.micro in version.
+@endcode
+
+The complete NDK version isn't listed in any of the online Android docs, you
+have to look into the `source.properties` file in the NDK root, which might say
+for example the following. It may be also available through the GUI SDK manager.
+
+@code{.properties}
+Pkg.Desc = Android NDK
+Pkg.Revision = 19.0.5232133
+@endcode
+
+@subsection platforms-android-troubleshooting-cmake Debugging Gradle CMake issues
+
+Gradle by default doesn't show any useful output for the CMake run, only the
+error output when something goes wrong. For general debugging, you have to run
+`gradle build -i`, which will spit out immense heaps of even more useless
+content, and the actual CMake output messages are interleaved with some JSON
+dumps in a way that makes them practically invisible. To find a start of the
+CMake log, it might help to redirect the output and then search for
+`Check for working CXX compiler`.
+
+To make things worse, the CMake build isn't stored in the `build/` directory,
+but rather in (hidden) `.externalNativeBuild/` or `.cxx/` directories,
+depending on which version you're at. Be sure to remove those when retrying a
+CMake configure step, otherwise CMake may not even get run.
+
+@subsubsection platforms-android-troubleshooting-cant-find Gradle CMake can't find dependencies
 
 Gradle by default searches only in the NDK install path. If you have your
 dependencies installed somewhere else (this goes especially for the *native*
@@ -870,6 +982,26 @@ environment variable to your install location:
 @code{.sh}
 export CMAKE_PREFIX_PATH=<path-where-your-dependencies-are-installed>
 gradle build
+@endcode
+
+You can also put that directly into the `gradle.build` file, although that's
+not recommended because it hardcodes your local system setup in the project:
+
+@m_class{m-console-wrap}
+
+@code{.gradle}
+android {
+    ...
+
+    defaultConfig {
+        ...
+
+        externalNativeBuild {
+            cmake {
+                // Append to the existing arguments that are there
+                arguments '-DANDROID_STL=c++_static', '-DCMAKE_PREFIX_PATH=<path-where-your-dependencies-are-installed>'
+            }
+        }
 @endcode
 
 If you have the dependencies installed in the NDK path, but it still fails,
@@ -907,10 +1039,11 @@ quick, the log is spitting out a lot of info all the time. Possible causes:
     [the official documentation](https://developer.android.com/studio/projects/gradle-external-native-builds.html#jniLibs)
     for details.
 
-@subsection platforms-android-troubleshooting-java8 Gradle aborting due to too new Java
+@subsection platforms-android-troubleshooting-gradle-evaluation-listener Gradle aborting due to "failed to notify project evaluation listener"
 
-If you see one of the following outputs, it might be that you're using Java 9
-or 10, which is not supported by Android build tools yet:
+All these errors look the same to an untrained eye, starting with the
+following, however there's a broad variety of reasons and *of course* it won't
+tell you what is actually wrong:
 
 @code{.shell-session}
 $ gradle build
@@ -920,16 +1053,21 @@ FAILURE: Build failed with an exception.
 * What went wrong:
 …
 > Failed to notify project evaluation listener.
+@endcode
+
+The line right after is the key clue to know the root cause --- see the
+following sections
+
+@subsubsection platforms-android-troubleshooting-java8 Too new Java
+
+Older versions of Android build tools didn't support Java 9 or 10, which could manifest as any of the following:
+
+@code{.shell-session}
+> Failed to notify project evaluation listener.
    > javax/xml/bind/annotation/XmlSchema
 @endcode
 
 @code{.shell-session}
-$ gradle build
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-…
 > Failed to notify project evaluation listener.
    > Could not initialize class com.android.sdklib.repository.AndroidSdkHandler
 @endcode
@@ -948,32 +1086,112 @@ On ArchLinux, Java 8 is provided by the [jdk8-openjdk](https://www.archlinux.org
 package, which is pulled in as a dependency of the `android-sdk` and `gradle`
 packages.
 
-@subsection platforms-android-troubleshooting-term Gradle aborting due to termcap
+@subsubsection platforms-android-troubleshooting-gradle6 Too new Gradle (or maybe NDK or...)
 
-If you see the following output, Gradle is crashing because @cb{.sh} $TERM @ce
-is set to `xterm-256color` or `xterm-24`:
+Older version of Android build tools don't seem to work with new Gradle (in
+this case 6.6.1) anymore. Or that's the most plausible explanation, it might
+also be that these don't work with new NDK versions either (r19 in this case)
+but why is that reported by a throwing exception 1000 stack frames deep in some
+totally random ungoogleable API is just beyond me. Anyway --- the following
+may happen with Android Gradle plugin 2.3.3:
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+> Failed to notify project evaluation listener.
+   > org.gradle.api.tasks.compile.CompileOptions.setBootClasspath(Ljava/lang/String;)V
+@endcode
+
+While this with 3.0.0:
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+> Failed to notify project evaluation listener.
+   > org.gradle.api.internal.TaskInputsInternal.property(Ljava/lang/String;Ljava/lang/Object;)Lorg/gradle/api/tasks/TaskInputs;
+@endcode
+
+This for 3.3.0:
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+> Failed to notify project evaluation listener.
+   > org.gradle.api.file.ProjectLayout.directoryProperty(Lorg/gradle/api/provider/Provider;)Lorg/gradle/api/file/DirectoryProperty;
+@endcode
+
+And probably a dozen other variants, but I am not willing to waste my time any
+further by enumerating all possible embarrasing crashes of cursed tools. The
+oldest Android Gradle plugin version that worked with Gradle 6.6.1 and NDK r19
+was 3.6.0, and to change it update the following entry in your `build.gradle`:
+
+@code{.gradle}
+buildscript {
+    // ...
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.6.0'
+    }
+}
+@endcode
+
+@subsection platform-android-troubleshooting-no-repositories-defined Gradle fails because no repositories are defined
+
+Android Gradle plugin 3.6 and newer may *greet* you with the following when
+doing a fresh build:
+
+@m_class{m-console-wrap}
 
 @code{.shell-session}
 $ gradle build
 
+> Task :mergeDebugResources FAILED
+
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Could not open terminal for stdout: could not get termcap entry
+Execution failed for task ':mergeDebugResources'.
+> Could not resolve all files for configuration ':_internal_aapt2_binary'.
+   > Cannot resolve external dependency com.android.tools.build:aapt2:4.0.0-6051327 because no repositories are defined.
+     Required by:
+         project :
 @endcode
 
-Solution is to set @cb{.sh} TERM=xterm @ce. See
-[gradle/gradle#4440](https://github.com/gradle/gradle/issues/4440) for more
-information.
+Solution is to add the following to your `build.gradle`:
 
-@code{.sh}
-TERM=xterm gradle build
+@code{.gradle}
+allprojects {
+    repositories {
+        google()
+    }
+}
 @endcode
+
+* *in addition* to the existing repositories defined inside `buildscript`:
+
+@code{.gradle}
+buildscript {
+    repositories {
+        jcenter()
+        google()
+    }
+
+    // ...
+@endcode
+
+Both the two existing repositories inside `buildscript` are still needed, it
+will fail with different but no less cryptic errors if you attempt to remove
+either of them. When you add the `allprojects` entry, the problem may seemingly
+look like it disappeared, since removing `allprojects` again will still work.
+This is only true until you recreate the build directory from scratch so better
+keep it there.
 
 @subsection platforms-android-troubleshooting-licenses Accepting SDK licenses for Gradle
 
 Gradle might refuse to build a project if SDK licenses are not accepted, with
 an error that might look like this:
+
+@m_class{m-console-wrap}
 
 @code{.shell-session}
 $ gradle build
@@ -994,20 +1212,63 @@ following (assuming you have SDK version 26 at least):
 sdkmanager --licenses # and then manually accept all of them
 @endcode
 
-The tool doesn't provide any diagnostic output if the accepting failed, so be
-sure to verify that everything went well by executing @cb{.sh} sdkmanager --licenses @ce
-again. If it offers the same licenses again, you might want to force it with
-@cb{.sh} sudo @ce.
+@m_class{m-note m-danger}
+
+@par
+    The tool says @cb{.shell-session} All SDK package licenses accepted @ce and
+    * **returns with a success error code even if the accepting failed**, so be
+    sure to verify that everything went well by executing @cb{.sh} sdkmanager --licenses @ce again. If it offers the same licenses again, it didn't succeed
+    before. In that case you may want to force it with @cb{.sh} sudo @ce (and
+    then verify once again).
 
 If the tool blows up with the following error, it's again because the Java
 version is too new, see @ref platforms-android-troubleshooting-java8 "above"
 for a solution:
+
+@m_class{m-console-wrap}
 
 @code{.shell-session}
 Exception in thread "main" java.lang.NoClassDefFoundError: javax/xml/bind/annotation/XmlSchema
         at com.android.repository.api.SchemaModule$SchemaModuleVersion.<init>(SchemaModule.java:156)
         …
 @endcode
+
+@subsection platforms-android-troubleshooting-marshalling-nonexistent-xml Gradle complains about an exception while marshalling some XML file that doesn't exist
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+$ gradle build
+
+> Configure project :
+Exception while marshalling /opt/android-sdk/build-tools/29.0.3/package.xml. Probably the SDK is read-only
+…
+@endcode
+
+This message doesn't seem to result in a build error, however it might be
+annoying. The files it complains about don't exist on the filesystem and it's
+related to the @ref platforms-android-troubleshooting-licenses problem --- the
+`package.xml` files get created during the (`sudo`ed) run of `sdkmanager`, even
+if there are no licenses left to sign.
+
+@subsection platforms-android-troubleshooting-no-signature-applicable Gradle fails because no signature of method is applicable for argument types
+
+@m_class{m-console-wrap}
+
+@code{.shell-session}
+$ gradle build
+
+* Where:
+Build file '…/build.gradle' line: …
+
+* What went wrong:
+…
+> No signature of method: build_3w19jaw3zqx2h2gvdj91syekc.android() is applicable for argument types: (build_3w19jaw3zqx2h2gvdj91syekc$_run_closure1) values: [build_3w19jaw3zqx2h2gvdj91syekc$_run_closure1@393eb206]
+@endcode
+
+The particular cryptic value may differ, but this means you have some error in
+your Gradle file. Of course it won't tell you what the error is, so good luck
+commenting out parts of the file until it works or you reach a different error.
 
 @subsection platforms-android-troubleshooting-permissions Android SDK directory permissions
 
@@ -1025,6 +1286,38 @@ it's often enough to just install such packages. In case of ArchLinux, all
 relevant packages are available in AUR. For the above error in particular, the
 matching packages are [android-sdk-build-tools-26.0.2](https://aur.archlinux.org/packages/android-sdk-build-tools-26.0.2/)
 and [android-platform-25](https://aur.archlinux.org/packages/android-platform-25/).
+
+@section platforms-android-obsolete-troubleshooting Obsolete troubleshooting
+
+These issues should no longer appear in practice with reasonably recent
+versions of Android tools, however are still kept <s>to remind us everything
+used to be even worse than it is now</s> in case your project keeps using the
+older versions (which is recommended for sanity, there's not many things worse
+than upgrading Android NDK).
+
+@subsection platforms-android-troubleshooting-term Gradle aborting due to termcap
+
+If you see the following output, Gradle is crashing because @cb{.sh} $TERM @ce
+is set to `xterm-256color` or `xterm-24`:
+
+@code{.shell-session}
+$ gradle build
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not open terminal for stdout: could not get termcap entry
+@endcode
+
+Solution is to set @cb{.sh} TERM=xterm @ce. See
+[gradle/gradle#4440](https://github.com/gradle/gradle/issues/4440) for more
+information. Doesn't seem to be an issue with Gradle 6.6.1 anymore, but the
+exact version where this got fixed is unknown.
+
+@code{.sh}
+TERM=xterm gradle build
+@endcode
+
 */
 
 }

@@ -24,46 +24,85 @@
 #   DEALINGS IN THE SOFTWARE.
 #
 
-# CMake has FindVulkan since 3.7
-cmake_minimum_required(VERSION 3.7)
-
-# We don't need system-wide includes
-set(Vulkan_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/MagnumExternal/Vulkan)
 find_package(Vulkan REQUIRED)
 
-set(MagnumVk_SRCS )
+set(MagnumVk_SRCS
+    CommandBuffer.cpp
+    CommandPool.cpp
+    Extensions.cpp
+    Handle.cpp
+    Instance.cpp
+    Result.cpp
+    Shader.cpp
+    Version.cpp
+
+    Implementation/Arguments.cpp
+    Implementation/DeviceState.cpp
+    Implementation/InstanceState.cpp)
+
 set(MagnumVk_GracefulAssert_SRCS
-    Enums.cpp)
+    Buffer.cpp
+    Device.cpp
+    DeviceProperties.cpp
+    Enums.cpp
+    ExtensionProperties.cpp
+    Image.cpp
+    LayerProperties.cpp
+    Memory.cpp)
+
 set(MagnumVk_HEADERS
+    Assert.h
+    Buffer.h
+    CommandBuffer.h
+    CommandPool.h
+    Device.h
+    DeviceProperties.h
     Enums.h
+    Extensions.h
+    ExtensionProperties.h
+    Handle.h
+    Image.h
+    Instance.h
     Integration.h
+    LayerProperties.h
+    Memory.h
+    Queue.h
+    Result.h
+    Shader.h
+    TypeTraits.h
+    Version.h
     Vk.h
     Vulkan.h
 
     visibility.h)
+
 set(MagnumVk_PRIVATE_HEADERS
+    Implementation/Arguments.h
+    Implementation/DeviceState.h
+    Implementation/InstanceState.h
+
     Implementation/compressedPixelFormatMapping.hpp
     Implementation/pixelFormatMapping.hpp
     Implementation/vertexFormatMapping.hpp)
 
 # Objects shared between main and test library
-# add_library(MagnumVkObjects OBJECT
-#     ${MagnumVk_SRCS}
-#     ${MagnumVk_HEADERS}
-#     ${MagnumVk_PRIVATE_HEADERS})
-# target_include_directories(MagnumVkObjects PUBLIC
-#     $<TARGET_PROPERTY:Magnum,INTERFACE_INCLUDE_DIRECTORIES>)
-# if(NOT BUILD_STATIC)
-#     target_compile_definitions(MagnumVkObjects PRIVATE "MagnumVkObjects_EXPORTS" "FlextVk_EXPORTS")
-# endif()
-# if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
-#     set_target_properties(MagnumVkObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
-# endif()
-# set_target_properties(MagnumVkObjects PROPERTIES FOLDER "Magnum/Vk")
+add_library(MagnumVkObjects OBJECT
+    ${MagnumVk_SRCS}
+    ${MagnumVk_HEADERS}
+    ${MagnumVk_PRIVATE_HEADERS})
+target_include_directories(MagnumVkObjects PUBLIC
+    $<TARGET_PROPERTY:Magnum,INTERFACE_INCLUDE_DIRECTORIES>)
+if(NOT BUILD_STATIC)
+    target_compile_definitions(MagnumVkObjects PRIVATE "MagnumVkObjects_EXPORTS" "FlextVk_EXPORTS")
+endif()
+if(NOT BUILD_STATIC OR BUILD_STATIC_PIC)
+    set_target_properties(MagnumVkObjects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+set_target_properties(MagnumVkObjects PROPERTIES FOLDER "Magnum/Vk")
 
 # Vk library
 add_library(MagnumVk ${SHARED_OR_STATIC}
-#     $<TARGET_OBJECTS:MagnumVkObjects>
+    $<TARGET_OBJECTS:MagnumVkObjects>
     $<TARGET_OBJECTS:MagnumFlextVkObjects>
     ${MagnumVk_GracefulAssert_SRCS})
 set_target_properties(MagnumVk PROPERTIES
@@ -88,10 +127,52 @@ install(TARGETS MagnumVk
     ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
 install(FILES ${MagnumVk_HEADERS} DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/Vk)
 
+if(WITH_VK_INFO)
+    add_executable(magnum-vk-info vk-info.cpp)
+    target_link_libraries(magnum-vk-info PRIVATE MagnumVk)
+    set_target_properties(magnum-vk-info PROPERTIES FOLDER "Magnum/Vk")
+
+    install(TARGETS magnum-vk-info DESTINATION ${MAGNUM_BINARY_INSTALL_DIR})
+
+    # Magnum Vk Info target alias for superprojects
+    add_executable(Magnum::vk-info ALIAS magnum-vk-info)
+endif()
+
+if(WITH_VULKANTESTER)
+    if(NOT TARGET_VK)
+        message(SEND_ERROR "VulkanTester is available only if TARGET_VK is enabled")
+    endif()
+
+    find_package(Corrade REQUIRED TestSuite)
+
+    set(MagnumVulkanTester_SRCS VulkanTester.cpp)
+    set(MagnumVulkanTester_HEADERS VulkanTester.h)
+
+    # Unlike with OpenGLTester, we shouldn't need a separate library that links
+    # exclusively to MagnumVkTestLib as there is no global state that could
+    # cause problems on Windows.
+    add_library(MagnumVulkanTester STATIC
+        ${MagnumVulkanTester_SRCS}
+        ${MagnumVulkanTester_HEADERS})
+    set_target_properties(MagnumVulkanTester PROPERTIES
+        DEBUG_POSTFIX "-d"
+        FOLDER "Magnum/Vk")
+    target_link_libraries(MagnumVulkanTester PUBLIC MagnumVk Corrade::TestSuite)
+
+    install(FILES ${MagnumVulkanTester_HEADERS} DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/Vk)
+    install(TARGETS MagnumVulkanTester
+        RUNTIME DESTINATION ${MAGNUM_BINARY_INSTALL_DIR}
+        LIBRARY DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR}
+        ARCHIVE DESTINATION ${MAGNUM_LIBRARY_INSTALL_DIR})
+
+    # Magnum VulkanTester target alias for superprojects
+    add_library(Magnum::VulkanTester ALIAS MagnumVulkanTester)
+endif()
+
 if(BUILD_TESTS)
     # Library with graceful assert for testing
     add_library(MagnumVkTestLib ${SHARED_OR_STATIC}
-#         $<TARGET_OBJECTS:MagnumVkObjects>
+        $<TARGET_OBJECTS:MagnumVkObjects>
         $<TARGET_OBJECTS:MagnumFlextVkObjects>
         ${MagnumVk_GracefulAssert_SRCS})
     set_target_properties(MagnumVkTestLib PROPERTIES

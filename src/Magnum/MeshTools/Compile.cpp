@@ -66,6 +66,11 @@ GL::Mesh compileInternal(const Trade::MeshData& meshData, GL::Buffer&& indices, 
 
     /* Vertex data */
     GL::Buffer verticesRef = GL::Buffer::wrap(vertices.id(), GL::Buffer::TargetHint::Array);
+
+    /* Ensure each known attribute gets bound only once. There's 16 generic
+       attribs at most. */
+    Math::BoolVector<16> boundAttributes;
+
     for(UnsignedInt i = 0; i != meshData.attributeCount(); ++i) {
         Containers::Optional<GL::DynamicAttribute> attribute;
 
@@ -130,6 +135,14 @@ GL::Mesh compileInternal(const Trade::MeshData& meshData, GL::Buffer&& indices, 
                 Warning{} << "MeshTools::compile(): ignoring unknown/unsupported attribute" << meshData.attributeName(i);
             continue;
         }
+
+        /* Ensure each attribute gets bound only once -- so for example when
+           there are two texture coordinate sets, we don't bind them both to
+           the same slot, effectively ignoring the first one */
+        /** @todo revisit when there are secondary generic texture coordinates */
+        if(boundAttributes[attribute->location()])
+            continue;
+        boundAttributes.set(attribute->location(), true);
 
         /* For the first attribute move the buffer in, for all others use the
            reference */
@@ -309,12 +322,6 @@ GL::Mesh compile(const Trade::MeshData2D& meshData) {
     return mesh;
 }
 
-std::tuple<GL::Mesh, std::unique_ptr<GL::Buffer>, std::unique_ptr<GL::Buffer>> compile(const Trade::MeshData2D& meshData, GL::BufferUsage) {
-    return std::make_tuple(compile(meshData),
-        std::unique_ptr<GL::Buffer>{new GL::Buffer{NoCreate}},
-        std::unique_ptr<GL::Buffer>{meshData.isIndexed() ? new GL::Buffer{NoCreate} : nullptr});
-}
-
 GL::Mesh compile(const Trade::MeshData3D& meshData, CompileFlags flags) {
     GL::Mesh mesh;
     mesh.setPrimitive(meshData.primitive());
@@ -467,12 +474,6 @@ GL::Mesh compile(const Trade::MeshData3D& meshData, CompileFlags flags) {
     } else mesh.setCount(positions.size());
 
     return mesh;
-}
-
-std::tuple<GL::Mesh, std::unique_ptr<GL::Buffer>, std::unique_ptr<GL::Buffer>> compile(const Trade::MeshData3D& meshData, GL::BufferUsage) {
-    return std::make_tuple(compile(meshData),
-        std::unique_ptr<GL::Buffer>{new GL::Buffer{NoCreate}},
-        std::unique_ptr<GL::Buffer>{meshData.isIndexed() ? new GL::Buffer{NoCreate} : nullptr});
 }
 CORRADE_IGNORE_DEPRECATED_POP
 #endif

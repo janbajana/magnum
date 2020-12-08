@@ -32,15 +32,16 @@
 #include <Corrade/Utility/DebugStl.h>
 #include <Corrade/Utility/String.h>
 
-#include "Magnum/Trade/AbstractMaterialData.h"
 #include "Magnum/Trade/AnimationData.h"
 #include "Magnum/Trade/CameraData.h"
 #include "Magnum/Trade/ImageData.h"
 #include "Magnum/Trade/LightData.h"
+#include "Magnum/Trade/MaterialData.h"
 #include "Magnum/Trade/MeshData.h"
 #include "Magnum/Trade/ObjectData2D.h"
 #include "Magnum/Trade/ObjectData3D.h"
 #include "Magnum/Trade/SceneData.h"
+#include "Magnum/Trade/SkinData.h"
 #include "Magnum/Trade/TextureData.h"
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -165,7 +166,7 @@ Int AnySceneImporter::doAnimationForName(const std::string& name) { return _in->
 std::string AnySceneImporter::doAnimationName(const UnsignedInt id) { return _in->animationName(id); }
 Containers::Optional<AnimationData> AnySceneImporter::doAnimation(const UnsignedInt id) { return _in->animation(id); }
 
-Int AnySceneImporter::doDefaultScene() { return _in->defaultScene(); }
+Int AnySceneImporter::doDefaultScene() const { return _in->defaultScene(); }
 
 UnsignedInt AnySceneImporter::doSceneCount() const { return _in->sceneCount(); }
 Int AnySceneImporter::doSceneForName(const std::string& name) { return _in->sceneForName(name); }
@@ -192,6 +193,16 @@ Int AnySceneImporter::doObject3DForName(const std::string& name) { return _in->o
 std::string AnySceneImporter::doObject3DName(const UnsignedInt id) { return _in->object3DName(id); }
 Containers::Pointer<ObjectData3D> AnySceneImporter::doObject3D(const UnsignedInt id) { return _in->object3D(id); }
 
+UnsignedInt AnySceneImporter::doSkin2DCount() const { return _in->skin2DCount(); }
+Int AnySceneImporter::doSkin2DForName(const std::string& name) { return _in->skin2DForName(name); }
+std::string AnySceneImporter::doSkin2DName(const UnsignedInt id) { return _in->skin2DName(id); }
+Containers::Optional<SkinData2D> AnySceneImporter::doSkin2D(const UnsignedInt id) { return _in->skin2D(id); }
+
+UnsignedInt AnySceneImporter::doSkin3DCount() const { return _in->skin3DCount(); }
+Int AnySceneImporter::doSkin3DForName(const std::string& name) { return _in->skin3DForName(name); }
+std::string AnySceneImporter::doSkin3DName(const UnsignedInt id) { return _in->skin3DName(id); }
+Containers::Optional<SkinData3D> AnySceneImporter::doSkin3D(const UnsignedInt id) { return _in->skin3D(id); }
+
 UnsignedInt AnySceneImporter::doMeshCount() const { return _in->meshCount(); }
 Int AnySceneImporter::doMeshForName(const std::string& name) { return _in->meshForName(name); }
 std::string AnySceneImporter::doMeshName(const UnsignedInt id) { return _in->meshName(id); }
@@ -217,7 +228,7 @@ CORRADE_IGNORE_DEPRECATED_POP
 UnsignedInt AnySceneImporter::doMaterialCount() const { return _in->materialCount(); }
 Int AnySceneImporter::doMaterialForName(const std::string& name) { return _in->materialForName(name); }
 std::string AnySceneImporter::doMaterialName(const UnsignedInt id) { return _in->materialName(id); }
-Containers::Pointer<AbstractMaterialData> AnySceneImporter::doMaterial(const UnsignedInt id) { return _in->material(id); }
+Containers::Optional<MaterialData> AnySceneImporter::doMaterial(const UnsignedInt id) { return _in->material(id); }
 
 UnsignedInt AnySceneImporter::doTextureCount() const { return _in->textureCount(); }
 Int AnySceneImporter::doTextureForName(const std::string& name) { return _in->textureForName(name); }
@@ -245,4 +256,4 @@ Containers::Optional<ImageData3D> AnySceneImporter::doImage3D(const UnsignedInt 
 }}
 
 CORRADE_PLUGIN_REGISTER(AnySceneImporter, Magnum::Trade::AnySceneImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")

@@ -92,7 +92,7 @@ Are the below lists missing your name or something's wrong?
     --- Multi-channel support in the @ref Audio library, standard conformance;
     float, double, A-Law and μ-Law format support in the
     @ref Audio::WavImporter "WavAudioImporter" plugin
--   **Andrew ([\@sheerluck](https://github.com/sheerluck)) --- Gentoo package
+-   **Andrew ([\@sheerluck](https://github.com/sheerluck))** --- Gentoo package
     fixes
 -   **Andy Somogyi** ([\@andysomogyi](https://github.com/andysomogyi)) ---
     bugreports, API design improvement suggestions
@@ -121,7 +121,8 @@ Are the below lists missing your name or something's wrong?
 -   **Émile Grégoire** ([\@emgre](https://github.com/emgre)) --- documentation
     updates, algorithm bugfixes
 -   **Erik Wijmans** ([\@erikwijmans](https://github.com/erikwijmans)) ---
-    NVidia-specific workarounds for headless EGL contexts
+    NVidia-specific workarounds for headless EGL contexts, CUDA device
+    selection in @ref Platform::WindowlessEglApplication
 -   **Florian Goujeon** ([\@fgoujeon](https://github.com/fgoujeon)) --- iOS
     fixes in the @ref Shaders library
 -   **Gerhard de Clercq** --- Windows RT (Store/Phone) port
@@ -142,11 +143,14 @@ Are the below lists missing your name or something's wrong?
     bootstrap project
 -   **Jan Dupal** ([\@JanDupal](https://github.com/JanDupal)) --- Homebrew
     package for `magnum-bindings`
+-   **[\@Janos95](https://github.com/Janos95)** -- @ref Math and
+    @ref DebugTools::ColorMap additions
 -   **Jonathan Hale** ([\@Squareys](https://github.com/Squareys)) ---
     @ref Audio and @ref Trade library enhancements,
     @ref Platform::GlfwApplication and @ref Platform::EmscriptenApplication
-    implementation, frustum and cone culling, bug reports, Windows build
-    improvements, documentation improvements and tons of other stuff
+    implementation, frustum and cone culling and other @ref Math additions, bug
+    reports, Windows build improvements, documentation improvements and tons of
+    other stuff
 -   **Joel Clay** ([\@jclay](https://github.com/jclay)) --- Vcpkg packages
 -   **Konstantinos Chatzilygeroudis** ([\@costashatz](https://github.com/costashatz))
     --- Debian package, improvements to @ref Platform::GlfwApplication and
@@ -167,14 +171,17 @@ Are the below lists missing your name or something's wrong?
     --- initial macOS port, various other improvements
 -   **Nathan Ollerenshaw** ([\@matjam](https://github.com/matjam)) --- Ubuntu
     packages in a PPA repository
--   **Nghia Truong** ([\@ttnghia](https://github.com/ttnghia) ---@ref Math
+-   **Nghia Truong** ([\@ttnghia](https://github.com/ttnghia) --- @ref Math
     library additions
 -   **Nick Skelsey** ([\@NSkelsey](https://github.com/NSkelsey)) ---
     documentation copy-editing
 -   **Nicholas "LB" Branden** ([\@LB--](https://github.com/LB--)) --- warning
     fixes, Windows buildsystem improvements
 -   **Olga Turanksaya** ([\@olga-python](https://github.com/olga-python)) ---
-    Gentoo ebuild
+    Gentoo ebuild)
+-   **Pablo Escobar** ([\@pezcode](https://github.com/pezcode)) --- @ref Math
+    additions, support for multiple @ref Platform::EmscriptenApplication
+    canvases on one page, Emscripten-focused fixes
 -   **Pascal Thomet** ([\@pthom](https://github.com/pthom)) --- C++17
     compilation fixes, buildsystem improvements, Hunter package
 -   **Sam Spilsbury** ([\@smspillaz](https://github.com/smspillaz)) --- WebGL
@@ -183,8 +190,8 @@ Are the below lists missing your name or something's wrong?
     @ref Platform::GlfwApplication crash fixes
 -   **[\@Selot](https://github.com/Selot)** --- Fixes in the `base-qt`
     bootstrap project
--   **Séverin Lemaignan** ([\@severin-lemaignan](severin-lemaignan/)) --- lots
-    of feedback and bug reports for the initial releases
+-   **Séverin Lemaignan** ([\@severin-lemaignan](https://github.com/severin-lemaignan))
+    --- lots of feedback and bug reports for the initial releases
 -   **[\@sigman78](https://github.com/sigman78)** --- Initial MSVC 2017 port,
     Vcpkg packages
 -   **Siim Kallas** ([\@seemk](https://github.com/seemk)) ---

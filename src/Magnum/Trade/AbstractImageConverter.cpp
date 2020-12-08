@@ -43,7 +43,11 @@
 namespace Magnum { namespace Trade {
 
 std::string AbstractImageConverter::pluginInterface() {
-    return "cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1";
+    return
+/* [interface] */
+"cz.mosra.magnum.Trade.AbstractImageConverter/0.2.1"
+/* [interface] */
+    ;
 }
 
 #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
@@ -148,9 +152,9 @@ bool AbstractImageConverter::doExportToFile(const ImageView2D& image, const std:
     CORRADE_ASSERT(features() >= ImageConverterFeature::ConvertData, "Trade::AbstractImageConverter::exportToFile(): feature advertised but not implemented", false);
 
     const auto data = doExportToData(image);
+    /* No deleter checks as it doesn't matter here */
     if(!data) return false;
 
-    /* Open file */
     if(!Utility::Directory::write(filename, data)) {
         Error() << "Trade::AbstractImageConverter::exportToFile(): cannot write to file" << filename;
         return false;
@@ -170,9 +174,9 @@ bool AbstractImageConverter::doExportToFile(const CompressedImageView2D& image, 
     CORRADE_ASSERT(features() >= ImageConverterFeature::ConvertCompressedData, "Trade::AbstractImageConverter::exportToFile(): feature advertised but not implemented", false);
 
     const auto data = doExportToData(image);
+    /* No deleter checks as it doesn't matter here */
     if(!data) return false;
 
-    /* Open file */
     if(!Utility::Directory::write(filename, data)) {
         Error() << "Trade::AbstractImageConverter::exportToFile(): cannot write to file" << filename;
         return false;

@@ -4,6 +4,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
               Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2018, 2019 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2020 Pablo Escobar <mail@rvrs.in>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -31,8 +32,11 @@
 #include "Magnum/GL/Renderer.h"
 #include "Magnum/GL/DefaultFramebuffer.h"
 #include "Magnum/GL/Mesh.h"
+#include "Magnum/Math/Color.h"
 
 namespace Magnum { namespace Platform { namespace Test {
+
+using namespace Math::Literals;
 
 struct EmscriptenApplicationTest: Platform::Application {
     /* For testing resize events */
@@ -40,6 +44,9 @@ struct EmscriptenApplicationTest: Platform::Application {
 
     virtual void drawEvent() override {
         Debug() << "draw event";
+        #ifdef CUSTOM_CLEAR_COLOR
+        GL::Renderer::setClearColor(CUSTOM_CLEAR_COLOR);
+        #endif
         GL::defaultFramebuffer.clear(GL::FramebufferClear::Color);
 
         swapBuffers();
@@ -75,16 +82,19 @@ struct EmscriptenApplicationTest: Platform::Application {
 
     /* For testing keyboard capture */
     void keyPressEvent(KeyEvent& event) override {
-        if(event.key() != KeyEvent::Key::Unknown) {
-            Debug{} << "keyPressEvent(" << event.keyName().c_str() << "): ✓";
-        } else {
-            Debug{} << "keyPressEvent(" << event.keyName().c_str() << "): x";
-        }
+        {
+            Debug d;
+            if(event.key() != KeyEvent::Key::Unknown) {
+                d << "keyPressEvent(" << Debug::nospace << event.keyName().data() << Debug::nospace << "): ✔";
+            } else {
+                d << "keyPressEvent(" << Debug::nospace << event.keyName().data() << Debug::nospace << "): ✘";
+            }
 
-        if(event.modifiers() & KeyEvent::Modifier::Shift) Debug{} << "Shift";
-        if(event.modifiers() & KeyEvent::Modifier::Ctrl) Debug{} << "Ctrl";
-        if(event.modifiers() & KeyEvent::Modifier::Alt) Debug{} << "Alt";
-        if(event.modifiers() & KeyEvent::Modifier::Super) Debug{} << "Super";
+            if(event.modifiers() & KeyEvent::Modifier::Shift) d << "Shift";
+            if(event.modifiers() & KeyEvent::Modifier::Ctrl) d << "Ctrl";
+            if(event.modifiers() & KeyEvent::Modifier::Alt) d << "Alt";
+            if(event.modifiers() & KeyEvent::Modifier::Super) d << "Super";
+        }
 
         if(event.key() == KeyEvent::Key::F1) {
             Debug{} << "starting text input";
@@ -98,7 +108,7 @@ struct EmscriptenApplicationTest: Platform::Application {
             stopTextInput();
         } else if(event.key() == KeyEvent::Key::F) {
             Debug{} << "toggling fullscreen";
-            setContainerCssClass((_fullscreen ^= true) ? "fullsize" : "");
+            setContainerCssClass((_fullscreen ^= true) ? "mn-fullsize" : "");
         } else if(event.key() == KeyEvent::Key::T) {
             Debug{} << "setting window title";
             setWindowTitle("This is a UTF-8 Window Title™!");
@@ -111,16 +121,19 @@ struct EmscriptenApplicationTest: Platform::Application {
     }
 
     void keyReleaseEvent(KeyEvent& event) override {
-        if(event.key() != KeyEvent::Key::Unknown) {
-            Debug{} << "keyReleaseEvent(" << event.keyName().c_str() << "): ✓";
-        } else {
-            Debug{} << "keyReleaseEvent(" << event.keyName().c_str() << "): x";
-        }
+        {
+            Debug d;
+            if(event.key() != KeyEvent::Key::Unknown) {
+                d << "keyReleaseEvent(" << Debug::nospace << event.keyName().data() << Debug::nospace << "): ✔";
+            } else {
+                d << "keyReleaseEvent(" << Debug::nospace << event.keyName().data() << Debug::nospace << "): ✘";
+            }
 
-        if(event.modifiers() & KeyEvent::Modifier::Shift) Debug{} << "Shift";
-        if(event.modifiers() & KeyEvent::Modifier::Ctrl) Debug{} << "Ctrl";
-        if(event.modifiers() & KeyEvent::Modifier::Alt) Debug{} << "Alt";
-        if(event.modifiers() & KeyEvent::Modifier::Super) Debug{} << "Super";
+            if(event.modifiers() & KeyEvent::Modifier::Shift) d << "Shift";
+            if(event.modifiers() & KeyEvent::Modifier::Ctrl) d << "Ctrl";
+            if(event.modifiers() & KeyEvent::Modifier::Alt) d << "Alt";
+            if(event.modifiers() & KeyEvent::Modifier::Super) d << "Super";
+        }
 
         event.setAccepted();
     }

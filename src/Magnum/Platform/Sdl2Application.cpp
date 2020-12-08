@@ -733,7 +733,13 @@ Vector2i Sdl2Application::framebufferSize() const {
 void Sdl2Application::setContainerCssClass(const std::string& cssClass) {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdollar-in-identifier-extension"
-    EM_ASM_({document.getElementById('container').className = AsciiToString($0);}, cssClass.data());
+    EM_ASM_({
+        /* Handle also the classic #container for backwards compatibility. We
+           also need to preserve the mn-container otherwise next time we'd have
+           no way to look for it anymore. */
+        (Module['canvas'].closest('.mn-container') ||
+         document.getElementById('container')).className = (['mn-container', AsciiToString($0)]).join(' ');
+    }, cssClass.data());
     #pragma GCC diagnostic pop
 }
 #endif
@@ -1066,7 +1072,7 @@ void Sdl2Application::setCursor(Cursor cursor) {
     CORRADE_INTERNAL_ASSERT(UnsignedInt(cursor) < Containers::arraySize(CursorMap));
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdollar-in-identifier-extension"
-    EM_ASM_({document.getElementById('canvas').style.cursor = AsciiToString($0);}, CursorMap[UnsignedInt(cursor)]);
+    EM_ASM_({Module['canvas'].style.cursor = AsciiToString($0);}, CursorMap[UnsignedInt(cursor)]);
     #pragma GCC diagnostic pop
     #endif
 }
@@ -1146,24 +1152,8 @@ void Sdl2Application::anyEvent(SDL_Event&) {
 }
 
 void Sdl2Application::viewportEvent(ViewportEvent& event) {
-    #ifdef MAGNUM_BUILD_DEPRECATED
-    CORRADE_IGNORE_DEPRECATED_PUSH
-    viewportEvent(
-        #ifdef MAGNUM_TARGET_GL
-        event.framebufferSize()
-        #else
-        event.windowSize()
-        #endif
-    );
-    CORRADE_IGNORE_DEPRECATED_POP
-    #else
     static_cast<void>(event);
-    #endif
 }
-
-#ifdef MAGNUM_BUILD_DEPRECATED
-void Sdl2Application::viewportEvent(const Vector2i&) {}
-#endif
 
 void Sdl2Application::keyPressEvent(KeyEvent&) {}
 void Sdl2Application::keyReleaseEvent(KeyEvent&) {}

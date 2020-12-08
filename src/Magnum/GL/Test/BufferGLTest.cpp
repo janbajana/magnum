@@ -54,6 +54,10 @@ struct BufferGLTest: OpenGLTester {
     void bindRange();
     #endif
 
+    #ifndef MAGNUM_TARGET_GLES
+    void storage();
+    #endif
+
     void data();
     #ifndef MAGNUM_TARGET_WEBGL
     void map();
@@ -79,6 +83,10 @@ BufferGLTest::BufferGLTest() {
               #ifndef MAGNUM_TARGET_GLES2
               &BufferGLTest::bindBase,
               &BufferGLTest::bindRange,
+              #endif
+
+              #ifndef MAGNUM_TARGET_GLES
+              &BufferGLTest::storage,
               #endif
 
               &BufferGLTest::data,
@@ -156,6 +164,9 @@ void BufferGLTest::constructMove() {
     CORRADE_VERIFY(cId > 0);
     CORRADE_COMPARE(b.id(), cId);
     CORRADE_COMPARE(c.id(), id);
+
+    CORRADE_VERIFY(std::is_nothrow_move_constructible<Buffer>::value);
+    CORRADE_VERIFY(std::is_nothrow_move_assignable<Buffer>::value);
 }
 
 void BufferGLTest::wrap() {
@@ -238,6 +249,21 @@ void BufferGLTest::bindRange() {
         std::make_tuple(&buffer, 768, 64)});
 
     MAGNUM_VERIFY_NO_GL_ERROR();
+}
+#endif
+
+#ifndef MAGNUM_TARGET_GLES
+void BufferGLTest::storage() {
+    Buffer buffer;
+
+    constexpr Int data[] = {2, 7, 5, 13, 25};
+
+    buffer.setStorage(data, Buffer::StorageFlag::MapRead|Buffer::StorageFlag::ClientStorage);
+    MAGNUM_VERIFY_NO_GL_ERROR();
+
+    CORRADE_COMPARE_AS(Containers::arrayCast<Int>(buffer.data()),
+        Containers::arrayView(data),
+        TestSuite::Compare::Container);
 }
 #endif
 

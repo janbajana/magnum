@@ -27,12 +27,10 @@
 
 #include "Context.h"
 
-#include <unordered_map>
-
 #include <al.h>
 #include <alc.h>
 #include <cstring>
-
+#include <algorithm>
 #include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/Debug.h>
@@ -49,17 +47,19 @@ namespace Magnum { namespace Audio {
 
 namespace {
 
+/* Binary search is performed on the extensions, thus they have to be sorted
+   alphabetically. */
 constexpr Extension ExtensionList[]{
     #define _extension(prefix, vendor, extension) {Extensions::prefix::vendor::extension::Index, Extensions::prefix::vendor::extension::string()}
-    _extension(AL,EXT,FLOAT32),
-    _extension(AL,EXT,DOUBLE),
-    _extension(AL,EXT,ALAW),
-    _extension(AL,EXT,MULAW),
-    _extension(AL,EXT,MCFORMATS),
-    _extension(AL,SOFT,loop_points),
     _extension(ALC,EXT,ENUMERATION),
     _extension(ALC,SOFTX,HRTF),
-    _extension(ALC,SOFT,HRTF)
+    _extension(ALC,SOFT,HRTF),
+    _extension(AL,EXT,ALAW),
+    _extension(AL,EXT,DOUBLE),
+    _extension(AL,EXT,FLOAT32),
+    _extension(AL,EXT,MCFORMATS),
+    _extension(AL,EXT,MULAW),
+    _extension(AL,SOFT,loop_points),
     #undef _entension
 };
 
@@ -268,18 +268,13 @@ bool Context::tryCreate(const Configuration& configuration) {
     alcMakeContextCurrent(_context);
     currentContext = this;
 
-    /* Add all extensions to a map for faster lookup */
-    std::unordered_map<std::string, Extension> extensionMap;
-    for(const Extension& extension: Extension::extensions())
-        extensionMap.emplace(extension.string(), extension);
-
     /* Check for presence of extensions */
     const std::vector<std::string> extensions = extensionStrings();
     for(const std::string& extension: extensions) {
-        const auto found = extensionMap.find(extension);
-        if(found != extensionMap.end()) {
-            _supportedExtensions.push_back(found->second);
-            _extensionStatus.set(found->second.index(), true);
+        const auto found = std::lower_bound(std::begin(ExtensionList), std::end(ExtensionList), extension, [](const Extension& a, const std::string& b) { return a.string() < b; });
+        if(found != std::end(ExtensionList) && found->string() == extension) {
+            _supportedExtensions.push_back(*found);
+            _extensionStatus.set(found->index(), true);
         }
     }
 
@@ -296,19 +291,20 @@ bool Context::tryCreate(const Configuration& configuration) {
         /* Disable extensions that are known and supported and print a message
            for each */
         for(auto&& extension: _disabledExtensionStrings) {
-            auto found = extensionMap.find(extension);
+            const auto found = std::lower_bound(std::begin(ExtensionList), std::end(ExtensionList), extension, [](const Extension& a, const std::string& b) { return a.string() < b; });
             /* No error message here because some of the extensions could be
                from Vulkan or OpenGL. That also means we print the header only
                when we actually have something to say */
-            if(found == extensionMap.end()) continue;
+            if(found == std::end(ExtensionList) || found->string() != extension)
+                continue;
 
             /* If the extension isn't supported in the first place, don't do
                anything. If it is, set its status as unsupported but flip the
                corresponding bit in the disabled bitmap so we know it is
                supported and only got disabled */
-            if(!_extensionStatus[found->second.index()]) continue;
-            _extensionStatus.set(found->second.index(), false);
-            _disabledExtensions.set(found->second.index(), true);
+            if(!_extensionStatus[found->index()]) continue;
+            _extensionStatus.set(found->index(), false);
+            _disabledExtensions.set(found->index(), true);
 
             if(!headerPrinted) {
                 Debug{output} << "Disabling extensions:";
@@ -337,15 +333,11 @@ std::vector<std::string> Context::extensionStrings() const {
     std::vector<std::string> extensions;
 
     /* Don't crash when alGetString() returns nullptr */
-    const char* alExts = reinterpret_cast<const char*>(alGetString(AL_EXTENSIONS));
-    if(alExts) extensions = Utility::String::splitWithoutEmptyParts(alExts, ' ');
+    extensions = Utility::String::splitWithoutEmptyParts(Utility::String::fromArray(reinterpret_cast<const char*>(alGetString(AL_EXTENSIONS))), ' ');
 
-    /* Add ALC extensions aswell */
-    const char* alcExts = reinterpret_cast<const char*>(alcGetString(_device, ALC_EXTENSIONS));
-    if(alcExts) {
-        auto splitAlcExts = Utility::String::splitWithoutEmptyParts(alcExts, ' ');
-        extensions.insert(extensions.end(), splitAlcExts.begin(), splitAlcExts.end());
-    }
+    /* Add ALC extensions as well */
+    auto splitAlcExts = Utility::String::splitWithoutEmptyParts(Utility::String::fromArray(reinterpret_cast<const char*>(alcGetString(_device, ALC_EXTENSIONS))), ' ');
+    extensions.insert(extensions.end(), splitAlcExts.begin(), splitAlcExts.end());
 
     return extensions;
 }

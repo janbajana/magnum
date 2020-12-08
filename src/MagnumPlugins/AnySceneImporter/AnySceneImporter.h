@@ -149,7 +149,7 @@ class MAGNUM_ANYSCENEIMPORTER_EXPORT AnySceneImporter: public AbstractImporter {
         MAGNUM_ANYSCENEIMPORTER_LOCAL Int doAnimationForName(const std::string& name) override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL Containers::Optional<AnimationData> doAnimation(UnsignedInt id) override;
 
-        MAGNUM_ANYSCENEIMPORTER_LOCAL Int doDefaultScene() override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL Int doDefaultScene() const override;
 
         MAGNUM_ANYSCENEIMPORTER_LOCAL UnsignedInt doSceneCount() const override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL Int doSceneForName(const std::string& name) override;
@@ -175,6 +175,16 @@ class MAGNUM_ANYSCENEIMPORTER_EXPORT AnySceneImporter: public AbstractImporter {
         MAGNUM_ANYSCENEIMPORTER_LOCAL Int doObject3DForName(const std::string& name) override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL std::string doObject3DName(UnsignedInt id) override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL Containers::Pointer<ObjectData3D> doObject3D(UnsignedInt id) override;
+
+        MAGNUM_ANYSCENEIMPORTER_LOCAL UnsignedInt doSkin2DCount() const override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL Int doSkin2DForName(const std::string& name) override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL std::string doSkin2DName(UnsignedInt id) override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL Containers::Optional<SkinData2D> doSkin2D(UnsignedInt id) override;
+
+        MAGNUM_ANYSCENEIMPORTER_LOCAL UnsignedInt doSkin3DCount() const override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL Int doSkin3DForName(const std::string& name) override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL std::string doSkin3DName(UnsignedInt id) override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL Containers::Optional<SkinData3D> doSkin3D(UnsignedInt id) override;
 
         MAGNUM_ANYSCENEIMPORTER_LOCAL UnsignedInt doMeshCount() const override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL Int doMeshForName(const std::string& name) override;
@@ -203,7 +213,7 @@ class MAGNUM_ANYSCENEIMPORTER_EXPORT AnySceneImporter: public AbstractImporter {
         MAGNUM_ANYSCENEIMPORTER_LOCAL UnsignedInt doMaterialCount() const override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL Int doMaterialForName(const std::string& name) override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL std::string doMaterialName(UnsignedInt id) override;
-        MAGNUM_ANYSCENEIMPORTER_LOCAL Containers::Pointer<AbstractMaterialData> doMaterial(UnsignedInt id) override;
+        MAGNUM_ANYSCENEIMPORTER_LOCAL Containers::Optional<MaterialData> doMaterial(UnsignedInt id) override;
 
         MAGNUM_ANYSCENEIMPORTER_LOCAL UnsignedInt doTextureCount() const override;
         MAGNUM_ANYSCENEIMPORTER_LOCAL Int doTextureForName(const std::string& name) override;

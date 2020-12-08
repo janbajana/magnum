@@ -111,7 +111,7 @@ template<UnsignedInt dimensions, class T> class Range {
         constexpr explicit Range(ZeroInitT) noexcept: Range<dimensions, T>{ZeroInit, typename std::conditional<dimensions == 1, void*, ZeroInitT*>::type{}} {}
 
         /** @brief Construct without initializing the contents */
-        explicit Range(NoInitT) noexcept: Range<dimensions, T>{NoInit, typename std::conditional<dimensions == 1, void*, NoInitT*>::type{}} {}
+        explicit Range(Magnum::NoInitT) noexcept: Range<dimensions, T>{Magnum::NoInit, typename std::conditional<dimensions == 1, void*, Magnum::NoInitT*>::type{}} {}
 
         /** @brief Construct a range from minimal and maximal coordinates */
         constexpr /*implicit*/ Range(const VectorType& min, const VectorType& max) noexcept: _min{min}, _max{max} {}
@@ -306,8 +306,8 @@ template<UnsignedInt dimensions, class T> class Range {
 
         /* Called from Range(NoInit), either using the NoInit constructor (if
            available) or not doing anything */
-        explicit Range(NoInitT, NoInitT*) noexcept: _min{NoInit}, _max{NoInit} {}
-        explicit Range(NoInitT, void*) noexcept {}
+        explicit Range(Magnum::NoInitT, Magnum::NoInitT*) noexcept: _min{Magnum::NoInit}, _max{Magnum::NoInit} {}
+        explicit Range(Magnum::NoInitT, void*) noexcept {}
 
         /* Called from data(), always returning a T* */
         constexpr const VectorType* dataInternal(void*) const { return &_min; }
@@ -373,14 +373,14 @@ template<class T> class Range2D: public Range<2, T> {
         constexpr explicit Range2D(ZeroInitT) noexcept: Range<2, T>{ZeroInit} {}
 
         /** @copydoc Range(NoInitT) */
-        explicit Range2D(NoInitT) noexcept: Range<2, T>{NoInit} {}
+        explicit Range2D(Magnum::NoInitT) noexcept: Range<2, T>{Magnum::NoInit} {}
 
         /** @copydoc Range(const VectorType&, const VectorType&) */
         constexpr /*implicit*/ Range2D(const Vector2<T>& min, const Vector2<T>& max) noexcept: Range<2, T>(min, max) {}
 
         /**
          * @brief Construct a range from a pair of minimal and maximal coordinates
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Useful in combination with e.g. @ref minmax(), here for example to
          * calculate texture bounds:
@@ -393,7 +393,7 @@ template<class T> class Range2D: public Range<2, T> {
 
         /**
          * @overload
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         /*implicit*/ Range2D(const std::pair<Vector<2, T>, Vector<2, T>>& minmax) noexcept: Range<2, T>{minmax.first, minmax.second} {}
 
@@ -526,15 +526,15 @@ template<class T> class Range3D: public Range<3, T> {
         /** @copydoc Range(ZeroInitT) */
         constexpr explicit Range3D(ZeroInitT) noexcept: Range<3, T>{ZeroInit} {}
 
-        /** @brief @copybrief Range(NoInitT) */
-        explicit Range3D(NoInitT) noexcept: Range<3, T>{NoInit} {}
+        /** @brief @copybrief Range(Magnum::NoInitT) */
+        explicit Range3D(Magnum::NoInitT) noexcept: Range<3, T>{Magnum::NoInit} {}
 
         /** @copydoc Range(const VectorType&, const VectorType&) */
         constexpr /*implicit*/ Range3D(const Vector3<T>& min, const Vector3<T>& max) noexcept: Range<3, T>(min, max) {}
 
         /**
          * @brief Construct a range from a pair of minimal and maximal coordinates
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Useful in combination with e.g. @ref minmax(), here for example to
          * calculate bounds of a triangle:
@@ -547,7 +547,7 @@ template<class T> class Range3D: public Range<3, T> {
 
         /**
          * @overload
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         /*implicit*/ Range3D(const std::pair<Vector<3, T>, Vector<3, T>>& minmax) noexcept: Range<3, T>{minmax.first, minmax.second} {}
 

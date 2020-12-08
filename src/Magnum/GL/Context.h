@@ -58,7 +58,7 @@ namespace Implementation {
             #ifndef MAGNUM_TARGET_GLES
             192
             #elif !defined(MAGNUM_TARGET_WEBGL)
-            144
+            160
             #else
             48
             #endif
@@ -492,7 +492,7 @@ class MAGNUM_GL_EXPORT Context {
         Context(const Context&) = delete;
 
         /** @brief Move constructor */
-        Context(Context&& other);
+        Context(Context&& other) noexcept;
 
         ~Context();
 

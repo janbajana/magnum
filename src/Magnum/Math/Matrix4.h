@@ -421,7 +421,10 @@ template<class T> class Matrix4: public Matrix4x4<T> {
          * @param translation       Translation part (first three elements of
          *      fourth column)
          *
-         * @see @ref rotationScaling(), @ref translation() const
+         * @see @ref rotationScaling(), @ref translation() const,
+         *      @ref Matrix3::from(const Matrix2x2<T>&, const Vector2<T>&),
+         *      @ref DualComplex::from(const Complex<T>&, const Vector2<T>&),
+         *      @ref DualQuaternion::from(const Quaternion<T>&, const Vector3<T>&)
          */
         constexpr static Matrix4<T> from(const Matrix3x3<T>& rotationScaling, const Vector3<T>& translation) {
             return {{rotationScaling[0], T(0)},
@@ -447,8 +450,8 @@ template<class T> class Matrix4: public Matrix4x4<T> {
         /** @copydoc Matrix::Matrix(ZeroInitT) */
         constexpr explicit Matrix4(ZeroInitT) noexcept: Matrix4x4<T>{ZeroInit} {}
 
-        /** @copydoc Matrix::Matrix(NoInitT) */
-        constexpr explicit Matrix4(NoInitT) noexcept: Matrix4x4<T>{NoInit} {}
+        /** @copydoc Matrix::Matrix(Magnum::NoInitT) */
+        constexpr explicit Matrix4(Magnum::NoInitT) noexcept: Matrix4x4<T>{Magnum::NoInit} {}
 
         /** @brief Construct from column vectors */
         constexpr /*implicit*/ Matrix4(const Vector4<T>& first, const Vector4<T>& second, const Vector4<T>& third, const Vector4<T>& fourth) noexcept: Matrix4x4<T>(first, second, third, fourth) {}
@@ -477,8 +480,9 @@ template<class T> class Matrix4: public Matrix4x4<T> {
         /**
          * @brief Check whether the matrix represents a rigid transformation
          *
-         * Rigid transformation consists only of rotation and translation (i.e.
-         * no scaling or projection).
+         * A [rigid transformation](https://en.wikipedia.org/wiki/Rigid_transformation)
+         * consists only of rotation, reflection and translation (i.e., no
+         * scaling, skew or projection).
          * @see @ref isOrthogonal()
          */
         bool isRigidTransformation() const {
@@ -906,8 +910,9 @@ template<class T> class Matrix4: public Matrix4x4<T> {
         /**
          * @brief Inverted rigid transformation matrix
          *
-         * Expects that the matrix represents rigid transformation.
-         * Significantly faster than the general algorithm in @ref inverted(). @f[
+         * Expects that the matrix represents a [rigid transformation](https://en.wikipedia.org/wiki/Rigid_transformation)
+         * (i.e., no scaling, skew or projection). Significantly faster than
+         * the general algorithm in @ref inverted(). @f[
          *      A^{-1} = \begin{pmatrix} (A^{3,3})^T & (A^{3,3})^T \begin{pmatrix} a_{3,0} \\ a_{3,1} \\ a_{3,2} \\ \end{pmatrix} \\ \begin{array}{ccc} 0 & 0 & 0 \end{array} & 1 \end{pmatrix}
          * @f]
          * @f$ A^{i, j} @f$ is matrix without i-th row and j-th column, see

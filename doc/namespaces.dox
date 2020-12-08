@@ -171,16 +171,6 @@ See @ref building and @ref cmake for more information.
     projects. See @ref singles and @ref Math for more information.
 */
 
-/** @dir Magnum/Math/Geometry
- * @brief Namespace @ref Magnum::Math::Geometry
- * @m_deprecated_since{2018,10} Use @ref Magnum/Math/Distance.h and
-        @ref Magnum/Math/Intersection.h instead.
- */
-/** @namespace Magnum::Math::Geometry
- * @m_deprecated_since{2018,10} Use @ref Magnum::Math::Distance and
-        @ref Magnum::Math::Intersection namespaces instead.
- */
-
 /** @namespace Magnum::Math::Distance
 @brief Functions for calculating distances
 
@@ -270,13 +260,18 @@ find_package(Magnum REQUIRED Audio)
 target_link_libraries(your-app PRIVATE Magnum::Audio)
 @endcode
 
-Additionally, if you're using Magnum as a CMake subproject, do the following
-* *before* calling @cmake find_package() @ce to ensure it's enabled, as the
-library is not built by default. Using OpenAL itself as a CMake subproject
-isn't  tested at the moment, so you need to provide it as a system dependency
-and point `CMAKE_PREFIX_PATH` to its installation dir if necessary.
+Additionally, if you're using Magnum as a CMake subproject, bundle the
+[openal-soft repository](https://github.com/kcat/openal-soft) and do the
+following *before* calling @cmake find_package() @ce to ensure it's enabled, as
+the library is not built by default. If you want to use system-installed
+OpenAL, omit the first part and point `CMAKE_PREFIX_PATH` to its installation
+dir if necessary.
 
 @code{.cmake}
+set(CMAKE_POSITION_INDEPENDENT_CODE ON) # needed if building dynamic libraries
+set(LIBTYPE STATIC) # omit or set to SHARED if you want a shared OpenAL library
+add_subdirectory(openal-soft EXCLUDE_FROM_ALL)
+
 set(WITH_AUDIO ON CACHE BOOL "" FORCE)
 add_subdirectory(magnum EXCLUDE_FROM_ALL)
 @endcode
@@ -498,6 +493,34 @@ See @ref building, @ref cmake and @ref shaders for more information.
 
 */
 
+/** @dir Magnum/ShaderTools
+ * @brief Namespace @ref Magnum::ShaderTools
+ * @m_since_latest
+ */
+/** @namespace Magnum::ShaderTools
+@brief Shader tools
+@m_since_latest
+
+Shader validation, conversion, compilation and reflection.
+
+This library is built if `WITH_SHADERTOOLS` is enabled when building Magnum. To
+use this library with CMake, request the `ShaderTools` component of the
+`Magnum` package and link to the `Magnum::ShaderTools` target:
+
+@code{.cmake}
+find_package(Magnum REQUIRED ShaderTools)
+
+# ...
+target_link_libraries(your-app PRIVATE Magnum::ShaderTools)
+@endcode
+
+Additional plugins and utilities are built separately. See particular
+`*Converter` class documentation, the
+@ref magnum-shaderconverter "magnum-shaderconverter" utility documentation,
+@ref building, @ref building-plugins, @ref cmake, @ref cmake-plugins and
+@ref plugins for more information.
+*/
+
 /** @dir Magnum/Text
  * @brief Namespace @ref Magnum::Text
  */
@@ -574,7 +597,8 @@ target_link_libraries(your-app PRIVATE Magnum::Trade)
 
 Additional plugins and utilities are built separately. See particular
 `Trade::*Importer` and `*ImageConverter` class documentation, the
-@ref magnum-imageconverter "magnum-imageconverter" utility documentation,
+@ref magnum-imageconverter "magnum-imageconverter" and
+@ref magnum-sceneconverter "magnum-sceneconverter" utility documentation,
 @ref building, @ref building-plugins, @ref cmake, @ref cmake-plugins and
 @ref plugins for more information.
 */
@@ -587,9 +611,11 @@ Additional plugins and utilities are built separately. See particular
 
 C++14 wrappers and helpers for Vulkan development.
 
-This library is built if `WITH_VK` is enabled when building Magnum. To use this
-library with CMake, request the `Vk` component of the `Magnum` package and link
-to the `Magnum::Vk` target:
+This library is depends on [Vulkan](https://www.khronos.org/vulkan/) and is
+built if `WITH_VK` is enabled when building Magnum. To use this library with
+CMake, put [FindVulkan.cmake](https://github.com/mosra/magnum/blob/master/modules/FindVulkan.cmake)
+into your `modules/` directory, request the `Vk` component of the `Magnum`
+package and link to the `Magnum::Vk` target:
 
 @code{.cmake}
 find_package(Magnum REQUIRED Vk)
@@ -634,8 +660,14 @@ See @ref building, @ref cmake and @ref vulkan for more information.
 /** @dir MagnumPlugins/AnyImageImporter
  * @brief Plugin @ref Magnum::Trade::AnyImageImporter
  */
+/** @dir MagnumPlugins/AnySceneConverter
+ * @brief Plugin @ref Magnum::Trade::AnySceneConverter
+ */
 /** @dir MagnumPlugins/AnySceneImporter
  * @brief Plugin @ref Magnum::Trade::AnySceneImporter
+ */
+/** @dir MagnumPlugins/AnyShaderConverter
+ * @brief Plugin @ref Magnum::ShaderTools::AnyConverter
  */
 /** @dir MagnumPlugins/MagnumFont
  * @brief Plugin @ref Magnum::Text::MagnumFont

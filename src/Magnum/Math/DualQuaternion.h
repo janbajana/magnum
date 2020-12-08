@@ -5,6 +5,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 Jonathan Hale <squareys@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -247,6 +248,23 @@ template<class T> class DualQuaternion: public Dual<Quaternion<T>> {
         }
 
         /**
+         * @brief Create dual quaternion from rotation quaternion and translation vector
+         * @m_since_latest
+         *
+         * @f[
+         *      \hat q = r + \epsilon [\frac{\boldsymbol t}{2}, 0] r
+         * @f]
+         *
+         * @see @ref translation(), @ref rotation(),
+         *      @ref Matrix3::from(const Matrix2x2<T>&, const Vector2<T>&),
+         *      @ref Matrix4::from(const Matrix3x3<T>&, const Vector3<T>&),
+         *      @ref DualComplex::from(const Complex<T>&, const Vector2<T>&)
+         */
+        static DualQuaternion<T> from(const Quaternion<T>& rotation, const Vector3<T>& translation) {
+            return {rotation, Quaternion<T>{translation/T(2)}*rotation};
+        }
+
+        /**
          * @brief Default constructor
          *
          * Equivalent to @ref DualQuaternion(IdentityInitT).
@@ -266,7 +284,7 @@ template<class T> class DualQuaternion: public Dual<Quaternion<T>> {
         constexpr explicit DualQuaternion(ZeroInitT) noexcept: Dual<Quaternion<T>>{Quaternion<T>{ZeroInit}, Quaternion<T>{ZeroInit}} {}
 
         /** @brief Construct without initializing the contents */
-        explicit DualQuaternion(NoInitT) noexcept: Dual<Quaternion<T>>{NoInit} {}
+        explicit DualQuaternion(Magnum::NoInitT) noexcept: Dual<Quaternion<T>>{Magnum::NoInit} {}
 
         /**
          * @brief Construct dual quaternion from real and dual part
@@ -476,7 +494,7 @@ template<class T> class DualQuaternion: public Dual<Quaternion<T>> {
 
         /**
          * @brief Rotate a vector with a dual quaternion
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Calls @ref Quaternion::transformVector() on the @ref real() part,
          * see its documentation for more information.
@@ -487,7 +505,7 @@ template<class T> class DualQuaternion: public Dual<Quaternion<T>> {
 
         /**
          * @brief Rotate a vector with a normalized dual quaternion
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Calls @ref Quaternion::transformVectorNormalized() on the
          * @ref real() part, see its documentation for more information.

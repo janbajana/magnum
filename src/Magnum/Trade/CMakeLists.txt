@@ -26,10 +26,8 @@
 find_package(Corrade REQUIRED PluginManager)
 
 set(MagnumTrade_SRCS
-    AbstractMaterialData.cpp
     ArrayAllocator.cpp
     Data.cpp
-    LightData.cpp
     MeshObjectData2D.cpp
     MeshObjectData3D.cpp
     SceneData.cpp
@@ -41,30 +39,43 @@ set(MagnumTrade_GracefulAssert_SRCS
     AbstractSceneConverter.cpp
     AnimationData.cpp
     CameraData.cpp
+    FlatMaterialData.cpp
     ImageData.cpp
+    LightData.cpp
+    MaterialData.cpp
     MeshData.cpp
     ObjectData2D.cpp
     ObjectData3D.cpp
-    PhongMaterialData.cpp)
+    PbrClearCoatMaterialData.cpp
+    PbrMetallicRoughnessMaterialData.cpp
+    PbrSpecularGlossinessMaterialData.cpp
+    PhongMaterialData.cpp
+    SkinData.cpp)
 
 set(MagnumTrade_HEADERS
     AbstractImporter.h
     AbstractImageConverter.h
-    AbstractMaterialData.h
     AbstractSceneConverter.h
     AnimationData.h
     ArrayAllocator.h
     CameraData.h
     Data.h
+    FlatMaterialData.h
     ImageData.h
     LightData.h
+    MaterialData.h
+    MaterialLayerData.h
     MeshData.h
     MeshObjectData2D.h
     MeshObjectData3D.h
     ObjectData2D.h
     ObjectData3D.h
+    PbrClearCoatMaterialData.h
+    PbrMetallicRoughnessMaterialData.h
+    PbrSpecularGlossinessMaterialData.h
     PhongMaterialData.h
     SceneData.h
+    SkinData.h
     TextureData.h
     Trade.h
 
@@ -72,7 +83,8 @@ set(MagnumTrade_HEADERS
 
 set(MagnumTrade_PRIVATE_HEADERS
     Implementation/arrayUtilities.h
-    Implementation/converterUtilities.h)
+    Implementation/converterUtilities.h
+    Implementation/materialAttributeProperties.hpp)
 
 if(MAGNUM_BUILD_DEPRECATED)
     list(APPEND MagnumTrade_GracefulAssert_SRCS
@@ -86,6 +98,8 @@ if(MAGNUM_BUILD_DEPRECATED)
         MeshData2D.cpp
         MeshData3D.cpp)
     list(APPEND MagnumTrade_HEADERS
+        AbstractMaterialData.h
+
         MeshData2D.h
         MeshData3D.h)
 endif()

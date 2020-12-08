@@ -207,7 +207,7 @@ constexpr struct {
 } ConstructInvalidData2D[] {
     {"no feature enabled",
         MeshVisualizer2D::Flag::NoGeometryShader, /* not a feature flag */
-        #if !defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL)
+        #ifndef MAGNUM_TARGET_GLES2
         "2D: at least one visualization feature has to be enabled"
         #else
         "2D: at least Flag::Wireframe has to be enabled"
@@ -230,7 +230,7 @@ constexpr struct {
 } ConstructInvalidData3D[] {
     {"no feature enabled",
         MeshVisualizer3D::Flag::NoGeometryShader, /* not a feature flag */
-        #if !defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL)
+        #ifndef MAGNUM_TARGET_GLES2
         "3D: at least one visualization feature has to be enabled"
         #else
         "3D: at least Flag::Wireframe has to be enabled"
@@ -981,7 +981,7 @@ void MeshVisualizerGLTest::renderDefaultsWireframe2D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     {
         CORRADE_EXPECT_FAIL("Defaults don't work for wireframe as line width is derived from viewport size.");
@@ -1030,7 +1030,7 @@ void MeshVisualizerGLTest::renderDefaultsWireframe3D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     {
         CORRADE_EXPECT_FAIL("Defaults don't work for wireframe as line width is derived from viewport size.");
@@ -1097,7 +1097,7 @@ void MeshVisualizerGLTest::renderDefaultsObjectId2D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     CORRADE_COMPARE_WITH(
         /* Dropping the alpha channel, as it's always 1.0 */
@@ -1146,7 +1146,7 @@ void MeshVisualizerGLTest::renderDefaultsObjectId3D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     CORRADE_COMPARE_WITH(
         /* Dropping the alpha channel, as it's always 1.0 */
@@ -1159,7 +1159,7 @@ void MeshVisualizerGLTest::renderDefaultsObjectId3D() {
 void MeshVisualizerGLTest::renderDefaultsVertexId2D() {
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     /* On SwiftShader gl_VertexID doesn't work in this case, skipping */
     if(!GL::Context::current().isExtensionSupported<GL::Extensions::MAGNUM::shader_vertex_id>())
@@ -1181,7 +1181,7 @@ void MeshVisualizerGLTest::renderDefaultsVertexId2D() {
 void MeshVisualizerGLTest::renderDefaultsVertexId3D() {
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     /* On SwiftShader gl_VertexID doesn't work in this case, skipping */
     if(!GL::Context::current().isExtensionSupported<GL::Extensions::MAGNUM::shader_vertex_id>())
@@ -1202,7 +1202,7 @@ void MeshVisualizerGLTest::renderDefaultsVertexId3D() {
 void MeshVisualizerGLTest::renderDefaultsPrimitiveId2D() {
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     /* Interestingly in this case gl_VertexID in SwiftShader works (thus not
        checking for MAGNUM_shader_vertex_id -- maybe it works only for
@@ -1254,7 +1254,7 @@ void MeshVisualizerGLTest::renderDefaultsPrimitiveId2D() {
 void MeshVisualizerGLTest::renderDefaultsPrimitiveId3D() {
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     /* Interestingly in this case gl_VertexID in SwiftShader works (thus not
        checking for MAGNUM_shader_vertex_id -- maybe it works only for
@@ -1327,7 +1327,7 @@ void MeshVisualizerGLTest::renderDefaultsTangentBitangentNormal() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     MAGNUM_VERIFY_NO_GL_ERROR();
 
@@ -1395,7 +1395,7 @@ void MeshVisualizerGLTest::renderWireframe2D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     {
         CORRADE_EXPECT_FAIL_IF(data.flags & MeshVisualizer2D::Flag::NoGeometryShader,
@@ -1489,7 +1489,7 @@ void MeshVisualizerGLTest::renderWireframe3D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     {
         CORRADE_EXPECT_FAIL_IF(data.flags & MeshVisualizer3D::Flag::NoGeometryShader,
@@ -1583,8 +1583,11 @@ void MeshVisualizerGLTest::renderObjectVertexPrimitiveId2D() {
     if(data.flags2D >= MeshVisualizer2D::Flag::PrimitiveIdFromVertexId)
         circleData = MeshTools::generateIndices(circleData);
     if(data.flags2D >= MeshVisualizer2D::Flag::PrimitiveIdFromVertexId ||
-       data.flags2D & MeshVisualizer2D::Flag::NoGeometryShader)
+       data.flags2D & MeshVisualizer2D::Flag::NoGeometryShader) {
+        if(circleData.primitive() != MeshPrimitive::Triangles)
+            circleData = MeshTools::generateIndices(circleData);
         circleData = MeshTools::duplicate(circleData);
+    }
 
     GL::Mesh circle = MeshTools::compile(circleData);
 
@@ -1619,7 +1622,7 @@ void MeshVisualizerGLTest::renderObjectVertexPrimitiveId2D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     CORRADE_COMPARE_WITH(
         /* Dropping the alpha channel, as it's always 1.0 */
@@ -1717,7 +1720,7 @@ void MeshVisualizerGLTest::renderObjectVertexPrimitiveId3D() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     /* Release build has 1 pixel slightly off. Huh. AMD & llvmpipe has
        additional off-by-one errors compared to Intel, SwiftShader some errors
@@ -1766,7 +1769,7 @@ void MeshVisualizerGLTest::renderWireframe3DPerspective() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     #ifdef MAGNUM_TARGET_GLES
     CORRADE_EXPECT_FAIL_IF(!GL::Context::current().isExtensionSupported<GL::Extensions::NV::shader_noperspective_interpolation>(),
@@ -1906,7 +1909,7 @@ void MeshVisualizerGLTest::renderTangentBitangentNormal() {
 
     if(!(_manager.loadState("AnyImageImporter") & PluginManager::LoadState::Loaded) ||
        !(_manager.loadState("TgaImporter") & PluginManager::LoadState::Loaded))
-        CORRADE_SKIP("AnyImageImporter / TgaImageImporter plugins not found.");
+        CORRADE_SKIP("AnyImageImporter / TgaImporter plugins not found.");
 
     /* Slight rasterization differences on AMD. If
        GL_NV_shader_noperspective_interpolation is not supported, the artifacts

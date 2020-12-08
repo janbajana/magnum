@@ -4,6 +4,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2016 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2020 janos <janos.meny@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -42,6 +43,7 @@ struct IntersectionTest: Corrade::TestSuite::Tester {
 
     void pointFrustum();
     void rangeFrustum();
+    void rayRange();
     void aabbFrustum();
     void sphereFrustum();
 
@@ -72,6 +74,7 @@ IntersectionTest::IntersectionTest() {
 
               &IntersectionTest::pointFrustum,
               &IntersectionTest::rangeFrustum,
+              &IntersectionTest::rayRange,
               &IntersectionTest::aabbFrustum,
               &IntersectionTest::sphereFrustum,
 
@@ -177,6 +180,52 @@ void IntersectionTest::rangeFrustum() {
     CORRADE_VERIFY(Intersection::rangeFrustum(Range3D{Vector3{-100.0f}, Vector3{100.0f}}, frustum));
     /* Outside of frustum */
     CORRADE_VERIFY(!Intersection::rangeFrustum(Range3D{Vector3{-10.0f}, Vector3{-5.0f}}, frustum));
+}
+
+void IntersectionTest::rayRange() {
+    const Vector3 origin{2.0f, 2.0f, 2.0f};
+    const Range3D range{{-1.0f, -1.0f, -1.0f},
+                        { 1.0f,  1.0f,  1.0f}};
+
+    const Vector3 center{0.0f, 0.0f, 1.0f};
+    const Vector3 edge{0.0f, -1.0f, 1.0f};
+    const Vector3 corner{-1.0f, -1.0f, 1.0f};
+    const Float eps = 1e-6f;
+
+    /* intersection at face center */
+    const Vector3 direction1 = center - origin;
+    const Vector3 invDir1 = 1.0f/direction1;
+    CORRADE_VERIFY(Intersection::rayRange(origin, invDir1, range));
+
+    /* intersection close to edge */
+    const Vector3 direction2 = edge + Vector3{0.0f, eps, 0.0f} - origin;
+    const Vector3 invDir2 = 1.0f/direction2;
+    CORRADE_VERIFY(Intersection::rayRange(origin, invDir2, range));
+
+    /* no intersection close to edge */
+    const Vector3 direction3 = edge - Vector3{0.0f, eps, 0.0f} - origin;
+    const Vector3 invDir3 = 1.0f/direction3;
+    CORRADE_VERIFY(!Intersection::rayRange(origin, invDir3, range));
+
+    /* intersection close to corner */
+    const Vector3 direction4 = corner + Vector3{eps, eps, 0.0f} - origin;
+    const Vector3 invDir4 = 1.0f/direction4;
+    CORRADE_VERIFY(Intersection::rayRange(origin, invDir4, range));
+
+    /* no intersection close to corner */
+    const Vector3 direction5 = corner - Vector3{eps, eps, 0.0f} - origin;
+    const Vector3 invDir5 = 1.0f/direction5;
+    CORRADE_VERIFY(!Intersection::rayRange(origin, invDir5, range));
+
+    /* divide by zero test with intersection */
+    const Vector3 direction6{0.0f, 0.0f, -1.0f};
+    const Vector3 invDir6 = 1.0f/direction6;
+    CORRADE_VERIFY(Intersection::rayRange({0.0f, 0.0f, 2.0f}, invDir6, range));
+
+    /* divide by zero test without intersection */
+    const Vector3 direction7{0.0f, 0.0f, 1.0f};
+    const Vector3 invDir7 = 1.0f/direction7;
+    CORRADE_VERIFY(!Intersection::rayRange(origin, invDir7, range));
 }
 
 void IntersectionTest::aabbFrustum() {

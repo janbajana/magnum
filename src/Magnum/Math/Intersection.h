@@ -6,6 +6,7 @@
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
     Copyright © 2016, 2018 Jonathan Hale <squareys@googlemail.com>
+    Copyright © 2020 janos <janos.meny@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -135,23 +136,6 @@ template<class T> inline T planeLine(const Vector4<T>& plane, const Vector3<T>& 
     return (-plane.w() - dot(plane.xyz(), p))/dot(plane.xyz(), r);
 }
 
-#ifdef MAGNUM_BUILD_DEPRECATED
-/**
-@brief Intersection of a plane and line
-@param planePosition    Plane position
-@param planeNormal      Plane normal
-@param p                Starting point of the line
-@param r                Direction of the line
-
-@m_deprecated_since{2018,10} Use @ref planeLine(const Vector4<T>&, const Vector3<T>&, const Vector3<T>&)
-    together with @ref planeEquation(const Vector3<T>&, const Vector3<T>&, const Vector3<T>&)
-    instead.
-*/
-template<class T> inline CORRADE_DEPRECATED("use planeLine(const Vector4&, const Vector3&, const Vector3&) together with planeEquation(const Vector3&, const Vector3&) instead") T planeLine(const Vector3<T>& planePosition, const Vector3<T>& planeNormal, const Vector3<T>& p, const Vector3<T>& r) {
-    return planeLine(planeEquation(planePosition, planeNormal), p, r);
-}
-#endif
-
 /**
 @brief Intersection of a point and a frustum
 @param point    Point
@@ -186,6 +170,24 @@ for plane normal @f$ \boldsymbol n @f$ and determinant @f$ w @f$.
 @see @ref aabbFrustum()
 */
 template<class T> bool rangeFrustum(const Range3D<T>& range, const Frustum<T>& frustum);
+
+/**
+@brief Intersection of a ray with a range.
+@param rayOrigin            Origin of the ray
+@param inverseRayDirection  Component-wise inverse of the ray direction
+@param range                Range
+@return @cpp true @ce if the the ray intersects the range, @cpp false @ce
+    otherwise
+@m_since_latest
+
+Note that you need to pass the inverse ray direction and not the ray direction.
+The purpose for this is to reduce the number of times you have to compute
+a ray inverse, when doing multiple ray / range intersections (for example
+when traversing an AABB tree). The algorithm implemented is a version of the
+classical slabs algorithm, see *Listing 1* in
+[Majercik et al.](http://jcgt.org/published/0007/03/04/).
+*/
+template<class T> bool rayRange(const Vector3<T>& rayOrigin, const Vector3<T>& inverseRayDirection, const Range3D<T>& range);
 
 /**
 @brief Intersection of an axis-aligned box and a frustum
@@ -443,6 +445,14 @@ template<class T> bool rangeFrustum(const Range3D<T>& range, const Frustum<T>& f
     }
 
     return true;
+}
+
+template<class T> bool rayRange(const Vector3<T>& rayOrigin, const Vector3<T>& inverseRayDirection, const Range3D<T>& range) {
+    const Vector3<T> t0 = (range.min() - rayOrigin)*inverseRayDirection;
+    const Vector3<T> t1 = (range.max() - rayOrigin)*inverseRayDirection;
+    const std::pair<Vector3<T>, Vector3<T>> tminMax = minmax(t0, t1);
+
+    return tminMax.first.max() <= tminMax.second.min();
 }
 
 template<class T> bool aabbFrustum(const Vector3<T>& aabbCenter, const Vector3<T>& aabbExtents, const Frustum<T>& frustum) {

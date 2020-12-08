@@ -244,6 +244,23 @@ in inverse --- but usually @ref developers-deprecation "deprecate first".
 In order to remove a plugin interface, be sure to touch all places mentioned
 above, only in inverse --- but usually @ref developers-deprecation "deprecate first".
 
+@section developers-plugin-interface-updating Checklist for updating a plugin interface
+
+When updating a plugin interface, the interface string (and thus also the
+interface string in all plugin implementations) should be updated if any of the
+following cases apply:
+
+-   Bump major version if the plugin usage changes significantly (and thus most
+    user code changes as well), for example when renaming a "open file" method
+-   Bump only the minor version if signature of some methods change,
+    potentially requiring changes in user code, for example when porting from
+    @ref std::string to @ref Containers::StringView
+-   Bump only the patch version if the change doesn't affect existing user code
+    but breaks ABI, for example when adding a new virtual function --- this is
+    mainly to prevent crashes when loading of plugins built against an older
+    interface. A rather exhaustive list of ABI-affecting changes is in the KDE
+    Community Wiki: https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B
+
 @section developers-tool Checklist for adding / removing a tool
 
 @todoc write
@@ -546,54 +563,38 @@ in inverse --- but usually @ref developers-deprecation "deprecate first".
 @section developers-gl-extensions Checklist for adding / removing GL versions and extensions
 
 1.  Install [flextGL](https://github.com/mosra/flextgl)
-2.  Go to `src/MagnumExternal/OpenGL/GL/`:
-    -   Update `extensions.txt` (bump a version or add/remove extensions)
-    -   Run @cb{.sh} .../flextGLgen.py -D . -t . extensions.txt @ce to generate
-        `flextGL.h`, `flextGL.cpp` and `flextGLPlatform.cpp` files
-3.  Go to `src/MagnumExternal/OpenGL/GLES2/`:
-    -   Update `extensions.txt` and `Emscripten/extensions.txt` (add/remove
+2.  Go to `src/MagnumExternal/OpenGL/`:
+    -   Update `GL/extensions.txt`, `GLES2/extensions.txt`,
+        `GLES2/Emscripten/extensions.txt`, `GLES3/extensions.txt`,
+        `GLES3/Emscripten/extensions.txt` (bump versions or add/remove
         extensions)
-    -   Run @cb{.sh} .../flextGLgen.py -D . -t . extensions.txt @ce to generate
-        `flextGL.h`, `flextGL.cpp`, `flextGLPlatform.cpp`,
-        `flextGLWindowsDesktop.h`, `flextGLWindowsDesktop.cpp`,
-        `flextGLPlatformWindowsDesktop.cpp` and `flextGLPlatformIOS.cpp` files.
-        Desktop GLES on Windows still links to the ancient `opengl32.dll`
-        which exports only OpenGL 1.1 symbols, so we have a special set of
-        headers that queries pointers for everything above OpenGL 1.1 (instead
-        of everything above OpenGL ES 2.0). iOS, on the other hand, doesn't
-        have any extension loader mechanism and all supported entrypoints are
-        exported from the library, so we set the function pointers to those
-        exported symbols in case the system GL header defines them.
-    -   Run @cb{.sh} .../flextGLgen.py -D . -t Emscripten/ Emscripten/extensions.txt @ce
-        to generate a stripped-down `flextGLEmscripten.h` file. Emscripten
-        doesn't have the ability to manually load extension pointers, thus it
-        has only header files.
-4.  Go to `src/MagnumExternal/OpenGL/GLES3/`:
-    -   Update `extensions.txt` and `Emscripten/extensions.txt` (bump a version
-        or add/remove extensions)
-    -   Run @cb{.sh} .../flextGLgen.py -D . -t . extensions.txt @ce to generate
-        `flextGL.h`, `flextGL.cpp`, `flextGLPlatform.cpp`,
-        `flextGLWindowsDesktop.h`, `flextGLWindowsDesktop.cpp`,
-        `flextGLPlatformWindowsDesktop.cpp` and `flextGLPlatformIOS.cpp` files.
-        See above why there are so many.
-    -   Run @cb{.sh} .../flextGLgen.py -D . -t Emscripten/ Emscripten/extensions.txt @ce
-        to generate a stripped-down `flextGLEmscripten.h` file. See above for
-        details.
-5.  Check @cb{.sh} git diff @ce for suspicious changes and whitespace-at-EOL
-6.  For every new added function, add an entry to `doc/opengl-mapping.dox`
-7.  For every new added limit query (various `GL_MIN_*` and `GL_MAX_*` macros
+    -   Run `./update-flextgl.sh` to update everything. Reason there is so many
+        variants of the files are the following:
+        -   Desktop GLES on Windows still links to the ancient `opengl32.dll`
+            which exports only OpenGL 1.1 symbols, so we have a special set of
+            headers that queries pointers for everything above OpenGL 1.1
+            (instead of everything above OpenGL ES 2.0).
+        -   iOS, on the other hand, doesn't have any extension loader mechanism
+            and all supported entrypoints are exported from the library, so we
+            set the function pointers to those exported symbols in case the
+            system GL header defines them.
+        -   Emscripten doesn't have the ability to manually load extension
+            pointers, thus it has only header files.
+3.  Check @cb{.sh} git diff @ce for suspicious changes and whitespace-at-EOL
+4.  For every new added function, add an entry to `doc/opengl-mapping.dox`
+5.  For every new added limit query (various `GL_MIN_*` and `GL_MAX_*` macros
     etc.), add an entry to the bottom of `doc/opengl-mapping.dox`
-8.  Add a table listing the new version and all new extensions in it to
+6.  Add a table listing the new version and all new extensions in it to
     `doc/opengl-support.dox` (take a list of them from the changelog in the
     official spec PDF). Some extensions might be already present in the general
     extension list, move them out of there.
-9.  Add a new `requires-glXY`, `requires-glesXY` or `requires-webglXY` page
+7.  Add a new `requires-glXY`, `requires-glesXY` or `requires-webglXY` page
     with @c \@m_footernavigation to `doc/opengl-support.dox`, mention it as a
     @c \@subpage at a correct position in the list
-10. Add a new `requires-glXY`, `requires-glesXY` or `requires-webglXY` alias
+8.  Add a new `requires-glXY`, `requires-glesXY` or `requires-webglXY` alias
     to `Doxyfile`, `Doxyfile-mcss` and `Doxyfile-public`, copypaste it from
     existing and change the numbers
-11. Add new version enum value:
+9.  Add new version enum value:
     -   to `src/Magnum/GL/Version.h`
     -   to debug output in `src/Magnum/GL/Version.cpp`
     -   to @ref GL::Extension::extensions() in `src/Magnum/GL/Context.cpp`
@@ -601,7 +602,7 @@ in inverse --- but usually @ref developers-deprecation "deprecate first".
     -   to specify GLSL version in `src/Magnum/GL/Shader.cpp`
     -   to the list in `src/Magnum/Platform/gl-info.cpp`
     -   to the test in `src/Magnum/GL/Test/ContextTest.cpp`
-12. Add new extensions to `src/Magnum/GL/Extensions.h`
+10. Add new extensions to `src/Magnum/GL/Extensions.h`
     -   order them by extension ID that is mentioned in every extension spec
         file
     -   update the numbering to stay monotonic and unique, round up start index
@@ -609,9 +610,9 @@ in inverse --- but usually @ref developers-deprecation "deprecate first".
     -   in case there's a lot of new extensions, @cpp Implementation::ExtensionCount @ce
         might needed to be increased
     -   run `ContextTest` to verify everything is still okay
-13. Update existing extensions with version in which they become core (last
+11. Update existing extensions with version in which they become core (last
     parameter of the `_extension()` macro)
-14. Update extension list in `src/magnum/GL/Context.cpp` according to changes
+12. Update extension list in `src/magnum/GL/Context.cpp` according to changes
     in `src/Magnum/GL/Extensions.h`
 
 In order to remove GL functionality, be sure to touch all places mentioned
@@ -728,7 +729,42 @@ unless it doesn't affect public API at all.
 
 @section developers-vk-extensions Checklist for adding / removing Vulkan versions and extensions
 
-@todoc adapt from the GL section
+1.  Install [flextGL](https://github.com/mosra/flextgl)
+2.  Go to `src/MagnumExternal/Vulkan/`:
+    -   Update `extensions.txt` (bump a version or add/remove extensions)
+    -   Run `./update-flexgl.sh` to update everything
+3.  Check @cb{.sh} git diff @ce for suspicious changes and whitespace-at-EOL
+4.  For every new added function and `CreateInfo` structure, add an entry to
+    `doc/vulkan-mapping.dox`
+5.  Add a table listing the new version and all new extensions in it to
+    `doc/vulkan-support.dox` (take a list of them from the changelog in the
+    official spec PDF). Some extensions might be already present in the general
+    extension list, move them out of there.
+6.  Add a new `requires-vkXY` page with @c \@m_footernavigation to
+    `doc/vulkan-support.dox`, mention it as a @c \@subpage at a correct
+    position in the list
+7.  Add a new `requires-vkXY` alias to `Doxyfile`, `Doxyfile-mcss` and
+    `Doxyfile-public`, copypaste it from existing and change the numbers
+8.  Add new version enum value:
+    -   to `src/Magnum/Vk/Version.h`
+    -   to the list in `src/Magnum/Vk/vk-info.cpp`
+    -   to @ref Vk::InstanceExtension::extensions() and
+        @ref Vk::Extension::extensions() in `src/Magnum/Vk/Extensions.cpp`
+9.  Add new extensions to `src/Magnum/Vk/Extensions.h`
+    -   there's a separate list for instance and device extensions, ensure each
+        in the right list
+    -   order them by extension ID that is mentioned on every extension spec
+        page
+    -   update the numbering to stay monotonic and unique, round up start index
+        of next section to nearest ten to make the updates bearable
+    -   in case there's a lot of new extensions,
+        @cpp Implementation::InstanceExtensionCount @ce /
+        @cpp Implementation::DeviceExtensionCount @ce might needed to be
+        increased
+10. Add them alphabetically ordered to the correct list in
+    `src/Magnum/Vk/Extensions.cpp`
+11. Update existing extensions with version in which they become core (last
+    parameter of the `_extension()` macro)
 
 In order to remove Vulkan functionality, be sure to touch all places mentioned
 above, only in inverse --- but usually @ref developers-deprecation "deprecate first",
@@ -894,7 +930,7 @@ inverse.
     -   Don't forget about the bootstrap repository and toolchains as well
 6.  Go through merged PRs (and the *most important* issues) and add new people
     to `dox/credits.md` (and similar files in other repositories) and
-    https://magnum.graphics/about/, if they are not there yet
+    https://magnum.graphics/about/ , if they are not there yet
 7.  Update changelog for the next release:
     -   change section names for the latest release from `latest` to `20XY-ab`
     -   change the title from `Changes since 20XY.aa` to `20XY.ab`
@@ -903,8 +939,13 @@ inverse.
     -   add a temporary <tt>\@<b></b>anchor changelog-latest</tt> (and
         equivalent in other repos) on top so the links from main page work
         properly
-8.  Convert all occurences of <tt>\@m_since_latest</tt> to
-    <tt>\@m_since{20XY,ab}</tt>
+8.  Convert all occurences of
+    -   <tt>\@m_since_latest_{thing}</tt> to <tt>\@m_since_{thing,20XY,ab}</tt>
+    -   <tt>\@m_since_latest</tt> to <tt>\@m_since{20XY,ab}</tt>
+    -   <tt>\@m_deprecated_since_latest_{thing}</tt> to
+        <tt>\@m_deprecated_since_{thing,20XY,ab}</tt>
+    -   <tt>\@m_deprecated_since_latest</tt> to
+        <tt>\@m_deprecated_since{20XY,ab}</tt>
 9.  Bump `MAGNUM*_LIBRARY_VERSION`, `MAGNUM*_LIBRARY_SOVERSION`
     `MAGNUM*_VERSION_YEAR` and `MAGNUM*_VERSION_MONTH` in all projects. Ensure
     all projects have the exact same version.
@@ -923,11 +964,15 @@ inverse.
     releases in PPAs can be done directly from the tag with no extra patching
 16. Tag a new version using @cb{.sh} git tag -a v20XY.ab @ce, say just
     `Version 20XY.ab` as a message
-17. Push the tag, verify that the CIs are still green
+17. Push the tag, verify that the CIs are still green; if not, retry and tag
+    again
     -   to GitLab as well
-18. Update the Corrade and Magnum tagfiles on the website using the
+18. Regenerate singles with changelogs for what changed *and only then*
+    commit the changelog updates so the generated singles refer to the actual
+    tag
+19. Update the Corrade and Magnum tagfiles on the website using the
     freshly-built *public* docs
-19. Write a release announcement for the blog
+20. Write a release announcement for the blog
     -   highlight the most prominent features, mention detailed blog posts
         about them, if any
     -   reference detailed changelogs for all projects at the end
@@ -935,8 +980,8 @@ inverse.
     -   create some fancy eye-catchy cover image featuring nice screenshots of
         new functionality
     -   add release annoucement link under the button on front page
-20. Publish the release announcement, verify it looks correct
-21. Advertise the release announcement, preferrably Monday 5 PM, never Friday
+21. Publish the release announcement, verify it looks correct
+22. Advertise the release announcement, preferrably Monday 5 PM, never Friday
     or weekends
     -   come up with some 100-character-long extended title
     -   Twitter (extended title + url and some hashtags), first dry-run the
@@ -951,9 +996,9 @@ inverse.
     -   send an e-mail to companies and universities on the private list
     -   add a message to the Gitter chat (title as heading, cover image,
         summary in a blockquote and "read more" link, `@` contributors)
-22. Reference Twitter, Reddit, Hacker News and mailing list in a "Discussion"
+23. Reference Twitter, Reddit, Hacker News and mailing list in a "Discussion"
     note at the end of the article, reupload that change
-23. Update versions of ArchLinux AUR packages:
+24. Update versions of ArchLinux AUR packages:
     -   run `makepkg` in `package/archlinux/magnum*-git`, verify it builds and
         says correct version, ideally with `r0` at the end
     -   copy the updated `PKGBUILD` to the AUR package repo, run
@@ -961,12 +1006,12 @@ inverse.
     -   commit the updated `PKGBUILD` and `.SRCINFO`, push
     -   after pushing all, verify that the version is updated in the AUR web
         interface as well
-24. Update Homebrew package versions
-25. Ask someone to update the Ubuntu PPA
-26. Ask someone to update Vcpkg packages
-27. Close the 20XY.ab GitHub milestone
-28. Add link to the release notes to the tag on GitHub
-29. Have a drink and take two days off
+25. Update Homebrew package versions
+26. Ask someone to update the Ubuntu PPA
+27. Ask someone to update Vcpkg packages
+28. Close the 20XY.ab GitHub milestone
+29. Add link to the release notes to the tag on GitHub
+30. Have a drink and take two days off
 
 */
 }

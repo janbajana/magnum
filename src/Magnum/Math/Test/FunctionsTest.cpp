@@ -3,6 +3,7 @@
 
     Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
                 2020 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2020 janos <janos.meny@googlemail.com>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -25,7 +26,6 @@
 
 #include <sstream>
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/TestSuite/Compare/Numeric.h>
 #include <Corrade/Utility/DebugStl.h>
 
 #include "Magnum/Math/Functions.h"
@@ -35,6 +35,8 @@ namespace Magnum { namespace Math { namespace Test { namespace {
 
 struct FunctionsTest: Corrade::TestSuite::Tester {
     explicit FunctionsTest();
+
+    template<class T> void popcount();
 
     void powIntegral();
     void pow();
@@ -51,6 +53,11 @@ struct FunctionsTest: Corrade::TestSuite::Tester {
     void floor();
     void round();
     void ceil();
+    void fmod();
+
+    void binomialCoefficient();
+    void binomialCoefficientInvalidInput();
+    void binomialCoefficientOverflow();
 
     void sqrt();
     void sqrtInverted();
@@ -79,9 +86,6 @@ struct FunctionsTest: Corrade::TestSuite::Tester {
     void trigonometric();
     void trigonometricWithBase();
     template<class T> void sincos();
-
-    void sinCosSeparateBenchmark();
-    void sinCosCombinedBenchmark();
 };
 
 using namespace Literals;
@@ -97,6 +101,10 @@ typedef Math::Vector3<Byte> Vector3b;
 typedef Math::Vector3<Int> Vector3i;
 
 FunctionsTest::FunctionsTest() {
+    addRepeatedTests<FunctionsTest>({
+        &FunctionsTest::popcount<UnsignedInt>,
+        &FunctionsTest::popcount<UnsignedLong>}, 8);
+
     addTests({&FunctionsTest::powIntegral,
               &FunctionsTest::pow,
 
@@ -112,6 +120,11 @@ FunctionsTest::FunctionsTest() {
               &FunctionsTest::floor,
               &FunctionsTest::round,
               &FunctionsTest::ceil,
+              &FunctionsTest::fmod,
+
+              &FunctionsTest::binomialCoefficient,
+              &FunctionsTest::binomialCoefficientInvalidInput,
+              &FunctionsTest::binomialCoefficientOverflow,
 
               &FunctionsTest::sqrt,
               &FunctionsTest::sqrtInverted,
@@ -145,9 +158,17 @@ FunctionsTest::FunctionsTest() {
               &FunctionsTest::sincos<long double>,
               #endif
               });
+}
 
-    addBenchmarks({&FunctionsTest::sinCosSeparateBenchmark,
-                   &FunctionsTest::sinCosCombinedBenchmark}, 100);
+template<class T> void FunctionsTest::popcount() {
+    setTestCaseTemplateName(TypeTraits<T>::name());
+
+    /* Trivial cases */
+    CORRADE_COMPARE(Math::popcount(T(0)), 0);
+    CORRADE_COMPARE(Math::popcount(~T{}), sizeof(T)*8);
+
+    /* 0x101101011101000110010100 */
+    CORRADE_COMPARE(Math::popcount(T(0xb5d194) << testCaseRepeatId()), 12);
 }
 
 void FunctionsTest::powIntegral() {
@@ -289,6 +310,46 @@ void FunctionsTest::ceil() {
 
     /* Wrapped types */
     CORRADE_COMPARE(Math::ceil(2.7_degf), 3.0_degf);
+}
+
+void FunctionsTest::binomialCoefficient() {
+    CORRADE_COMPARE(Math::binomialCoefficient(1, 1), 1ull);
+    CORRADE_COMPARE(Math::binomialCoefficient(1, 0), 1ull);
+    CORRADE_COMPARE(Math::binomialCoefficient(19, 11), 75582ull);
+    CORRADE_COMPARE(Math::binomialCoefficient(1000, 999), 1000ull);
+    CORRADE_COMPARE(Math::binomialCoefficient(0, 0), 1ull);
+    CORRADE_COMPARE(Math::binomialCoefficient(32, 11), 129024480ull);
+    CORRADE_COMPARE(Math::binomialCoefficient(62, 31), 465428353255261088ull);
+}
+
+void FunctionsTest::binomialCoefficientInvalidInput() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    Math::binomialCoefficient(15, 16);
+    CORRADE_COMPARE(out.str(), "Math::binomialCoefficient(): k can't be greater than n in (15 choose 16)\n");
+}
+
+void FunctionsTest::binomialCoefficientOverflow() {
+    #ifdef CORRADE_NO_ASSERT
+    CORRADE_SKIP("CORRADE_NO_ASSERT defined, can't test assertions");
+    #endif
+
+    std::ostringstream out;
+    Error redirectError{&out};
+    Math::binomialCoefficient(63, 31);
+    CORRADE_COMPARE(out.str(), "Math::binomialCoefficient(): overflow for (63 choose 31)\n");
+}
+
+void FunctionsTest::fmod() {
+    CORRADE_COMPARE(Math::fmod(5.1f, 3.0f), 2.1f);
+    CORRADE_COMPARE(Math::fmod(Vector3(5.1f, -5.1f, 6.8f), Vector3(3.0f, 3.0f, 1.1f)), Vector3(2.1f, -2.1f, 0.2f));
+
+    /* Wrapped types */
+    CORRADE_COMPARE(Math::fmod(2.7_degf, 1.3_degf), 0.1_degf);
 }
 
 void FunctionsTest::sqrt() {
@@ -507,41 +568,41 @@ void FunctionsTest::refractNotNormalized() {
 }
 
 void FunctionsTest::trigonometric() {
-    CORRADE_COMPARE(Math::sin(Deg(30.0f)), 0.5f);
+    CORRADE_COMPARE(Math::sin(30.0_degf), 0.5f);
     CORRADE_COMPARE(Math::sin(Rad(Constants::pi()/6)), 0.5f);
-    CORRADE_COMPARE_AS(Math::asin(0.5f), Deg(30.0f), Deg);
+    CORRADE_COMPARE_AS(Math::asin(0.5f), 30.0_degf, Deg);
 
-    CORRADE_COMPARE(Math::cos(Deg(60.0f)), 0.5f);
+    CORRADE_COMPARE(Math::cos(60.0_degf), 0.5f);
     CORRADE_COMPARE(Math::cos(Rad(Constants::pi()/3)), 0.5f);
-    CORRADE_COMPARE_AS(Math::acos(0.5f), Deg(60.0f), Deg);
+    CORRADE_COMPARE_AS(Math::acos(0.5f), 60.0_degf, Deg);
 
-    CORRADE_COMPARE(Math::sincos(Deg(30.0f)).first, 0.5f);
-    CORRADE_COMPARE(Math::sincos(Deg(30.0f)).second, 0.8660254037844386f);
+    CORRADE_COMPARE(Math::sincos(30.0_degf).first, 0.5f);
+    CORRADE_COMPARE(Math::sincos(30.0_degf).second, 0.8660254037844386f);
     CORRADE_COMPARE(Math::sincos(Rad(Constants::pi()/6)).first, 0.5f);
     CORRADE_COMPARE(Math::sincos(Rad(Constants::pi()/6)).second, 0.8660254037844386f);
 
-    CORRADE_COMPARE(Math::tan(Deg(45.0f)), 1.0f);
+    CORRADE_COMPARE(Math::tan(45.0_degf), 1.0f);
     CORRADE_COMPARE(Math::tan(Rad(Constants::pi()/4)), 1.0f);
-    CORRADE_COMPARE_AS(Math::atan(1.0f), Deg(45.0f), Deg);
+    CORRADE_COMPARE_AS(Math::atan(1.0f), 45.0_degf, Deg);
 }
 
 void FunctionsTest::trigonometricWithBase() {
     /* Verify that the functions can be called with Unit<Deg, T> and Unit<Rad, T> */
-    CORRADE_VERIFY((std::is_same<decltype(2*Deg(15.0f)), Unit<Math::Deg, Float>>::value));
+    CORRADE_VERIFY((std::is_same<decltype(2*15.0_degf), Unit<Math::Deg, Float>>::value));
     CORRADE_VERIFY((std::is_same<decltype(2*Rad(Constants::pi()/12)), Unit<Math::Rad, Float>>::value));
 
-    CORRADE_COMPARE(Math::sin(2*Deg(15.0f)), 0.5f);
+    CORRADE_COMPARE(Math::sin(2*15.0_degf), 0.5f);
     CORRADE_COMPARE(Math::sin(2*Rad(Constants::pi()/12)), 0.5f);
 
-    CORRADE_COMPARE(Math::cos(2*Deg(30.0f)), 0.5f);
+    CORRADE_COMPARE(Math::cos(2*30.0_degf), 0.5f);
     CORRADE_COMPARE(Math::cos(2*Rad(Constants::pi()/6)), 0.5f);
 
-    CORRADE_COMPARE(Math::sincos(2*Deg(15.0f)).first, 0.5f);
-    CORRADE_COMPARE(Math::sincos(2*Deg(15.0f)).second, 0.8660254037844386f);
+    CORRADE_COMPARE(Math::sincos(2*15.0_degf).first, 0.5f);
+    CORRADE_COMPARE(Math::sincos(2*15.0_degf).second, 0.8660254037844386f);
     CORRADE_COMPARE(Math::sincos(2*Rad(Constants::pi()/12)).first, 0.5f);
     CORRADE_COMPARE(Math::sincos(2*Rad(Constants::pi()/12)).second, 0.8660254037844386f);
 
-    CORRADE_COMPARE(Math::tan(2*Deg(22.5f)), 1.0f);
+    CORRADE_COMPARE(Math::tan(2*22.5_degf), 1.0f);
     CORRADE_COMPARE(Math::tan(2*Rad(Constants::pi()/8)), 1.0f);
 }
 
@@ -552,29 +613,6 @@ template<class T> void FunctionsTest::sincos() {
        correct */
     CORRADE_COMPARE(Math::sincos(Math::Deg<T>(T(30.0))).first, T(0.5));
     CORRADE_COMPARE(Math::sincos(Math::Deg<T>(T(30.0))).second, T(0.866025403784438647l));
-}
-
-void FunctionsTest::sinCosSeparateBenchmark() {
-    Float sin{}, cos{}, a{};
-    CORRADE_BENCHMARK(1000) {
-        sin += Math::sin(Rad(a));
-        cos += Math::cos(Rad(a));
-        a += 0.1f;
-    }
-
-    CORRADE_COMPARE_AS(a, 10.0f, Corrade::TestSuite::Compare::Greater);
-}
-
-void FunctionsTest::sinCosCombinedBenchmark() {
-    Float sin{}, cos{}, a{};
-    CORRADE_BENCHMARK(1000) {
-        auto sincos = Math::sincos(Rad(a));
-        sin += sincos.first;
-        cos += sincos.second;
-        a += 0.1f;
-    }
-
-    CORRADE_COMPARE_AS(a, 10.0f, Corrade::TestSuite::Compare::Greater);
 }
 
 }}}}

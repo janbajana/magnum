@@ -369,24 +369,28 @@ enum class PixelType: GLenum {
 
     /**
      * Each component unsigned short.
-     * @requires_gles30 For texture data only, extension @gl_extension{OES,depth_texture}
-     *      or @gl_extension{ANGLE,depth_texture} in OpenGL ES 2.0.
-     * @requires_gl Can't be used for framebuffer reading in OpenGL ES or
-     *      WebGL.
-     * @requires_webgl20 For texture data only, extension
-     *      @webgl_extension{WEBGL,depth_texture} in WebGL 1.0.
+     * @requires_gles30 Extension @gl_extension{OES,depth_texture}
+     *      or @gl_extension{ANGLE,depth_texture} in OpenGL ES 2.0 for depth
+     *      texture data
+     * @requires_es_extension OpenGL ES 3.1 and @gl_extension{EXT,texture_norm16}
+     *      for color texture data
+     * @requires_webgl20 Extension @webgl_extension{WEBGL,depth_texture} in
+     *      WebGL 1.0 for depth texture data
+     * @requires_webgl_extension @webgl_extension{EXT,texture_norm16} for color
+     *      texture data
      */
     UnsignedShort = GL_UNSIGNED_SHORT,
 
-    #ifndef MAGNUM_TARGET_GLES2
+    /* Available everywhere except ES2 (WebGL 1 has it) */
+    #if !(defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL))
     /**
      * Each component signed short.
      * @requires_gl Can't be used for framebuffer reading in OpenGL ES or
      *      WebGL.
      * @requires_gles30 For texture data only, only @ref PixelType::UnsignedShort
      *      is available in OpenGL ES 2.0.
-     * @requires_webgl20 For texture data only, only @ref PixelType::UnsignedShort
-     *      is available in WebGL 1.0.
+     * @requires_webgl20 For texture data only, @webgl_extension{EXT,texture_norm16}
+     *      in WebGL 1.0.
      */
     Short = GL_SHORT,
     #endif
@@ -415,7 +419,7 @@ enum class PixelType: GLenum {
      * Each component half float.
      * @see @ref Magnum::Half "Half", @ref Math::packHalf(),
      *      @ref Math::unpackHalf()
-     * @m_since_latest
+     * @m_since{2020,06}
      * @requires_gl30 Extension @gl_extension{ARB,half_float_pixel}
      * @requires_gles30 Extension @gl_extension2{OES,texture_half_float,OES_texture_float}
      *      to use for texture reading in OpenGL ES 2.0.
@@ -439,7 +443,7 @@ enum class PixelType: GLenum {
     #ifdef MAGNUM_BUILD_DEPRECATED
     /**
      * Half float.
-     * @m_deprecated_since_latest Use @ref PixelType::Half instead.
+     * @m_deprecated_since{2020,06} Use @ref PixelType::Half instead.
      */
     HalfFloat CORRADE_DEPRECATED_ENUM("use Half instead") = Half,
     #endif

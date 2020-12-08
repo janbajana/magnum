@@ -33,16 +33,17 @@
 #include <Corrade/Utility/Directory.h>
 
 #include "Magnum/FileCallback.h"
-#include "Magnum/Trade/AbstractMaterialData.h"
 #include "Magnum/Trade/AnimationData.h"
 #include "Magnum/Trade/ArrayAllocator.h"
 #include "Magnum/Trade/CameraData.h"
 #include "Magnum/Trade/ImageData.h"
 #include "Magnum/Trade/LightData.h"
+#include "Magnum/Trade/MaterialData.h"
 #include "Magnum/Trade/MeshData.h"
 #include "Magnum/Trade/ObjectData2D.h"
 #include "Magnum/Trade/ObjectData3D.h"
 #include "Magnum/Trade/SceneData.h"
+#include "Magnum/Trade/SkinData.h"
 #include "Magnum/Trade/TextureData.h"
 
 #ifdef MAGNUM_BUILD_DEPRECATED
@@ -59,7 +60,11 @@
 namespace Magnum { namespace Trade {
 
 std::string AbstractImporter::pluginInterface() {
-    return "cz.mosra.magnum.Trade.AbstractImporter/0.3.1";
+    return
+/* [interface] */
+"cz.mosra.magnum.Trade.AbstractImporter/0.3.3"
+/* [interface] */
+    ;
 }
 
 #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
@@ -207,12 +212,12 @@ void AbstractImporter::close() {
     }
 }
 
-Int AbstractImporter::defaultScene() {
+Int AbstractImporter::defaultScene() const {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::defaultScene(): no file opened", -1);
     return doDefaultScene();
 }
 
-Int AbstractImporter::doDefaultScene() { return -1; }
+Int AbstractImporter::doDefaultScene() const { return -1; }
 
 UnsignedInt AbstractImporter::sceneCount() const {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::sceneCount(): no file opened", 0);
@@ -471,6 +476,100 @@ Containers::Pointer<ObjectData3D> AbstractImporter::object3D(const std::string& 
     return object3D(id); /* not doObject3D(), so we get the range checks also */
 }
 
+UnsignedInt AbstractImporter::skin2DCount() const {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin2DCount(): no file opened", {});
+    return doSkin2DCount();
+}
+
+UnsignedInt AbstractImporter::doSkin2DCount() const { return 0; }
+
+Int AbstractImporter::skin2DForName(const std::string& name) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin2DForName(): no file opened", {});
+    return doSkin2DForName(name);
+}
+
+Int AbstractImporter::doSkin2DForName(const std::string&) { return -1; }
+
+std::string AbstractImporter::skin2DName(const UnsignedInt id) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin2DName(): no file opened", {});
+    CORRADE_ASSERT(id < doSkin2DCount(), "Trade::AbstractImporter::skin2DName(): index" << id << "out of range for" << doSkin2DCount() << "entries", {});
+    return doSkin2DName(id);
+}
+
+std::string AbstractImporter::doSkin2DName(UnsignedInt) { return {}; }
+
+Containers::Optional<SkinData2D> AbstractImporter::skin2D(const UnsignedInt id) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin2D(): no file opened", {});
+    CORRADE_ASSERT(id < doSkin2DCount(), "Trade::AbstractImporter::skin2D(): index" << id << "out of range for" << doSkin2DCount() << "entries", {});
+    Containers::Optional<SkinData2D> skin = doSkin2D(id);
+    CORRADE_ASSERT(!skin || (
+        (!skin->_jointData.deleter() || skin->_jointData.deleter() == reinterpret_cast<void(*)(UnsignedInt*, std::size_t)>(Implementation::nonOwnedArrayDeleter)) &&
+        (!skin->_inverseBindMatrixData.deleter() || skin->_inverseBindMatrixData.deleter() == reinterpret_cast<void(*)(Matrix3*, std::size_t)>(Implementation::nonOwnedArrayDeleter))),
+        "Trade::AbstractImporter::skin2D(): implementation is not allowed to use a custom Array deleter", {});
+    return skin;
+}
+
+Containers::Optional<SkinData2D> AbstractImporter::doSkin2D(UnsignedInt) {
+    CORRADE_ASSERT_UNREACHABLE("Trade::AbstractImporter::skin2D(): not implemented", {});
+}
+
+Containers::Optional<SkinData2D> AbstractImporter::skin2D(const std::string& name) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin2D(): no file opened", {});
+    const Int id = doSkin2DForName(name);
+    if(id == -1) {
+        Error{} << "Trade::AbstractImporter::skin2D(): skin" << name << "not found";
+        return {};
+    }
+    return skin2D(id); /* not doSkin2D(), so we get the range checks also */
+}
+
+UnsignedInt AbstractImporter::skin3DCount() const {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin3DCount(): no file opened", {});
+    return doSkin3DCount();
+}
+
+UnsignedInt AbstractImporter::doSkin3DCount() const { return 0; }
+
+Int AbstractImporter::skin3DForName(const std::string& name) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin3DForName(): no file opened", {});
+    return doSkin3DForName(name);
+}
+
+Int AbstractImporter::doSkin3DForName(const std::string&) { return -1; }
+
+std::string AbstractImporter::skin3DName(const UnsignedInt id) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin3DName(): no file opened", {});
+    CORRADE_ASSERT(id < doSkin3DCount(), "Trade::AbstractImporter::skin3DName(): index" << id << "out of range for" << doSkin3DCount() << "entries", {});
+    return doSkin3DName(id);
+}
+
+std::string AbstractImporter::doSkin3DName(UnsignedInt) { return {}; }
+
+Containers::Optional<SkinData3D> AbstractImporter::skin3D(const UnsignedInt id) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin3D(): no file opened", {});
+    CORRADE_ASSERT(id < doSkin3DCount(), "Trade::AbstractImporter::skin3D(): index" << id << "out of range for" << doSkin3DCount() << "entries", {});
+    Containers::Optional<SkinData3D> skin = doSkin3D(id);
+    CORRADE_ASSERT(!skin || (
+        (!skin->_jointData.deleter() || skin->_jointData.deleter() == reinterpret_cast<void(*)(UnsignedInt*, std::size_t)>(Implementation::nonOwnedArrayDeleter)) &&
+        (!skin->_inverseBindMatrixData.deleter() || skin->_inverseBindMatrixData.deleter() == reinterpret_cast<void(*)(Matrix4*, std::size_t)>(Implementation::nonOwnedArrayDeleter))),
+        "Trade::AbstractImporter::skin3D(): implementation is not allowed to use a custom Array deleter", {});
+    return skin;
+}
+
+Containers::Optional<SkinData3D> AbstractImporter::doSkin3D(UnsignedInt) {
+    CORRADE_ASSERT_UNREACHABLE("Trade::AbstractImporter::skin3D(): not implemented", {});
+}
+
+Containers::Optional<SkinData3D> AbstractImporter::skin3D(const std::string& name) {
+    CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::skin3D(): no file opened", {});
+    const Int id = doSkin3DForName(name);
+    if(id == -1) {
+        Error{} << "Trade::AbstractImporter::skin3D(): skin" << name << "not found";
+        return {};
+    }
+    return skin3D(id); /* not doSkin3D(), so we get the range checks also */
+}
+
 UnsignedInt AbstractImporter::meshCount() const {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::meshCount(): no file opened", {});
     return doMeshCount();
@@ -671,17 +770,39 @@ std::string AbstractImporter::materialName(const UnsignedInt id) {
 
 std::string AbstractImporter::doMaterialName(UnsignedInt) { return {}; }
 
-Containers::Pointer<AbstractMaterialData> AbstractImporter::material(const UnsignedInt id) {
+#if !defined(MAGNUM_BUILD_DEPRECATED) || defined(DOXYGEN_GENERATING_OUTPUT)
+Containers::Optional<MaterialData>
+#else
+OptionalButAlsoPointer<MaterialData>
+#endif
+AbstractImporter::material(const UnsignedInt id) {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::material(): no file opened", {});
     CORRADE_ASSERT(id < doMaterialCount(), "Trade::AbstractImporter::material(): index" << id << "out of range for" << doMaterialCount() << "entries", {});
-    return doMaterial(id);
+
+    Containers::Optional<MaterialData> material = doMaterial(id);
+    CORRADE_ASSERT(!material || (
+        (!material->_data.deleter() || material->_data.deleter() == reinterpret_cast<void(*)(MaterialAttributeData*, std::size_t)>(Implementation::nonOwnedArrayDeleter)) &&
+        (!material->_layerOffsets.deleter() || material->_layerOffsets.deleter() == reinterpret_cast<void(*)(UnsignedInt*, std::size_t)>(Implementation::nonOwnedArrayDeleter))),
+        "Trade::AbstractImporter::material(): implementation is not allowed to use a custom Array deleter", {});
+
+    /* GCC 4.8 and clang-cl needs an explicit conversion here */
+    #ifdef MAGNUM_BUILD_DEPRECATED
+    return OptionalButAlsoPointer<MaterialData>{std::move(material)};
+    #else
+    return material;
+    #endif
 }
 
-Containers::Pointer<AbstractMaterialData> AbstractImporter::doMaterial(UnsignedInt) {
+Containers::Optional<MaterialData> AbstractImporter::doMaterial(UnsignedInt) {
     CORRADE_ASSERT_UNREACHABLE("Trade::AbstractImporter::material(): not implemented", {});
 }
 
-Containers::Pointer<AbstractMaterialData> AbstractImporter::material(const std::string& name) {
+#if !defined(MAGNUM_BUILD_DEPRECATED) || defined(DOXYGEN_GENERATING_OUTPUT)
+Containers::Optional<MaterialData>
+#else
+OptionalButAlsoPointer<MaterialData>
+#endif
+AbstractImporter::material(const std::string& name) {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::material(): no file opened", {});
     const Int id = doMaterialForName(name);
     if(id == -1) {

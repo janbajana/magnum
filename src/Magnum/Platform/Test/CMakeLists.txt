@@ -3,6 +3,7 @@
 #
 #   Copyright © 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
 #               2020 Vladimír Vondruš <mosra@centrum.cz>
+#   Copyright © 2020 Pablo Escobar <mail@rvrs.in>
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a
 #   copy of this software and associated documentation files (the "Software"),
@@ -41,7 +42,14 @@ endif()
 
 if(WITH_EMSCRIPTENAPPLICATION)
     add_executable(PlatformEmscriptenApplicationTest EmscriptenApplicationTest.cpp)
-    target_link_libraries(PlatformEmscriptenApplicationTest PRIVATE MagnumEmscriptenApplication MagnumGL)
+    target_link_libraries(PlatformEmscriptenApplicationTest PRIVATE
+        MagnumEmscriptenApplication MagnumGL
+        # Test that the canvas and keylistener can be found with both the old
+        # and the new Emscripten target behaviors
+        # TODO: use target_link_options() once we can require CMake 3.13
+        "-s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0"
+        # Enable memory runtime checks
+        "-s ASSERTIONS=2 -s SAFE_HEAP=1")
     set_target_properties(PlatformEmscriptenApplicationTest PROPERTIES FOLDER "Magnum/Platform/Test")
     add_custom_command(TARGET PlatformEmscriptenApplicationTest POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -51,6 +59,24 @@ if(WITH_EMSCRIPTENAPPLICATION)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${CMAKE_CURRENT_SOURCE_DIR}/EmscriptenApplicationTest.html
             $<TARGET_FILE_DIR:PlatformEmscriptenApplicationTest>/PlatformEmscriptenApplicationTest.html)
+
+    add_executable(PlatformMultipleEmscriptenApplicationTest EmscriptenApplicationTest.cpp)
+    target_link_libraries(PlatformMultipleEmscriptenApplicationTest PRIVATE
+        MagnumEmscriptenApplication MagnumGL
+        # TODO: use target_link_options() once we can require CMake 3.13
+        "-s MODULARIZE -s EXPORT_NAME=createModule"
+        "-s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1"
+        "-s ASSERTIONS=2 -s SAFE_HEAP=1")
+    target_compile_definitions(PlatformMultipleEmscriptenApplicationTest PRIVATE CUSTOM_CLEAR_COLOR=0x3bd267_rgbf)
+    set_target_properties(PlatformMultipleEmscriptenApplicationTest PROPERTIES FOLDER "Magnum/Platform/Test")
+    add_custom_command(TARGET PlatformMultipleEmscriptenApplicationTest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_SOURCE_DIR}/../WebApplication.css
+            ${CMAKE_CURRENT_SOURCE_DIR}/../EmscriptenApplication.js
+            $<TARGET_FILE_DIR:PlatformMultipleEmscriptenApplicationTest>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_SOURCE_DIR}/MultipleEmscriptenApplicationTest.html
+            $<TARGET_FILE_DIR:PlatformMultipleEmscriptenApplicationTest>/PlatformMultipleEmscriptenApplicationTest.html)
 endif()
 
 if(WITH_GLFWAPPLICATION)

@@ -40,6 +40,7 @@
 #include <X11/Xutil.h>
 /* undef Xlib nonsense to avoid conflicts */
 #undef Always
+#undef Bool
 #undef Complex
 #undef Convex
 #undef None
@@ -50,6 +51,11 @@
 #undef Button3
 #undef Button4
 #undef Button5
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+/* Unfortunately Xlib *needs* the Bool type, so provide a typedef instead */
+typedef int Bool;
+#endif
 
 #include "Magnum/Magnum.h"
 #include "Magnum/Tags.h"
@@ -120,7 +126,7 @@ class AbstractXApplication {
          * @brief Run one iteration of application main loop
          * @return @cpp false @ce if @ref exit() was called and the application
          *      should exit, @cpp true @ce otherwise
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Called internally from @ref exec(). If you want to have better
          * control over how the main loop behaves, you can call this function
@@ -248,11 +254,6 @@ class AbstractXApplication {
          * retrieved using @ref windowSize().
          */
         virtual void viewportEvent(ViewportEvent& event);
-
-        #ifdef MAGNUM_BUILD_DEPRECATED
-        /** @copydoc GlfwApplication::viewportEvent(const Vector2i&) */
-        virtual CORRADE_DEPRECATED("use viewportEvent(ViewportEvent&) instead") void viewportEvent(const Vector2i& size);
-        #endif
 
         /** @copydoc Sdl2Application::drawEvent() */
         virtual void drawEvent() = 0;

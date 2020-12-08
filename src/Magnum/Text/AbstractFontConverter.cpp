@@ -58,7 +58,11 @@ std::u32string uniqueUnicode(const std::string& characters)
 }
 
 std::string AbstractFontConverter::pluginInterface() {
-    return "cz.mosra.magnum.Text.AbstractFontConverter/0.2";
+    return
+/* [interface] */
+"cz.mosra.magnum.Text.AbstractFontConverter/0.2"
+/* [interface] */
+    ;
 }
 
 #ifndef CORRADE_PLUGINMANAGER_NO_DYNAMIC_PLUGIN_SUPPORT
@@ -99,7 +103,8 @@ std::vector<std::pair<std::string, Containers::Array<char>>> AbstractFontConvert
         "Text::AbstractFontConverter::exportFontToData(): feature advertised but not implemented", {});
 
     std::vector<std::pair<std::string, Containers::Array<char>>> out;
-    out.emplace_back(filename, doExportFontToSingleData(font, cache, characters));
+    Containers::Array<char> result = doExportFontToSingleData(font, cache, characters);
+    if(result) out.emplace_back(filename, std::move(result));
     return out;
 }
 
@@ -125,7 +130,7 @@ bool AbstractFontConverter::exportFontToFile(AbstractFont& font, AbstractGlyphCa
 
 bool AbstractFontConverter::doExportFontToFile(AbstractFont& font, AbstractGlyphCache& cache, const std::string& filename, const std::u32string& characters) const {
     CORRADE_ASSERT(features() & FontConverterFeature::ConvertData,
-        "Text::AbstractFontConverter::exportFontToFile(): not implemented", false);
+        "Text::AbstractFontConverter::exportFontToFile(): feature advertised but not implemented", {});
 
     /* Export all data */
     const auto data = doExportFontToData(font, cache, filename, characters);
@@ -151,7 +156,8 @@ std::vector<std::pair<std::string, Containers::Array<char>>> AbstractFontConvert
         "Text::AbstractFontConverter::exportGlyphCacheToData(): feature advertised but not implemented", {});
 
     std::vector<std::pair<std::string, Containers::Array<char>>> out;
-    out.emplace_back(filename, doExportGlyphCacheToSingleData(cache));
+    Containers::Array<char> result = doExportGlyphCacheToSingleData(cache);
+    if(result) out.emplace_back(filename, std::move(result));
     return out;
 }
 
@@ -177,7 +183,7 @@ bool AbstractFontConverter::exportGlyphCacheToFile(AbstractGlyphCache& cache, co
 
 bool AbstractFontConverter::doExportGlyphCacheToFile(AbstractGlyphCache& cache, const std::string& filename) const {
     CORRADE_ASSERT(features() & FontConverterFeature::ConvertData,
-        "Text::AbstractFontConverter::exportGlyphCacheToFile(): not implemented", false);
+        "Text::AbstractFontConverter::exportGlyphCacheToFile(): feature advertised but not implemented", {});
 
     /* Export all data */
     const auto data = doExportGlyphCacheToData(cache, filename);
@@ -231,11 +237,11 @@ Containers::Pointer<AbstractGlyphCache> AbstractFontConverter::importGlyphCacheF
 
 Containers::Pointer<AbstractGlyphCache> AbstractFontConverter::doImportGlyphCacheFromFile(const std::string& filename) const {
     CORRADE_ASSERT(features() & FontConverterFeature::ConvertData && !(features() & FontConverterFeature::MultiFile),
-        "Text::AbstractFontConverter::importGlyphCacheFromFile(): not implemented", nullptr);
+        "Text::AbstractFontConverter::importGlyphCacheFromFile(): feature advertised but not implemented", {});
 
     /* Open file */
     if(!Utility::Directory::exists(filename)) {
-        Error() << "Trade::AbstractFontConverter::importGlyphCacheFromFile(): cannot open file" << filename;
+        Error() << "Text::AbstractFontConverter::importGlyphCacheFromFile(): cannot open file" << filename;
         return nullptr;
     }
 

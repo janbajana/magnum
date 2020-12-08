@@ -91,7 +91,9 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in WebGL.
+             * @requires_gles Enabled by default on WebGL if the
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
+             *      is available.
              */
             BlendAdvancedCoherent = GL_BLEND_ADVANCED_COHERENT_KHR,
             #endif
@@ -117,7 +119,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance0 = GL_CLIP_DISTANCE0,
@@ -140,7 +142,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance1 = GL_CLIP_DISTANCE1,
@@ -163,7 +165,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance2 = GL_CLIP_DISTANCE2,
@@ -186,7 +188,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance3 = GL_CLIP_DISTANCE3,
@@ -209,7 +211,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance4 = GL_CLIP_DISTANCE4,
@@ -232,7 +234,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance5 = GL_CLIP_DISTANCE5,
@@ -255,7 +257,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance6 = GL_CLIP_DISTANCE6,
@@ -278,7 +280,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      @gl_extension{EXT,clip_cull_distance}
              * @requires_webgl_extension WebGL 2.0 and extension
              *      @webgl_extension{EXT,clip_cull_distance}
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_GLES
             ClipDistance7 = GL_CLIP_DISTANCE7,
@@ -364,15 +366,6 @@ class MAGNUM_GL_EXPORT Renderer {
             #else
             FramebufferSrgb = GL_FRAMEBUFFER_SRGB_EXT,
             #endif
-
-            #ifdef MAGNUM_BUILD_DEPRECATED
-            /**
-             * Perform sRGB conversion of values written to sRGB framebuffers.
-             * @m_deprecated_since{2018,10} Use @ref Feature::FramebufferSrgb
-             *      instead.
-             */
-            FramebufferSRGB CORRADE_DEPRECATED_ENUM("use GL::Renderer::Feature::FramebufferSrgb instead") = FramebufferSrgb,
-            #endif
             #endif
 
             #ifndef MAGNUM_TARGET_GLES
@@ -402,7 +395,9 @@ class MAGNUM_GL_EXPORT Renderer {
 
             #ifndef MAGNUM_TARGET_WEBGL
             /**
-             * Offset lines
+             * Offset lines. Note that this affects only filled polygons
+             * rendered with @ref setPolygonMode() set to
+             * @ref PolygonMode::Line, not actual line primitives.
              * @see @ref Feature::PolygonOffsetFill, @ref Feature::PolygonOffsetPoint,
              *      @ref setPolygonOffset()
              * @requires_es_extension Extension @gl_extension{NV,polygon_offset}
@@ -416,7 +411,9 @@ class MAGNUM_GL_EXPORT Renderer {
             #endif
 
             /**
-             * Offset points
+             * Offset points. Note that this affects only filled polygons
+             * rendered with @ref setPolygonMode() set to
+             * @ref PolygonMode::Point, not actual point primitives.
              * @see @ref Feature::PolygonOffsetFill, @ref Feature::PolygonOffsetLine,
              *      @ref setPolygonOffset()
              * @requires_es_extension Extension @gl_extension{NV,polygon_offset}
@@ -514,7 +511,7 @@ class MAGNUM_GL_EXPORT Renderer {
          * @brief Enable a feature for given draw buffer
          * @param feature       Feature to enable
          * @param drawBuffer    Draw buffer index
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref disable(Feature, UnsignedInt),
          *      @ref setFeature(Feature, UnsignedInt, bool),
@@ -540,7 +537,7 @@ class MAGNUM_GL_EXPORT Renderer {
          * @brief Disable a feature for given draw buffer
          * @param feature       Feature to disable
          * @param drawBuffer    Draw buffer index
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref enable(Feature, UnsignedInt),
          *      @ref setFeature(Feature, UnsignedInt, bool),
@@ -881,7 +878,7 @@ class MAGNUM_GL_EXPORT Renderer {
         #if !defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL)
         /**
          * @brief Max supported component patch vertex count
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * The result is cached, repeated queries don't result in repeated
          * OpenGL calls. If neither @gl_extension{ARB,tessellation_shader} (part
@@ -896,7 +893,7 @@ class MAGNUM_GL_EXPORT Renderer {
 
         /**
          * @brief Set tessellation patch vertex count
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Specifies number of vertices that will be used to make up a single
          * tessellation patch primitive.
@@ -914,7 +911,7 @@ class MAGNUM_GL_EXPORT Renderer {
         #ifndef MAGNUM_TARGET_GLES
         /**
          * @brief Set default patch inner tessellation level
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * When no tessellation control shader is present, specifies the
          * default inner tessellation levels to be used.
@@ -928,7 +925,7 @@ class MAGNUM_GL_EXPORT Renderer {
 
         /**
          * @brief Set default patch outer tessellation level
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * When no tessellation control shader is present, specifies the
          * default outer tessellation levels to be used.
@@ -944,7 +941,7 @@ class MAGNUM_GL_EXPORT Renderer {
         #if !(defined(MAGNUM_TARGET_GLES2) && defined(MAGNUM_TARGET_WEBGL))
         /**
          * @brief Max supported clip distance count
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * The result is cached, repeated queries don't result in repeated
          * OpenGL calls. If neither OpenGL 3.0 nor
@@ -961,7 +958,7 @@ class MAGNUM_GL_EXPORT Renderer {
         #ifndef MAGNUM_TARGET_GLES2
         /**
          * @brief Max supported cull distance count
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * The result is cached, repeated queries don't result in repeated
          * OpenGL calls. If neither @gl_extension{ARB,cull_distance} (part of
@@ -976,7 +973,7 @@ class MAGNUM_GL_EXPORT Renderer {
 
         /**
          * @brief Max supported combined clip and cull distance count
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * The result is cached, repeated queries don't result in repeated
          * OpenGL calls. If neither @gl_extension{ARB,cull_distance} (part of
@@ -1181,7 +1178,7 @@ class MAGNUM_GL_EXPORT Renderer {
          * @param allowGreen    Allow green channel to be written
          * @param allowBlue     Allow blue channel to be written
          * @param allowAlpha    Allow alpha channel to be written
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref GL-Framebuffer-usage-multiple-outputs,
          *      @fn_gl2_keyword{ColorMaski,ColorMask}
@@ -1274,7 +1271,6 @@ class MAGNUM_GL_EXPORT Renderer {
             Max = GL_MAX_EXT,
             #endif
 
-            #ifndef MAGNUM_TARGET_WEBGL
             /**
              * Multiply. Not accepted as separate parameters in
              * @ref setBlendEquation(BlendEquation, BlendEquation), only in
@@ -1283,8 +1279,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Multiply = GL_MULTIPLY_KHR,
 
@@ -1296,8 +1292,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Screen = GL_SCREEN_KHR,
 
@@ -1309,8 +1305,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Overlay = GL_OVERLAY_KHR,
 
@@ -1322,8 +1318,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Darken = GL_DARKEN_KHR,
 
@@ -1335,8 +1331,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Lighten = GL_LIGHTEN_KHR,
 
@@ -1348,8 +1344,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             ColorDodge = GL_COLORDODGE_KHR,
 
@@ -1361,8 +1357,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             ColorBurn = GL_COLORBURN_KHR,
 
@@ -1374,8 +1370,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             HardLight = GL_HARDLIGHT_KHR,
 
@@ -1387,8 +1383,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             SoftLight = GL_SOFTLIGHT_KHR,
 
@@ -1400,8 +1396,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Difference = GL_DIFFERENCE_KHR,
 
@@ -1413,8 +1409,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             Exclusion = GL_EXCLUSION_KHR,
 
@@ -1426,8 +1422,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             HslHue = GL_HSL_HUE_KHR,
 
@@ -1439,8 +1435,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             HslSaturation = GL_HSL_SATURATION_KHR,
 
@@ -1452,8 +1448,8 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             HslColor = GL_HSL_COLOR_KHR,
 
@@ -1465,11 +1461,10 @@ class MAGNUM_GL_EXPORT Renderer {
              * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{KHR,blend_equation_advanced}
-             * @requires_gles Advanced blend equations are not available in
-             *      WebGL.
+             * @requires_webgl_extension Extension
+             *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
              */
             HslLuminosity = GL_HSL_LUMINOSITY_KHR
-            #endif
         };
 
         /**
@@ -1618,7 +1613,7 @@ class MAGNUM_GL_EXPORT Renderer {
          * @brief Set blend equation for given draw buffer
          * @param drawBuffer    Draw buffer index
          * @param equation      Blend equation
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref GL-Framebuffer-usage-multiple-outputs,
          *      @fn_gl2_keyword{BlendEquationi,BlendEquation}
@@ -1643,11 +1638,11 @@ class MAGNUM_GL_EXPORT Renderer {
 
         #if !(defined(MAGNUM_TARGET_WEBGL) && defined(MAGNUM_TARGET_GLES2))
         /**
-         * @brief Set blend equation for given draw buffer
+         * @brief Set blend equation for given draw buffer separately for RGB and alpha components
          * @param drawBuffer    Draw buffer index
          * @param rgb           Blend equation for RGB components
          * @param alpha         Blend equation for the alpha component
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref GL-Framebuffer-usage-multiple-outputs,
          *      @fn_gl2_keyword{BlendEquationSeparatei,BlendEquationSeparate}
@@ -1696,7 +1691,7 @@ class MAGNUM_GL_EXPORT Renderer {
          *      from pixel value
          * @param destination   How the destination blending factor is
          *      computed from framebuffer
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * See @ref setBlendFunction(BlendFunction, BlendFunction) for more
          * information.
@@ -1721,7 +1716,7 @@ class MAGNUM_GL_EXPORT Renderer {
         static void setBlendFunction(BlendFunction sourceRgb, BlendFunction destinationRgb, BlendFunction sourceAlpha, BlendFunction destinationAlpha);
 
         /**
-         * @brief Set blend function separately for RGB and alpha components for given draw buffer
+         * @brief Set blend function for given draw buffer separately for RGB and alpha components
          * @param drawBuffer        Draw buffer index
          * @param sourceRgb         How the source blending factor is computed
          *      from pixel value for RGB components
@@ -1731,7 +1726,7 @@ class MAGNUM_GL_EXPORT Renderer {
          *      computed from framebuffer for RGB components
          * @param destinationAlpha  How the destination blending factor is
          *      computed from framebuffer for the alpha component
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * See @ref setBlendFunction(BlendFunction, BlendFunction) for more
          * information.
@@ -1771,7 +1766,9 @@ class MAGNUM_GL_EXPORT Renderer {
          * @requires_extension Extension @gl_extension{KHR,blend_equation_advanced}
          * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
          *      @gl_extension{KHR,blend_equation_advanced}
-         * @requires_gles Advanced blend equations are not available in WebGL.
+         * @requires_gles Enabled by default on WebGL if the
+         *      @webgl_extension{WEBGL,blend_equation_advanced_coherent}
+         *      is available.
          */
         static void blendBarrier() { glBlendBarrierKHR(); }
         #endif
@@ -1901,7 +1898,7 @@ class MAGNUM_GL_EXPORT Renderer {
              *      3.0 and older.
              * @requires_gles Shader storage is not available in WebGL.
              */
-            ShaderStorage = GL_ATOMIC_COUNTER_BARRIER_BIT
+            ShaderStorage = GL_SHADER_STORAGE_BARRIER_BIT
         };
 
         /**

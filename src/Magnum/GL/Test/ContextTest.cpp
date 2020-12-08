@@ -78,6 +78,9 @@ void ContextTest::constructNoCreate() {
     }
 
     CORRADE_VERIFY(!Context::hasCurrent());
+
+    /* Implicit construction is not allowed */
+    CORRADE_VERIFY(!(std::is_convertible<NoCreateT, Context>::value));
 }
 
 void ContextTest::constructCopyMove() {
@@ -86,6 +89,9 @@ void ContextTest::constructCopyMove() {
     CORRADE_VERIFY((std::is_constructible<Context, Context&&>{}));
     CORRADE_VERIFY(!(std::is_assignable<Context, const Context&>{}));
     CORRADE_VERIFY(!(std::is_assignable<Context, Context&&>{}));
+
+    CORRADE_VERIFY(std::is_nothrow_move_constructible<Context>::value);
+    /* No move assignment */
 }
 
 void ContextTest::makeCurrentNoOp() {
@@ -125,22 +131,31 @@ void ContextTest::extensions() {
         #endif
         Version::None})
     {
+        std::string previous;
         for(const Extension& e: Extension::extensions(version)) {
+            CORRADE_ITERATION(version);
+            CORRADE_ITERATION(e.string());
+
+            /** @todo convert to CORRADE_ERROR() when that's done */
+
+            if(!previous.empty() && previous >= e.string()) {
+                Error{} << "Extension not sorted after" << previous;
+                CORRADE_VERIFY(false);
+            }
+
             if(e.index() >= GL::Implementation::ExtensionCount) {
-                Error{} << "Index" << e.index() << "used by" << e.string()
-                        << "larger than" << GL::Implementation::ExtensionCount;
+                Error{} << "Index" << e.index() << "larger than" << GL::Implementation::ExtensionCount;
                 CORRADE_VERIFY(false);
             }
 
             if(used[e.index()]) {
-                Error{} << "Index" << e.index() << "used by both"
-                        << used[e.index()] << "and" << e.string();
+                Error{} << "Index" << e.index() << "already used by" << used[e.index()];
                 CORRADE_VERIFY(false);
             }
 
             used[e.index()] = e.string();
             if(!unique.insert(e.string()).second) {
-                Error{} << "Extension" << e.string() << "listed more than once";
+                Error{} << "Extension listed more than once";
                 CORRADE_VERIFY(false);
             }
 
@@ -153,25 +168,25 @@ void ContextTest::extensions() {
                 && e.index() != Extensions::WEBGL::color_buffer_float::Index
                 #endif
             ) {
-                Error{} << "Extension" << e.string() << "should have core version"
-                    << version << "but has" << e.coreVersion();
+                Error{} << "Extension should have core version" << version << "but has" << e.coreVersion();
                 CORRADE_VERIFY(false);
             }
 
             #ifdef MAGNUM_TARGET_GLES2
             if(e.requiredVersion() != Version::GLES200) {
-                Error{} << "Extension" << e.string() << "should have required version"
-                    << Version::GLES200 << "but has" << e.requiredVersion();
+                Error{} << "Extension should have required version" << Version::GLES200 << "but has" << e.requiredVersion();
                 CORRADE_VERIFY(false);
             }
             #endif
 
             #if defined(MAGNUM_TARGET_GLES) && !defined(MAGNUM_TARGET_GLES2)
             if(e.coreVersion() == Version::GLES300 && e.index() != Extensions::MAGNUM::shader_vertex_id::Index) {
-                Error{} << "Extension" << e.string() << "has core version" << e.coreVersion() << "on a GLES3 build -- it shouldn't be present at all";
+                Error{} << "Extension has core version" << e.coreVersion() << "on a GLES3 build -- it shouldn't be present at all";
                 CORRADE_VERIFY(false);
             }
             #endif
+
+            previous = e.string();
         }
     }
 

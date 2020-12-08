@@ -43,11 +43,10 @@ namespace Implementation {
 class MAGNUM_SHADERS_EXPORT MeshVisualizerBase: public GL::AbstractShaderProgram {
     protected:
         enum class FlagBase: UnsignedShort {
-            #ifndef MAGNUM_TARGET_GLES2
+            /* Unlike the public Wireframe flag, this one doesn't include
+               NoGeometryShader on ES2 as that would make the checks too
+               complex */
             Wireframe = 1 << 0,
-            #else
-            Wireframe = (1 << 0) | (1 << 1),
-            #endif
             NoGeometryShader = 1 << 1,
             #ifndef MAGNUM_TARGET_GLES2
             InstancedObjectId = 1 << 2,
@@ -96,7 +95,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizerBase: public GL::AbstractShaderProgram
 
 /**
 @brief 2D mesh visualization shader
-@m_since_latest
+@m_since{2020,06}
 
 Visualizes wireframe, per-vertex/per-instance object ID or primitive ID of 2D
 meshes. You need to provide the @ref Position attribute in your triangle mesh.
@@ -142,7 +141,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer2D: public Implementation::MeshVisuali
         #ifndef MAGNUM_TARGET_GLES2
         /**
          * @brief (Instanced) object ID
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @ref shaders-generic "Generic attribute", @ref Magnum::UnsignedInt.
          * Used only if @ref Flag::InstancedObjectId is set.
@@ -169,10 +168,10 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer2D: public Implementation::MeshVisuali
          */
         enum class Flag: UnsignedShort {
             /**
-             * Visualize wireframe. On OpenGL ES 2.0 this also enables
-             * @ref Flag::NoGeometryShader.
+             * Visualize wireframe. On OpenGL ES 2.0 and WebGL this also
+             * enables @ref Flag::NoGeometryShader.
              */
-            #ifndef MAGNUM_TARGET_GLES2
+            #if !defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL)
             Wireframe = 1 << 0,
             #else
             Wireframe = (1 << 0) | (1 << 1),
@@ -181,8 +180,8 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer2D: public Implementation::MeshVisuali
             /**
              * Don't use a geometry shader for wireframe visualization. If
              * enabled, you might need to provide also the @ref VertexIndex
-             * attribute in the mesh. In OpenGL ES 2.0 enabled alongside
-             * @ref Flag::Wireframe.
+             * attribute in the mesh. On OpenGL ES 2.0 and WebGL enabled
+             * alongside @ref Flag::Wireframe.
              */
             NoGeometryShader = 1 << 1,
 
@@ -364,7 +363,9 @@ enabled.
 
 Wireframe visualization is done by enabling @ref Flag::Wireframe. It is done
 either using geometry shaders or with help of additional vertex information. If
-you have geometry shaders available, you don't need to do anything else.
+you have geometry shaders available, you don't need to do anything else except
+calling @ref setViewportSize() to correctly size the wireframe --- without
+this, the mesh will be rendered in a single color.
 
 @requires_gl32 Extension @gl_extension{ARB,geometry_shader4} for wireframe
     rendering using geometry shaders.
@@ -502,7 +503,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
 
         /**
          * @brief Tangent direction
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @ref shaders-generic "Generic attribute",
          * @ref Magnum::Vector3 "Vector3". Use either this or the @ref Tangent4
@@ -512,7 +513,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
 
         /**
          * @brief Tangent direction with a bitangent sign
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @ref shaders-generic "Generic attribute",
          * @ref Magnum::Vector4 "Vector4". Use either this or the @ref Tangent
@@ -523,17 +524,17 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
 
         /**
          * @brief Bitangent direction
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @ref shaders-generic "Generic attribute",
-         * @ref Magnum::Vector4 "Vector4". Use either this or the @ref Tangent4
+         * @ref Magnum::Vector3 "Vector3". Use either this or the @ref Tangent4
          * attribute. Used only if @ref Flag::BitangentDirection is enabled.
          */
         typedef typename Generic3D::Bitangent Bitangent;
 
         /**
          * @brief Normal direction
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @ref shaders-generic "Generic attribute",
          * @ref Magnum::Vector3 "Vector3". Used only if
@@ -562,7 +563,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         #ifndef MAGNUM_TARGET_GLES2
         /**
          * @brief (Instanced) object ID
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @ref shaders-generic "Generic attribute", @ref Magnum::UnsignedInt.
          * Used only if @ref Flag::InstancedObjectId is set.
@@ -589,10 +590,10 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
          */
         enum class Flag: UnsignedShort {
             /**
-             * Visualize wireframe. On OpenGL ES 2.0 this also enables
-             * @ref Flag::NoGeometryShader.
+             * Visualize wireframe. On OpenGL ES 2.0 and WebGL this also
+             * enables @ref Flag::NoGeometryShader.
              */
-            #ifndef MAGNUM_TARGET_GLES2
+            #if !defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL)
             Wireframe = 1 << 0,
             #else
             Wireframe = (1 << 0) | (1 << 1),
@@ -601,8 +602,8 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
             /**
              * Don't use a geometry shader for wireframe visualization. If
              * enabled, you might need to provide also the @ref VertexIndex
-             * attribute in the mesh. In OpenGL ES 2.0 enabled alongside
-             * @ref Flag::Wireframe.
+             * attribute in the mesh. On OpenGL ES 2.0 and WebGL enabled
+             * alongside @ref Flag::Wireframe.
              *
              * Mutually exclusive with @ref Flag::TangentDirection,
              * @ref Flag::BitangentFromTangentDirection,
@@ -620,7 +621,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles30 Object ID output requires integer support in
              *      shaders, which is not available in OpenGL ES 2.0 or WebGL
              *      1.0.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             InstancedObjectId = 1 << 2,
 
@@ -635,7 +636,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles30 The `gl_VertexID` shader variable is not
              *      available on OpenGL ES 2.0.
              * @requires_webgl20 `gl_VertexID` is not available in WebGL 1.0.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             VertexId = 1 << 3,
 
@@ -652,7 +653,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles32 The `gl_PrimitiveID` shader variable is not
              *      available on OpenGL ES 3.1 and lower.
              * @requires_gles `gl_PrimitiveID` is not available in WebGL.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             PrimitiveId = 1 << 4,
             #endif
@@ -669,7 +670,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles30 The `gl_VertexID` shader variable is not
              *      available on OpenGL ES 2.0.
              * @requires_webgl20 `gl_VertexID` is not available in WebGL 1.0.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             #ifndef MAGNUM_TARGET_WEBGL
             PrimitiveIdFromVertexId = (1 << 5)|PrimitiveId,
@@ -690,7 +691,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{EXT,geometry_shader}
              * @requires_gles Geometry shaders are not available in WebGL.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             TangentDirection = 1 << 6,
 
@@ -707,7 +708,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{EXT,geometry_shader}
              * @requires_gles Geometry shaders are not available in WebGL.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             BitangentFromTangentDirection = 1 << 7,
 
@@ -724,7 +725,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{EXT,geometry_shader}
              * @requires_gles Geometry shaders are not available in WebGL.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             BitangentDirection = 1 << 8,
 
@@ -738,7 +739,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
              * @requires_gles32 Extension @gl_extension{ANDROID,extension_pack_es31a} /
              *      @gl_extension{EXT,geometry_shader}
              * @requires_gles Geometry shaders are not available in WebGL.
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             NormalDirection = 1 << 9
             #endif
@@ -761,7 +762,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Constructor
-         * @m_deprecated_since_latest Use @ref MeshVisualizer3D(Flags) instead.
+         * @m_deprecated_since{2020,06} Use @ref MeshVisualizer3D(Flags) instead.
          */
         explicit CORRADE_DEPRECATED("use MeshVisualizer3D(Flags) instead") MeshVisualizer3D(): MeshVisualizer3D{{}} {}
         #endif
@@ -800,7 +801,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         #ifdef MAGNUM_BUILD_DEPRECATED
         /**
          * @brief Set transformation and projection matrix
-         * @m_deprecated_since_latest Use @ref setTransformationMatrix() and
+         * @m_deprecated_since{2020,06} Use @ref setTransformationMatrix() and
          *      @ref setProjectionMatrix() instead.
          */
         CORRADE_DEPRECATED("use setTransformationMatrix() and setProjectionMatrix() instead") MeshVisualizer3D& setTransformationProjectionMatrix(const Matrix4& matrix) {
@@ -832,7 +833,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         /**
          * @brief Set transformation matrix
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Expects that @ref Flag::TangentDirection,
          * @ref Flag::BitangentDirection or @ref Flag::NormalDirection is
@@ -900,7 +901,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         /**
          * @brief Set color map transformation
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Offset and scale applied to the input value coming either from the
          * @ref ObjectId attribute or @glsl gl_PrimitiveID @ce, resulting value
@@ -933,7 +934,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         /**
          * @brief Bind a color map texture
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * See also @ref setColorMapTransformation(). Expects that either
          * @ref Flag::InstancedObjectId or @ref Flag::PrimitiveId /
@@ -956,7 +957,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         /**
          * @brief Set line width
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Value is in screen space (depending on @ref setViewportSize()),
          * initial value is @cpp 1.0f @ce. Expects that
@@ -975,7 +976,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
         /**
          * @brief Set line length
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Value is in object space, initial value is @cpp 1.0f @ce. Expects
          * that @ref Flag::TangentDirection,
@@ -1017,7 +1018,7 @@ class MAGNUM_SHADERS_EXPORT MeshVisualizer3D: public Implementation::MeshVisuali
 #ifdef MAGNUM_BUILD_DEPRECATED
 /**
 @brief 3D mesh visualizer shader
-@m_deprecated_since_latest Use @ref MeshVisualizer3D instead.
+@m_deprecated_since{2020,06} Use @ref MeshVisualizer3D instead.
 */
 typedef CORRADE_DEPRECATED("use MeshVisualizer3D instead") MeshVisualizer3D MeshVisualizer;
 #endif

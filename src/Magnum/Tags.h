@@ -26,38 +26,82 @@
 */
 
 /** @file
- * @brief Tag type @ref Magnum::NoCreateT, tag @ref Magnum::NoCreate
+ * @brief Tag type @ref Magnum::NoInitT, @ref Magnum::NoCreateT, tag @ref Magnum::NoInit, @ref Magnum::NoCreate
  */
 
-#include "Corrade/configure.h"
+#include <Corrade/Containers/Tags.h>
+
 #include "Magnum/configure.h"
 
 namespace Magnum {
 
 /**
+@brief No initialization tag type
+@m_since{2020,06}
+
+Used to distinguish construction with no initialization at all.
+@see @ref NoInit
+*/
+typedef Corrade::Containers::NoInitT NoInitT;
+
+/**
 @brief No creation tag type
 
-Used to distinguish construction without creating the underlying OpenGL object.
+Used to distinguish construction without creating the underlying OpenGL /
+Vulkan / ... object.
 @see @ref NoCreate
 */
+typedef Corrade::Containers::NoCreateT NoCreateT;
+
+/**
+@brief No allocation tag type
+@m_since_latest
+
+Used to distinguish construction without allocating memory.
+@see @ref NoAllocate
+*/
 /* Explicit constructor to avoid ambiguous calls when using {} */
-struct NoCreateT {
+struct NoAllocateT {
     #ifndef DOXYGEN_GENERATING_OUTPUT
     struct Init{};
-    constexpr explicit NoCreateT(Init) {}
+    constexpr explicit NoAllocateT(Init) {}
     #endif
 };
 
 /**
+@brief No initialization tag
+@m_since{2020,06}
+
+Use for construction with no initialization at all.
+*/
+#ifdef DOXYGEN_GENERATING_OUTPUT
+constexpr NoInitT NoInit{};
+#else
+using Corrade::Containers::NoInit;
+#endif
+
+/**
 @brief No creation tag
 
-Use for construction without creating the underlying OpenGL object. Note that
-calling anything on objects created this way is not defined (and not checked or
-guarded in any way) and may result in crashes. If you want delayed object
-creation with safety checks (however with some extra memory overhead), wrap
-the objects in an @ref Corrade::Containers::Optional.
+Use for construction without creating the underlying OpenGL / Vulkan / ...
+object. Note that calling anything on objects created this way is not defined
+(and not checked or guarded in any way) and may result in crashes. If you want
+delayed object creation with safety checks (however with some extra memory
+overhead), wrap the objects in an @ref Corrade::Containers::Optional.
 */
-constexpr NoCreateT NoCreate{NoCreateT::Init{}};
+#ifdef DOXYGEN_GENERATING_OUTPUT
+constexpr NoCreateT NoCreate{};
+#else
+using Corrade::Containers::NoCreate;
+#endif
+
+/**
+@brief No allocation tag
+@m_since_latest
+
+Use for construction without allocating memory.
+*/
+constexpr NoAllocateT NoAllocate{NoAllocateT::Init{}};
 
 }
 

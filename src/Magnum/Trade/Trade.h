@@ -48,9 +48,17 @@ class AbstractSceneConverter;
 typedef CORRADE_DEPRECATED("use InputFileCallbackPolicy instead") InputFileCallbackPolicy ImporterFileCallbackPolicy;
 #endif
 
-enum class MaterialType: UnsignedByte;
+enum class MaterialAttribute: UnsignedInt;
+enum class MaterialTextureSwizzle: UnsignedInt;
+enum class MaterialAttributeType: UnsignedByte;
+enum class MaterialLayer: UnsignedInt;
+enum class MaterialType: UnsignedInt;
 enum class MaterialAlphaMode: UnsignedByte;
-class AbstractMaterialData;
+class MaterialAttributeData;
+class MaterialData;
+#ifdef MAGNUM_BUILD_DEPRECATED
+typedef CORRADE_DEPRECATED("use MaterialData instead") MaterialData AbstractMaterialData;
+#endif
 
 enum class AnimationTrackTargetType: UnsignedByte;
 enum class AnimationTrackType: UnsignedByte;
@@ -62,6 +70,8 @@ class CameraData;
 
 enum class DataFlag: UnsignedByte;
 typedef Containers::EnumSet<DataFlag> DataFlags;
+
+class FlatMaterialData;
 
 template<UnsignedInt> class ImageData;
 typedef ImageData<1> ImageData1D;
@@ -83,9 +93,16 @@ class MeshObjectData2D;
 class MeshObjectData3D;
 class ObjectData2D;
 class ObjectData3D;
+class PbrClearCoatMaterialData;
+class PbrMetallicRoughnessMaterialData;
+class PbrSpecularGlossinessMaterialData;
 class PhongMaterialData;
 class TextureData;
 class SceneData;
+
+template<UnsignedInt> class SkinData;
+typedef SkinData<2> SkinData2D;
+typedef SkinData<3> SkinData3D;
 #endif
 
 }}

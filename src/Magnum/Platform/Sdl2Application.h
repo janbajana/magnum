@@ -160,7 +160,7 @@ you have all the dependencies.
 @code{.sh}
 mkdir build-ios && cd build-ios
 cmake .. \
-    -DCMAKE_TOOLCHAIN_FILE=../toolchains/generic/iOS.cmake \
+    -DCMAKE_TOOLCHAIN_FILE=path/to/toolchains/generic/iOS.cmake \
     -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk \
     -DCMAKE_OSX_ARCHITECTURES="arm64;armv7;armv7s" \
     -DCMAKE_PREFIX_PATH=~/ios-libs \
@@ -680,7 +680,7 @@ class Sdl2Application {
         /**
          * @brief Set window size
          * @param size    The size, in screen coordinates
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * To make the sizing work independently of the display DPI, @p size is
          * internally multiplied with @ref dpiScaling() before getting applied.
@@ -772,7 +772,7 @@ class Sdl2Application {
         #if !defined(CORRADE_TARGET_EMSCRIPTEN) && (SDL_MAJOR_VERSION*1000 + SDL_MINOR_VERSION*100 + SDL_PATCHLEVEL >= 2005 || defined(DOXYGEN_GENERATING_OUTPUT))
         /**
          * @brief Set window icon
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * The @p image is expected to be with origin at bottom left (which is
          * the default for imported images) and in one of
@@ -787,6 +787,8 @@ class Sdl2Application {
          *      have no effect on macOS / Wayland, similarly to how
          *      @ref GlfwApplication::setWindowIcon() behaves on those
          *      platforms.
+         * @see @ref platform-windows-icon "Excecutable icon on Windows",
+         *      @ref Trade::IcoImporter "IcoImporter"
          */
         void setWindowIcon(const ImageView2D& image);
         #endif
@@ -795,14 +797,23 @@ class Sdl2Application {
         /**
          * @brief Set container CSS class
          *
-         * Assigns given CSS class to the @cb{.html} <div class="container"> @ce.
-         * Useful for example to change aspect ratio of the view or stretch it
-         * to cover the full page. See @ref platforms-html5-layout for more
-         * information about possible values. Note that this replaces any
-         * existing class, to set multiple classes separate them with
-         * whitespace.
+         * Assigns given CSS class to the @cb{.html} <div class="mn-container"> @ce
+         * enclosing the application @cb{.html} <canvas> @ce. Useful for
+         * example to change aspect ratio of the view or stretch it to cover
+         * the full page. See @ref platforms-html5-layout for more information
+         * about possible values. Note that this replaces any existing class
+         * (except for @cb{.css} .mn-container @ce, which is kept), to set
+         * multiple classes separate them with whitespace.
          *
          * @note Only available on @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
+         *
+         * @m_class{m-note m-danger}
+         *
+         * @par
+         *      For backwards compatibility purposes the function will look for
+         *      *any* @cb{.html} <div id="container"> @ce in case the
+         *      @cb{.html} <div class="mn-container"> @ce is not found. This
+         *      compatibility is scheduled to be removed in the future.
          */
         void setContainerCssClass(const std::string& cssClass);
         #endif
@@ -879,18 +890,6 @@ class Sdl2Application {
          */
         virtual void viewportEvent(ViewportEvent& event);
 
-        #ifdef MAGNUM_BUILD_DEPRECATED
-        /** @brief @copybrief viewportEvent(ViewportEvent&)
-         * @m_deprecated_since{2018,10} Use @ref viewportEvent(ViewportEvent&)
-         *      instead. To preserve backwards compatibility, this function is
-         *      called from @ref viewportEvent(ViewportEvent&) with
-         *      @ref ViewportEvent::framebufferSize() passed to @p size.
-         *      Overriding the new function will cause this function to not be
-         *      called anymore.
-         */
-        virtual CORRADE_DEPRECATED("use viewportEvent(ViewportEvent&) instead") void viewportEvent(const Vector2i& size);
-        #endif
-
         /**
          * @brief Draw event
          *
@@ -935,7 +934,7 @@ class Sdl2Application {
     public:
         /**
          * @brief Cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * @see @ref setCursor()
          */
@@ -967,7 +966,7 @@ class Sdl2Application {
 
         /**
          * @brief Set cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Default is @ref Cursor::Arrow.
          */
@@ -975,7 +974,7 @@ class Sdl2Application {
 
         /**
          * @brief Get current cursor type
-         * @m_since_latest
+         * @m_since{2020,06}
          */
         Cursor cursor();
 
@@ -994,7 +993,7 @@ class Sdl2Application {
         /**
          * @brief Whether mouse is locked
          *
-         * @m_deprecated_since_latest Use @ref cursor() together with
+         * @m_deprecated_since{2020,06} Use @ref cursor() together with
          *      @ref Cursor::HiddenLocked instead.
          */
         CORRADE_DEPRECATED("use cursor() together with Cursor::HiddenLocked instead") bool isMouseLocked() const { return SDL_GetRelativeMouseMode(); }
@@ -1002,7 +1001,7 @@ class Sdl2Application {
         /**
          * @brief Enable or disable mouse locking
          *
-         * @m_deprecated_since_latest Use @ref setCursor() together with
+         * @m_deprecated_since{2020,06} Use @ref setCursor() together with
          *      @ref Cursor::HiddenLocked instead.
          */
         CORRADE_DEPRECATED("use setCursor() together with Cursor::HiddenLocked instead") void setMouseLocked(bool enabled);
@@ -1440,22 +1439,6 @@ class Sdl2Application::GLConfiguration {
             _srgbCapable = enabled;
             return *this;
         }
-
-        #ifdef MAGNUM_BUILD_DEPRECATED
-        /**
-         * @brief @copybrief isSrgbCapable()
-         * @m_deprecated_since{2018,10} Use @ref isSrgbCapable() instead.
-         */
-        CORRADE_DEPRECATED("use isSrgbCapable() instead") bool isSRGBCapable() const { return isSrgbCapable(); }
-
-        /**
-         * @brief @copybrief setSrgbCapable()
-         * @m_deprecated_since{2018,10} Use @ref setSrgbCapable() instead.
-         */
-        CORRADE_DEPRECATED("use setSrgbCapable() instead") GLConfiguration& setSRGBCapable(bool enabled) {
-            return setSrgbCapable(enabled);
-        }
-        #endif
         #endif
 
     private:
@@ -1536,7 +1519,7 @@ class Sdl2Application::Configuration {
 
             /**
              * Fullscreen window at the current desktop resolution
-             * @m_since_latest
+             * @m_since{2020,06}
              *
              * @note Not available on @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
              */
@@ -1548,17 +1531,6 @@ class Sdl2Application::Configuration {
              * @note Not available on @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
              */
             Borderless = SDL_WINDOW_BORDERLESS,
-            #endif
-
-            #ifdef MAGNUM_BUILD_DEPRECATED
-            /**
-             * Allow high DPI.
-             *
-             * @m_deprecated_since{2018,10} Has no effect, as this flag is
-             *      passed implicitly on platforms where needed. See
-             *      @ref Platform-Sdl2Application-dpi for more information.
-             */
-            AllowHighDpi CORRADE_DEPRECATED_ENUM("has no effect, passed implicitly on platforms that need it") = 0,
             #endif
 
             #ifndef CORRADE_TARGET_EMSCRIPTEN
@@ -1599,7 +1571,7 @@ class Sdl2Application::Configuration {
             #if SDL_MAJOR_VERSION*1000 + SDL_MINOR_VERSION*100 + SDL_PATCHLEVEL >= 2005 || defined(DOXYGEN_GENERATING_OUTPUT)
             /**
              * Always on top
-             * @m_since_latest
+             * @m_since{2020,06}
              *
              * @note Available since SDL 2.0.5, not available on
              *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten". According to
@@ -1609,7 +1581,7 @@ class Sdl2Application::Configuration {
 
             /**
              * Don't add the window to taskbar
-             * @m_since_latest
+             * @m_since{2020,06}
              *
              * @note Available since SDL 2.0.5, not available on
              *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten". According to
@@ -1619,7 +1591,7 @@ class Sdl2Application::Configuration {
 
             /**
              * Window should be treated as a utility window
-             * @m_since_latest
+             * @m_since{2020,06}
              *
              * @note Available since SDL 2.0.5, not available on
              *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten". According to
@@ -1629,7 +1601,7 @@ class Sdl2Application::Configuration {
 
             /**
              * Window should be treated as a tooltip
-             * @m_since_latest
+             * @m_since{2020,06}
              *
              * @note Available since SDL 2.0.5, not available on
              *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten". According to
@@ -1639,7 +1611,7 @@ class Sdl2Application::Configuration {
 
             /**
              * Window should be treated as a popup menu
-             * @m_since_latest
+             * @m_since{2020,06}
              *
              * @note Available since SDL 2.0.5, not available on
              *      @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten". According to
@@ -1869,7 +1841,7 @@ class Sdl2Application::Configuration {
         /**
          * @brief Add window flags
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Unlike @ref setWindowFlags(), ORs the flags with existing instead of
          * replacing them. Useful for preserving the defaults.
@@ -1883,7 +1855,7 @@ class Sdl2Application::Configuration {
         /**
          * @brief Clear window flags
          * @return Reference to self (for method chaining)
-         * @m_since_latest
+         * @m_since{2020,06}
          *
          * Unlike @ref setWindowFlags(), ANDs the inverse of @p flags with
          * existing instead of replacing them. Useful for removing default
@@ -2274,7 +2246,7 @@ class Sdl2Application::KeyEvent: public Sdl2Application::InputEvent {
 
             /**
              * Quote (<tt>'</tt>)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Quote = SDLK_QUOTE,
 
@@ -2289,25 +2261,25 @@ class Sdl2Application::KeyEvent: public Sdl2Application::InputEvent {
 
             /**
              * Left bracket (`[`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             LeftBracket = SDLK_LEFTBRACKET,
 
             /**
              * Right bracket (`]`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             RightBracket = SDLK_RIGHTBRACKET,
 
             /**
              * Backslash (`\`)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Backslash = SDLK_BACKSLASH,
 
             /**
              * Backquote (<tt>`</tt>)
-             * @m_since_latest
+             * @m_since{2020,06}
              */
             Backquote = SDLK_BACKQUOTE,
 

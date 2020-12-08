@@ -26,10 +26,12 @@
 #include "AnyImageImporter.h"
 
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Utility/DebugStl.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Corrade/Utility/String.h>
 
 #include "Magnum/Trade/ImageData.h"
@@ -144,27 +146,37 @@ void AnyImageImporter::doOpenFile(const std::string& filename) {
 }
 
 void AnyImageImporter::doOpenData(Containers::ArrayView<const char> data) {
+    using namespace Containers::Literals;
+
     CORRADE_INTERNAL_ASSERT(manager());
+
+    /* So we can use the convenient hasSuffix() API */
+    const Containers::StringView dataString = data;
 
     std::string plugin;
     /* https://github.com/BinomialLLC/basis_universal/blob/7d784c728844c007d8c95d63231f7adcc0f65364/transcoder/basisu_file_headers.h#L78 */
-    if(Utility::String::viewBeginsWith(data, "sB"))
+    if(dataString.hasPrefix("sB"_s))
         plugin = "BasisImporter";
     /* https://docs.microsoft.com/cs-cz/windows/desktop/direct3ddds/dx-graphics-dds-pguide */
-    else if(Utility::String::viewBeginsWith(data, "DDS "))
+    else if(dataString.hasPrefix("DDS "_s))
         plugin = "DdsImporter";
     /* http://www.openexr.com/openexrfilelayout.pdf */
-    else if(Utility::String::viewBeginsWith(data, "\x76\x2f\x31\x01"))
+    else if(dataString.hasPrefix("\x76\x2f\x31\x01"_s))
         plugin = "OpenExrImporter";
     /* https://en.wikipedia.org/wiki/Radiance_(software)#HDR_image_format */
-    else if(Utility::String::viewBeginsWith(data, "#?RADIANCE"))
+    else if(dataString.hasPrefix("#?RADIANCE"_s))
         plugin = "HdrImporter";
     /* https://en.wikipedia.org/wiki/JPEG#Syntax_and_structure */
-    else if(Utility::String::viewBeginsWith(data, "\xff\xd8\xff"))
+    else if(dataString.hasPrefix("\xff\xd8\xff"_s))
         plugin = "JpegImporter";
     /* https://en.wikipedia.org/wiki/Portable_Network_Graphics#File_header */
-    else if(Utility::String::viewBeginsWith(data, "\x89PNG\x0d\x0a\x1a\x0a"))
+    else if(dataString.hasPrefix("\x89PNG\x0d\x0a\x1a\x0a"_s))
         plugin = "PngImporter";
+    /* http://paulbourke.net/dataformats/tiff/,
+       http://paulbourke.net/dataformats/tiff/tiff_summary.pdf */
+    else if(dataString.hasPrefix("II\x2a\x00"_s) ||
+            dataString.hasPrefix("MM\x00\x2a"_s))
+        plugin = "TiffImporter";
     /* https://github.com/file/file/blob/d04de269e0b06ccd0a7d1bf4974fed1d75be7d9e/magic/Magdir/images#L18-L22
        TGAs are a complete guesswork, so try after everything else fails. */
     else if([data]() {
@@ -191,11 +203,14 @@ void AnyImageImporter::doOpenData(Containers::ArrayView<const char> data) {
         Error{} << "Trade::AnyImageImporter::openData(): file is empty";
         return;
     } else {
-        std::uint32_t signature = data[0] << 24;
-        if(data.size() > 1) signature |= data[1] << 16;
-        if(data.size() > 2) signature |= data[2] << 8;
-        if(data.size() > 3) signature |= data[3];
-        Error{} << "Trade::AnyImageImporter::openData(): cannot determine the format from signature" << reinterpret_cast<void*>(signature);
+        /* FFS so much casting to avoid implicit sign extension ruining
+           everything */
+        UnsignedInt signature = UnsignedInt(UnsignedByte(data[0])) << 24;
+        if(data.size() > 1) signature |= UnsignedInt(UnsignedByte(data[1])) << 16;
+        if(data.size() > 2) signature |= UnsignedInt(UnsignedByte(data[2])) << 8;
+        if(data.size() > 3) signature |= UnsignedInt(UnsignedByte(data[3]));
+        /* If there's less than four bytes, cut the rest away */
+        Error{} << "Trade::AnyImageImporter::openData(): cannot determine the format from signature 0x" << Debug::nospace << Utility::formatString("{:.8x}", signature).substr(0, data.size() < 4 ? data.size()*2 : std::string::npos);
         return;
     }
 
@@ -234,4 +249,4 @@ Containers::Optional<ImageData2D> AnyImageImporter::doImage2D(const UnsignedInt 
 }}
 
 CORRADE_PLUGIN_REGISTER(AnyImageImporter, Magnum::Trade::AnyImageImporter,
-    "cz.mosra.magnum.Trade.AbstractImporter/0.3.1")
+    "cz.mosra.magnum.Trade.AbstractImporter/0.3.3")
